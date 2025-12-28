@@ -8,5 +8,8 @@
     "lint": "pnpm --filter web lint",
     "test": "pnpm --filter @twentynine/engine test",
     "auto:commit": "node scripts/auto-commit.js"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3"
   }
 }
