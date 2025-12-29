@@ -231,7 +231,9 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Trick</span>
-                  <span className="font-medium text-foreground">{gameState.trickNumber + 1} / 8</span>
+                  <span className="font-medium text-foreground">
+                    {Math.min(gameState.trickNumber + 1, 8)} / 8
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Current Player</span>

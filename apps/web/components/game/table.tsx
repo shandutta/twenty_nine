@@ -392,7 +392,7 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
             <div className="flex items-center gap-4 px-4 py-2 rounded-lg bg-background/95 backdrop-blur border border-border shadow-lg">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">Bid:</span>
-                <span className="text-lg font-bold text-amber-400">{teamA.bid || "-"}</span>
+                <span className="text-lg font-bold text-amber-400">{gameState.currentBid || "-"}</span>
               </div>
               <div className="w-px h-6 bg-border" />
               <div className="flex items-center gap-3">

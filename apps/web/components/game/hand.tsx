@@ -253,7 +253,7 @@ function PlayableCard({
   )
 }
 
-export function Hand({ player, onPlayCard, isCurrentTurn, animationsEnabled }: HandProps) {
+export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animationsEnabled }: HandProps) {
   // Sort cards by suit then by value
   const suitOrder: Suit[] = ["spades", "hearts", "clubs", "diamonds"]
   const rankOrder = ["J", "9", "A", "10", "K", "Q", "8", "7"]
