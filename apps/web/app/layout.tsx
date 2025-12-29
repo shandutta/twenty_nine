@@ -1,38 +1,48 @@
-import type { Metadata } from "next";
-import { Fraunces, JetBrains_Mono, Space_Grotesk } from "next/font/google";
-import "./globals.css";
-
-const display = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const body = Space_Grotesk({
-  variable: "--font-body",
-  subsets: ["latin"],
-});
-
-const mono = JetBrains_Mono({
-  variable: "--font-code",
-  subsets: ["latin"],
-});
+import type React from "react"
+import type { Metadata, Viewport } from "next"
+import { Analytics } from "@vercel/analytics/next"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Twenty-Nine Table",
-  description: "Play a full hand of Twenty-Nine against three bots.",
-};
+  title: "Twenty-Nine | Card Game",
+  description: "Play the classic South Asian trick-taking card game Twenty-Nine",
+  generator: "v0.app",
+  icons: {
+    icon: [
+      {
+        url: "/icon-light-32x32.png",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/icon-dark-32x32.png",
+        media: "(prefers-color-scheme: dark)",
+      },
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: "/apple-icon.png",
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: "#1a2e1a",
+  width: "device-width",
+  initialScale: 1,
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${display.variable} ${body.variable} ${mono.variable} antialiased`}>
+    <html lang="en" className="dark">
+      <body className="font-sans antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
-  );
+  )
 }
