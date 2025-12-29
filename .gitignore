@@ -2,3 +2,4 @@ node_modules
 .corepack-cache
 .env
 .env.local
+_v0.zip

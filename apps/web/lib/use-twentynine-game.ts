@@ -7,8 +7,8 @@ import {
   playCard,
   scoreTrick,
   winningPlay,
-} from "@twentynine/engine";
-import type { Card, Suit, TrickState } from "@twentynine/engine";
+} from "@/lib/engine";
+import type { Card, Suit, TrickState } from "@/lib/engine";
 
 export type GameState = {
   hands: Card[][];

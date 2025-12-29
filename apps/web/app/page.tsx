@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTwentyNineGame } from "@/lib/use-twentynine-game";
 import { cn } from "@/lib/utils";
-import type { Card, Suit } from "@twentynine/engine";
+import type { Card, Suit } from "@/lib/engine";
 
 const suitLabel: Record<Suit, string> = {
   clubs: "C",
