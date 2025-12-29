@@ -2,16 +2,14 @@
 
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { Hand } from "./hand"
-import type { GameState, PlayingCard, Player, Suit } from "@/app/game/page"
-import { Eye } from "lucide-react"
+import type { GameState, PlayingCard, Player, Suit } from "@/components/game/types"
 
 interface GameTableProps {
   gameState: GameState
   onPlayCard: (card: PlayingCard) => void
-  onRevealTrump: () => void
+  legalCardIds: string[]
   animationsEnabled: boolean
 }
 
@@ -313,7 +311,7 @@ function OpponentArea({
   )
 }
 
-export function GameTable({ gameState, onPlayCard, onRevealTrump, animationsEnabled }: GameTableProps) {
+export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabled }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!
   const leftPlayer = gameState.players.find((p) => p.position === "left")!
   const topPlayer = gameState.players.find((p) => p.position === "top")!
@@ -387,16 +385,6 @@ export function GameTable({ gameState, onPlayCard, onRevealTrump, animationsEnab
                 </span>
               ) : (
                 <span className="text-lg font-bold text-muted-foreground">?</span>
-              )}
-              {!gameState.trumpRevealed && gameState.bidWinner === "player1" && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button size="sm" variant="ghost" onClick={onRevealTrump} className="gap-1 h-7 px-2">
-                      <Eye className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Reveal trump suit</TooltipContent>
-                </Tooltip>
               )}
             </div>
 
@@ -501,6 +489,7 @@ export function GameTable({ gameState, onPlayCard, onRevealTrump, animationsEnab
               player={bottomPlayer}
               onPlayCard={onPlayCard}
               isCurrentTurn={bottomPlayer.isCurrentPlayer}
+              legalCardIds={legalCardIds}
               animationsEnabled={animationsEnabled}
             />
           </div>

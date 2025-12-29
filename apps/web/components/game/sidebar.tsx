@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
-import type { GameState } from "@/app/game/page"
+import type { GameState } from "@/components/game/types"
 import { Settings, RotateCcw, Trophy, Users, Info } from "lucide-react"
 
 interface GameSidebarProps {
@@ -136,6 +136,14 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                   <span className="text-muted-foreground">{teamB.name} Tricks:</span>
                   <span className="text-rose-400 font-medium">{teamB.tricksWon}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{teamA.name} Points:</span>
+                  <span className="text-emerald-400 font-medium">{teamA.handPoints}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{teamB.name} Points:</span>
+                  <span className="text-rose-400 font-medium">{teamB.handPoints}</span>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -214,6 +222,34 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
           <TabsContent value="rules" className="mt-4 space-y-4">
             <Card className="bg-card border-border">
               <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Hand State</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-xs text-muted-foreground">
+                <div className="flex justify-between text-sm">
+                  <span>Phase</span>
+                  <span className="font-medium text-foreground">{gameState.phase}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Trick</span>
+                  <span className="font-medium text-foreground">{gameState.trickNumber + 1} / 8</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Current Player</span>
+                  <span className="font-medium text-foreground">
+                    {gameState.players.find((p) => p.id === gameState.currentPlayerId)?.name}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Trump</span>
+                  <span className="font-medium text-foreground">
+                    {gameState.trumpRevealed ? gameState.trumpSuit : "Hidden"}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-2">
                 <CardTitle className="text-sm">Card Points</CardTitle>
               </CardHeader>
               <CardContent>
@@ -244,13 +280,28 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                 <CardTitle className="text-sm">Quick Rules</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-xs text-muted-foreground">
-                <p>• Total 28 points in deck (8 cards × 4 suits)</p>
+                <p>• Total 28 points in deck + last trick bonus = 29</p>
                 <p>• Partners sit across from each other</p>
-                <p>• Minimum bid is 15, maximum is 28</p>
-                <p>• Bidding team must reach bid to win round</p>
-                <p>• Trump suit revealed when bid winner plays trump</p>
+                <p>• Minimum bid is 16, maximum is 29</p>
+                <p>• Royals (K+Q of trump) adjust bid by ±4 within bounds</p>
+                <p>• Trump reveals when someone cannot follow suit</p>
                 <p>• Must follow suit if possible</p>
                 <p>• Highest card of led suit wins (unless trumped)</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">Action Log</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-xs text-muted-foreground">
+                  {gameState.log.length === 0 ? (
+                    <p>No actions yet.</p>
+                  ) : (
+                    gameState.log.slice(-8).map((entry, index) => <p key={index}>• {entry}</p>)
+                  )}
+                </div>
               </CardContent>
             </Card>
 

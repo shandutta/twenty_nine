@@ -4,12 +4,13 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import type { Player, PlayingCard, Suit } from "@/app/game/page"
+import type { Player, PlayingCard, Suit } from "@/components/game/types"
 
 interface HandProps {
   player: Player
   onPlayCard: (card: PlayingCard) => void
   isCurrentTurn: boolean
+  legalCardIds: string[]
   animationsEnabled: boolean
 }
 
@@ -168,13 +169,13 @@ function PlayableCard({
             disabled={!isPlayable}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            className={cn(
-              "relative rounded-lg bg-white shadow-lg border transition-all duration-200 overflow-hidden",
-              "h-[120px] w-[84px] md:h-[150px] md:w-[105px]",
-              isPlayable
-                ? "border-gray-300 hover:border-amber-500 hover:shadow-2xl cursor-pointer"
+          className={cn(
+            "relative rounded-lg bg-white shadow-lg border transition-all duration-200 overflow-hidden",
+            "h-[120px] w-[84px] md:h-[150px] md:w-[105px]",
+            isPlayable
+                ? "border-amber-400 ring-2 ring-amber-400/40 hover:shadow-2xl cursor-pointer"
                 : "border-gray-300 opacity-60 cursor-not-allowed",
-            )}
+          )}
             style={{
               transform: `rotate(${isHovered && isPlayable ? 0 : rotation}deg) translateY(${isHovered && isPlayable ? -20 : yOffset}px)`,
               marginLeft: index === 0 ? 0 : "-1.25rem",
@@ -271,7 +272,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, animationsEnabled }: H
             key={card.id}
             card={card}
             onClick={() => onPlayCard(card)}
-            isPlayable={isCurrentTurn}
+            isPlayable={isCurrentTurn && legalCardIds.includes(card.id)}
             index={index}
             total={sortedCards.length}
             animationsEnabled={animationsEnabled}
