@@ -39,6 +39,7 @@ export default function GamePage() {
   const [coachLoading, setCoachLoading] = useState(false)
   const [coachError, setCoachError] = useState<string | null>(null)
   const [coachResponse, setCoachResponse] = useState<string | null>(null)
+  const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null)
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`
@@ -50,7 +51,29 @@ export default function GamePage() {
 
   const legalAlternatives = lastMove ? formatCardList(lastMove.legalMoves) : "--"
 
-  const canRequestCoach = coachEnabled && Boolean(lastMove) && !coachLoading
+  const canRequestCoach =
+    coachEnabled && Boolean(lastMove) && !coachLoading && openRouterConfigured !== false
+
+  useEffect(() => {
+    let isMounted = true
+    const checkConfig = async () => {
+      try {
+        const response = await fetch("/api/openrouter")
+        const data = (await response.json().catch(() => null)) as { configured?: boolean } | null
+        if (isMounted) {
+          setOpenRouterConfigured(Boolean(data?.configured))
+        }
+      } catch {
+        if (isMounted) {
+          setOpenRouterConfigured(false)
+        }
+      }
+    }
+    void checkConfig()
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   useEffect(() => {
     setCoachResponse(null)
@@ -61,8 +84,13 @@ export default function GamePage() {
     if (!coachEnabled || !lastMove) {
       return
     }
+    if (openRouterConfigured === false) {
+      setCoachError("Set OPENROUTER_API_KEY in apps/web/.env.local first.")
+      return
+    }
     setCoachLoading(true)
     setCoachError(null)
+    setCoachResponse(null)
 
     const message = {
       trump: engineState.trumpRevealed ? engineState.trumpSuit : "hidden",

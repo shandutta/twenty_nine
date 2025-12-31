@@ -8,6 +8,22 @@ Monorepo for the 29 card game (web app + engine).
 pnpm install
 ```
 
+## How to run
+
+```bash
+pnpm run dev
+```
+
+Then open `http://localhost:3000/game`.
+
+## How to test
+
+```bash
+pnpm run lint
+pnpm run test
+pnpm run build
+```
+
 ## Engine tests
 
 ```bash
@@ -29,6 +45,13 @@ pnpm -C apps/web dev
 ## AI features (optional)
 
 Set `OPENROUTER_API_KEY` in `apps/web/.env.local` to enable the AI Coach and LLM bot strategies. A template is in `apps/web/.env.example`.
+
+## Known limitations
+
+- No bidding/auction phase yet; bid target defaults to 16.
+- Trump selection is currently deterministic (seed-based), not chosen by a bidder.
+- Multiplayer is not implemented (solo only).
+- No web test suite yet (`apps/web` has no `test` script).
 
 ## Deployment (VPS + Caddy)
 
