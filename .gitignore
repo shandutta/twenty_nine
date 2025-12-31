@@ -1,5 +1,12 @@
 node_modules
+.env*
+!.env.example
+.next
+dist
+coverage
 .corepack-cache
 .env
 .env.local
 _v0.zip
+.v0-twenty-nine-game-table/
+v0-twenty-nine-game-table.zip

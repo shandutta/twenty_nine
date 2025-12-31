@@ -5,13 +5,28 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { GameState } from "@/components/game/types"
-import { Settings, RotateCcw, Trophy, Users, Info } from "lucide-react"
+import type { BotDifficulty, BotSettings } from "@/components/game/use-game-controller"
+import { Settings, RotateCcw, Trophy, Users, Info, Sparkles } from "lucide-react"
 
 interface GameSidebarProps {
   gameState: GameState
   onNewGame: () => void
   onOpenSettings: () => void
+  botSettings: BotSettings
+  onBotEnabledChange: (enabled: boolean) => void
+  onBotDifficultyChange: (difficulty: BotDifficulty) => void
+  coachEnabled: boolean
+  onCoachEnabledChange: (enabled: boolean) => void
+  coachLoading: boolean
+  coachError: string | null
+  coachResponse: string | null
+  onRequestCoach: () => void
+  lastMoveSummary: string
+  legalAlternatives: string
+  canRequestCoach: boolean
 }
 
 function ScoringDisplay({ score, label }: { score: number; label: string }) {
@@ -44,7 +59,23 @@ function ScoringDisplay({ score, label }: { score: number; label: string }) {
   )
 }
 
-export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSidebarProps) {
+export function GameSidebar({
+  gameState,
+  onNewGame,
+  onOpenSettings,
+  botSettings,
+  onBotEnabledChange,
+  onBotDifficultyChange,
+  coachEnabled,
+  onCoachEnabledChange,
+  coachLoading,
+  coachError,
+  coachResponse,
+  onRequestCoach,
+  lastMoveSummary,
+  legalAlternatives,
+  canRequestCoach,
+}: GameSidebarProps) {
   const teamA = gameState.teams.teamA
   const teamB = gameState.teams.teamB
 
@@ -73,7 +104,7 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
 
       {/* Tabs Content */}
       <Tabs defaultValue="score" className="flex-1 flex flex-col">
-        <TabsList className="mx-4 mt-4 grid grid-cols-3">
+        <TabsList className="mx-4 mt-4 grid grid-cols-4">
           <TabsTrigger value="score" className="gap-1">
             <Trophy className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Score</span>
@@ -85,6 +116,10 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
           <TabsTrigger value="rules" className="gap-1">
             <Info className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Rules</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="gap-1">
+            <Sparkles className="h-4 w-4" />
+            <span className="sr-only sm:not-sr-only">AI</span>
           </TabsTrigger>
         </TabsList>
 
@@ -316,6 +351,76 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                 <p>• Win bid = opponent gives you a red 6</p>
                 <p>• Lose bid = you give opponent a black 6</p>
                 <p>• Game ends when one team has all 6 cards</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="ai" className="mt-4 space-y-4">
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-emerald-500" />
+                  LLM Bots
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Enable LLM strategy</p>
+                    <p className="text-xs text-muted-foreground">Let bots consult OpenRouter on tricky turns.</p>
+                  </div>
+                  <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Difficulty</p>
+                  <Select value={botSettings.difficulty} onValueChange={(value) => onBotDifficultyChange(value as BotDifficulty)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">Easy</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                  <p>Model: {botSettings.model}</p>
+                  <p>Temperature: {botSettings.temperature}</p>
+                  <p>{botSettings.usageHint}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">AI Coach</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium">Explain last move</p>
+                    <p className="text-xs text-muted-foreground">Get a quick critique and alternatives.</p>
+                  </div>
+                  <Switch checked={coachEnabled} onCheckedChange={onCoachEnabledChange} />
+                </div>
+                <div className="rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground space-y-1">
+                  <p>
+                    <span className="font-medium text-foreground">Last move:</span> {lastMoveSummary}
+                  </p>
+                  <p>
+                    <span className="font-medium text-foreground">Legal alternatives:</span> {legalAlternatives}
+                  </p>
+                </div>
+                <Button onClick={onRequestCoach} disabled={!canRequestCoach} className="w-full">
+                  {coachLoading ? "Analyzing..." : "Explain last move"}
+                </Button>
+                {coachError && <p className="text-xs text-red-500">{coachError}</p>}
+                {coachResponse && (
+                  <div className="rounded-lg border border-border bg-white/80 p-3 text-xs text-foreground leading-relaxed whitespace-pre-wrap">
+                    {coachResponse}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
