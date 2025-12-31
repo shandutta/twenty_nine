@@ -7,8 +7,13 @@ import * as chromeLauncher from "chrome-launcher";
 const baseUrlEnv =
   process.env.LIGHTHOUSE_BASE_URL ?? process.env.AUDIT_BASE_URL ?? "";
 const rawBaseUrl =
-  baseUrlEnv.length > 0 ? baseUrlEnv : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3000}`;
+  baseUrlEnv.length > 0
+    ? baseUrlEnv
+    : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3000}`;
 const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
+const parsedBaseUrl = new URL(baseURL);
+const host = parsedBaseUrl.hostname;
+const port = parsedBaseUrl.port ? Number(parsedBaseUrl.port) : 3000;
 const url = `${baseURL}/game`;
 
 const waitForServer = async (targetUrl, timeoutMs = 60_000) => {
@@ -58,7 +63,17 @@ process.on("exit", () => {
 });
 
 try {
+  let useExistingServer = false;
   if (!baseUrlEnv) {
+    try {
+      await waitForServer(url, 1500);
+      useExistingServer = true;
+    } catch {
+      useExistingServer = false;
+    }
+  }
+
+  if (!baseUrlEnv && !useExistingServer) {
     serverProcess = startServer();
     const serverExit = new Promise((_, reject) => {
       serverProcess.once("exit", (code, signal) => {

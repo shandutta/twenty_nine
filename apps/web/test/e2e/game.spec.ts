@@ -16,26 +16,43 @@ test("game page smoke flow", async ({ page }) => {
     errors.push(error.message);
   });
 
-  await page.goto("/game", { waitUntil: "domcontentloaded" });
+  await page.goto("/game", { waitUntil: "networkidle" });
 
   await expect(page.getByRole("heading", { name: "Game Table" })).toBeVisible();
   await expect(page.getByText("Current Trick")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
-  await expect(page.getByText("You")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
 
-  const youPanel = page.getByText("You").locator("..").locator("..");
-  const firstLegal = youPanel.locator("button:not([disabled])").first();
-  await expect(firstLegal).toBeVisible();
+  const currentPlayerRow = page.getByText("Current player").first().locator("..");
+  await expect
+    .poll(async () => currentPlayerRow.locator("span").nth(1).textContent())
+    .toContain("You");
+
+  const handButtons = page
+    .locator("section")
+    .locator("button")
+    .filter({ hasText: /^(10|[7-9]|J|Q|K|A)[CDHS]$/ });
+  const enabledHandButtons = page
+    .locator("section")
+    .locator("button:not([disabled])")
+    .filter({ hasText: /^(10|[7-9]|J|Q|K|A)[CDHS]$/ });
+
+  await expect(handButtons.first()).toBeVisible();
+  const firstLegal = enabledHandButtons.first();
+  await expect(firstLegal).toBeEnabled();
+  const firstLabel = await firstLegal.textContent();
   await firstLegal.click();
 
-  await expect(page.getByText(/Last move:/)).toContainText(/played/i);
+  if (firstLabel) {
+    await expect(
+      handButtons.filter({ hasText: firstLabel })
+    ).toHaveCount(0);
+  }
 
-  await expect.poll(
-    async () => youPanel.locator("button:not([disabled])").count(),
-    { timeout: 15_000 }
-  ).toBeGreaterThan(0);
+  await expect.poll(async () => enabledHandButtons.count(), { timeout: 15_000 })
+    .toBeGreaterThan(0);
 
-  const secondLegal = youPanel.locator("button:not([disabled])").first();
+  const secondLegal = enabledHandButtons.first();
   await secondLegal.click();
 
   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
