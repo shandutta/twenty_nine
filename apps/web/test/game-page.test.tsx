@@ -1,6 +1,6 @@
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import type { Card, GameState } from "@twentynine/engine";
+import type { Card, GameState, CompletedTrick } from "@twentynine/engine";
 import { createGame } from "@twentynine/engine";
 import GamePage from "@/app/game/page";
 import { useGameController } from "@/hooks/useGameController";
@@ -14,7 +14,7 @@ const card = (suit: Card["suit"], rank: Card["rank"]): Card => ({
   rank,
 });
 
-const makeState = (hand: Card[]): GameState => {
+const makeState = (hand: Card[], overrides?: Partial<GameState>): GameState => {
   const base = createGame(1, { trumpSuit: "spades" });
   return {
     ...base,
@@ -22,16 +22,11 @@ const makeState = (hand: Card[]): GameState => {
     players: [{ hand }, { hand: [] }, { hand: [] }, { hand: [] }],
     trick: { plays: [], leadSuit: null },
     completedTricks: [],
+    ...overrides,
   };
 };
 
-beforeAll(() => {
-  vi.stubGlobal("fetch", vi.fn(async () => ({
-    json: async () => ({ configured: true }),
-  })) as unknown as typeof fetch);
-});
-
-afterAll(() => {
+afterEach(() => {
   vi.unstubAllGlobals();
 });
 
@@ -39,6 +34,10 @@ describe("/game UI", () => {
   let playCardMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      json: async () => ({ configured: true }),
+    })) as unknown as typeof fetch);
+
     const legal = card("hearts", "7");
     const illegal = card("spades", "A");
     playCardMock = vi.fn();
@@ -82,5 +81,80 @@ describe("/game UI", () => {
     const button = screen.getAllByRole("button", { name: "7H" })[0];
     fireEvent.click(button);
     expect(playCardMock).toHaveBeenCalledWith(card("hearts", "7"));
+  });
+
+  it("renders game-over UI and coach warning when OpenRouter missing", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({
+      json: async () => ({ configured: false }),
+    })) as unknown as typeof fetch);
+
+    const legal = card("hearts", "7");
+    const completedTricks: CompletedTrick[] = [
+      {
+        winner: 2,
+        plays: [
+          { player: 0, card: card("clubs", "J") },
+          { player: 1, card: card("clubs", "9") },
+          { player: 2, card: card("clubs", "A") },
+          { player: 3, card: card("clubs", "7") },
+        ],
+      },
+    ];
+    const state = makeState([legal], {
+      currentPlayer: 1,
+      trumpRevealed: true,
+      trick: {
+        leadSuit: "clubs",
+        plays: [{ player: 1, card: card("clubs", "10") }],
+      },
+      completedTricks,
+    });
+
+    mockedUseGameController.mockReturnValue({
+      state,
+      legalMoves: [legal],
+      isGameOver: true,
+      score: {
+        team0: 17,
+        team1: 12,
+        cardPoints: { team0: 16, team1: 12 },
+        lastTrickBonusWinner: 0,
+      },
+      humanPlayer: 0,
+      playCard: vi.fn(),
+      canShowPair: true,
+      showPair: vi.fn(),
+      resetGame: vi.fn(),
+      lastMove: {
+        id: 1,
+        action: { type: "play_card", player: 0, card: legal },
+        legalMoves: [legal],
+      },
+      botSettings: {
+        enabled: true,
+        difficulty: "hard",
+        model: "openai/gpt-4o",
+        temperature: 0.7,
+        usageHint: "Uses LLM on every bot move.",
+      },
+      setBotEnabled: vi.fn(),
+      setBotDifficulty: vi.fn(),
+    });
+
+    render(<GamePage />);
+
+    const warnings = await screen.findAllByText(
+      /OPENROUTER_API_KEY not configured/i
+    );
+    expect(warnings).toHaveLength(2);
+    const bonus = screen.getAllByText(/Last trick bonus: Team 0/i);
+    expect(bonus.length).toBeGreaterThan(0);
+    const tricks = screen.getAllByText(/Trick 1/i);
+    expect(tricks.length).toBeGreaterThan(0);
+    const finals = screen.getAllByText(/Final: Team 0 wins/i);
+    expect(finals.length).toBeGreaterThan(0);
+
+    const coachHeader = screen.getAllByText("AI Coach")[0];
+    expect(coachHeader).toBeInTheDocument();
   });
 });

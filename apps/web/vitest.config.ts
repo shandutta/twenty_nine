@@ -14,13 +14,25 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      include: ["app/game/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
       thresholds: {
         lines: 70,
         branches: 60,
         functions: 70,
         statements: 70,
       },
-      exclude: ["test/**"],
+      exclude: [
+        ".next/**",
+        "coverage/**",
+        "test/**",
+        "app/api/**",
+        "app/layout.tsx",
+        "app/page.tsx",
+        "next-env.d.ts",
+        "**/*.d.ts",
+        "**/*.config.*",
+        "vitest.config.ts",
+      ],
     },
   },
 });

@@ -13,7 +13,7 @@ export default defineConfig({
         functions: 95,
         statements: 95,
       },
-      exclude: ["test/**"],
+      exclude: ["test/**", "vitest.config.ts"],
     },
   },
 });
