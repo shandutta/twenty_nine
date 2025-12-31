@@ -11,7 +11,7 @@ pnpm install
 ## How to run
 
 ```bash
-pnpm run dev
+pnpm -C apps/web dev
 ```
 
 Then open `http://localhost:3000/game`.
@@ -38,6 +38,9 @@ External server mode (if you already started the app elsewhere):
 PW_BASE_URL=http://127.0.0.1:3000 E2E_NO_WEBSERVER=1 pnpm -C apps/web test:e2e
 LIGHTHOUSE_BASE_URL=http://127.0.0.1:3000 pnpm -C apps/web audit:lighthouse
 ```
+
+Note: `next/font/google` downloads fonts at build time. If your environment blocks outbound
+network, either allow access to Google Fonts or switch to self-hosted fonts.
 
 ## Coverage
 
@@ -70,6 +73,17 @@ pnpm -C apps/web dev
 ## AI features (optional)
 
 Set `OPENROUTER_API_KEY` in `apps/web/.env.local` to enable the AI Coach and LLM bot strategies. A template is in `apps/web/.env.example`.
+
+## Rule toggles (engine config)
+
+House rules live in the engine `RulesConfig` and can be overridden in `createGame`:
+
+- `autoRevealOnFirstFail` (boolean): auto-reveal trump on first inability to follow suit.
+- `pair.enabled` (boolean): enable/disable Royals (K+Q of trump) rule.
+- `pair.adjustBy` (number): target adjustment amount (default 4).
+- `pair.minTarget` / `pair.maxTarget` (number): clamp bid target after adjustment.
+- `pair.requireTrumpRevealed` (boolean): pair only after trump is revealed.
+- `pair.requireTrickAfterReveal` (boolean): pair only after the team has taken a trick post-reveal.
 
 ## UX changelog
 

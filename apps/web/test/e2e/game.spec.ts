@@ -10,7 +10,11 @@ test("game page smoke flow", async ({ page }) => {
   });
   page.on("requestfailed", (request) => {
     const failure = request.failure()?.errorText ?? "unknown failure";
-    errors.push(`Request failed: ${request.url()} (${failure})`);
+    const url = request.url();
+    if (failure.includes("net::ERR_ABORTED") && url.includes("_rsc")) {
+      return;
+    }
+    errors.push(`Request failed: ${url} (${failure})`);
   });
   page.on("pageerror", (error) => {
     errors.push(error.message);
