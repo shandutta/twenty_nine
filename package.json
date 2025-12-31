@@ -10,6 +10,7 @@
     "auto:commit": "node scripts/auto-commit.js"
   },
   "devDependencies": {
+    "chrome-devtools-mcp": "^0.12.1",
     "dotenv": "^17.2.3"
   }
 }
