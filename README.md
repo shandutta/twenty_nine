@@ -71,6 +71,17 @@ pnpm -C apps/web dev
 
 Set `OPENROUTER_API_KEY` in `apps/web/.env.local` to enable the AI Coach and LLM bot strategies. A template is in `apps/web/.env.example`.
 
+## UX changelog
+
+Before:
+- Basic stacked panels with limited hierarchy and minimal status guidance.
+- Card interactions were functional but lacked clear legal/illegal affordances.
+
+After:
+- Dedicated top bar for match score, contract, trump status, and turn/phase guidance.
+- Centered trick pile with lead suit, leader highlight, and motion polish.
+- Clearer hand affordances, right-rail logs, and tooltipped Royals status.
+
 ## Known limitations
 
 - No bidding/auction phase yet; bid target defaults to 16.

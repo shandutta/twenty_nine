@@ -23,9 +23,9 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
 
-  const currentPlayerRow = page.getByText("Current player").first().locator("..");
+  const currentPlayerText = page.getByText(/Current player:/).first();
   await expect
-    .poll(async () => currentPlayerRow.locator("span").nth(1).textContent())
+    .poll(async () => currentPlayerText.textContent())
     .toContain("You");
 
   const handButtons = page
