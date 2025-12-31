@@ -22,7 +22,15 @@ Then open `http://localhost:3000/game`.
 pnpm run lint
 pnpm run test
 pnpm run build
+pnpm -C apps/web exec playwright install chromium
+pnpm -C apps/web test:e2e
+pnpm -C apps/web audit:lighthouse
+pnpm run qa
 ```
+
+Artifacts:
+- Playwright HTML report: `apps/web/reports/playwright/html`
+- Lighthouse report: `apps/web/reports/lighthouse/game.html`
 
 ## Coverage
 
@@ -61,7 +69,7 @@ Set `OPENROUTER_API_KEY` in `apps/web/.env.local` to enable the AI Coach and LLM
 - No bidding/auction phase yet; bid target defaults to 16.
 - Trump selection is currently deterministic (seed-based), not chosen by a bidder.
 - Multiplayer is not implemented (solo only).
-- No web test suite yet (`apps/web` has no `test` script).
+- Lighthouse scores are informational only (no thresholds enforced).
 
 ## Deployment (VPS + Caddy)
 
