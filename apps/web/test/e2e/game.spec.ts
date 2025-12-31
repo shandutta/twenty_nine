@@ -27,11 +27,6 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
 
-  const currentPlayerText = page.getByText(/Current player:/).first();
-  await expect
-    .poll(async () => currentPlayerText.textContent())
-    .toContain("You");
-
   const handButtons = page
     .locator("section")
     .locator("button")
@@ -40,6 +35,51 @@ test("game page smoke flow", async ({ page }) => {
     .locator("section")
     .locator("button:not([disabled])")
     .filter({ hasText: /^(10|[7-9]|J|Q|K|A)[CDHS]$/ });
+
+  const biddingHeading = page.getByRole("heading", { name: "Bidding" });
+  const trumpHeading = page.getByRole("heading", { name: "Choose Trump" });
+  const deadline = Date.now() + 30_000;
+  while (Date.now() < deadline) {
+    if (await biddingHeading.isVisible().catch(() => false)) {
+      const enabledBid = page
+        .locator("button:not([disabled])")
+        .filter({ hasText: /Bid \d+/ })
+        .first();
+      if (await enabledBid.isVisible().catch(() => false)) {
+        await enabledBid.click();
+        await page.waitForTimeout(300);
+        continue;
+      }
+      const passButton = page
+        .locator("button:not([disabled])")
+        .filter({ hasText: /^Pass$/ })
+        .first();
+      if (await passButton.isVisible().catch(() => false)) {
+        await passButton.click();
+        await page.waitForTimeout(300);
+        continue;
+      }
+    }
+
+    if (await trumpHeading.isVisible().catch(() => false)) {
+      const enabledTrump = page
+        .locator("button:not([disabled])")
+        .filter({ hasText: /Clubs|Diamonds|Hearts|Spades/ })
+        .first();
+      if (await enabledTrump.isVisible().catch(() => false)) {
+        await enabledTrump.click();
+        await page.waitForTimeout(300);
+        continue;
+      }
+    }
+
+    if ((await enabledHandButtons.count()) > 0) {
+      break;
+    }
+    await page.waitForTimeout(250);
+  }
+
+  await expect(enabledHandButtons.first()).toBeVisible({ timeout: 10_000 });
 
   await expect(handButtons.first()).toBeVisible();
   const firstLegal = enabledHandButtons.first();
