@@ -71,14 +71,16 @@ describe("/game UI", () => {
 
   it("disables illegal moves", () => {
     render(<GamePage />);
-    const legalButtons = screen.getAllByRole("button", { name: "7H" });
+    const legalButtons = screen.getAllByRole("button", { name: "7 of Hearts" });
     expect(legalButtons[0]).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: "AS" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "A of Spades" })
+    ).toBeDisabled();
   });
 
   it("clicking a legal card dispatches play", () => {
     render(<GamePage />);
-    const button = screen.getAllByRole("button", { name: "7H" })[0];
+    const button = screen.getAllByRole("button", { name: "7 of Hearts" })[0];
     fireEvent.click(button);
     expect(playCardMock).toHaveBeenCalledWith(card("hearts", "7"));
   });
