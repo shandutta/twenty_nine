@@ -9,7 +9,7 @@ const baseUrlEnv =
 const rawBaseUrl =
   baseUrlEnv.length > 0
     ? baseUrlEnv
-    : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3000}`;
+    : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3100}`;
 const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
 const parsedBaseUrl = new URL(baseURL);
 const host = parsedBaseUrl.hostname;
@@ -109,10 +109,19 @@ try {
     logLevel: "info",
   });
 
-  const reportDir = path.resolve(process.cwd(), "reports", "lighthouse");
+  const reportDir = path.resolve(
+    process.cwd(),
+    "..",
+    "..",
+    "docs",
+    "ux",
+    "lighthouse"
+  );
   await mkdir(reportDir, { recursive: true });
   const reportPath = path.join(reportDir, "game.html");
+  const jsonPath = path.join(reportDir, "game.json");
   await writeFile(reportPath, result.report);
+  await writeFile(jsonPath, JSON.stringify(result.lhr, null, 2));
 
   await chrome.kill();
   await cleanup();

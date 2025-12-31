@@ -10,7 +10,7 @@
     "coverage": "pnpm -C packages/engine coverage && pnpm -C apps/web coverage",
     "test:engine": "pnpm -C packages/engine test",
     "test:web": "pnpm -C apps/web test",
-    "qa": "pnpm -C packages/engine test && pnpm -C apps/web test && pnpm -C apps/web build && pnpm -C apps/web test:e2e && pnpm -C apps/web audit:lighthouse",
+    "qa": "pnpm install && pnpm -C packages/engine coverage && pnpm -C apps/web test && pnpm -C apps/web build && pnpm -C apps/web test:e2e && pnpm -C apps/web audit:lighthouse",
     "auto:commit": "node scripts/auto-commit.js"
   },
   "devDependencies": {

@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { mkdir } from "node:fs/promises";
+import path from "node:path";
 
 test("game page smoke flow", async ({ page }) => {
   const errors: string[] = [];
@@ -26,6 +28,27 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByText("Current Trick")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
+
+  const screenshotDir = path.resolve(
+    process.cwd(),
+    "..",
+    "..",
+    "docs",
+    "ux",
+    "screens"
+  );
+  await mkdir(screenshotDir, { recursive: true });
+  const capture = async (width: number) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      path: path.join(screenshotDir, `game-${width}.png`),
+      fullPage: true,
+    });
+  };
+  await capture(1280);
+  await capture(768);
+  await capture(390);
 
   const handButtons = page
     .locator("section")
@@ -82,22 +105,23 @@ test("game page smoke flow", async ({ page }) => {
   await expect(enabledHandButtons.first()).toBeVisible({ timeout: 10_000 });
 
   await expect(handButtons.first()).toBeVisible();
-  const firstLegal = enabledHandButtons.first();
-  await expect(firstLegal).toBeEnabled();
-  const firstLabel = await firstLegal.textContent();
-  await firstLegal.click();
 
-  if (firstLabel) {
-    await expect(
-      handButtons.filter({ hasText: firstLabel })
-    ).toHaveCount(0);
+  const playLegalMove = async () => {
+    await expect
+      .poll(async () => enabledHandButtons.count(), { timeout: 20_000 })
+      .toBeGreaterThan(0);
+    const legal = enabledHandButtons.first();
+    await expect(legal).toBeEnabled();
+    const label = await legal.textContent();
+    await legal.click();
+    if (label) {
+      await expect(handButtons.filter({ hasText: label })).toHaveCount(0);
+    }
+  };
+
+  for (let i = 0; i < 3; i += 1) {
+    await playLegalMove();
   }
-
-  await expect.poll(async () => enabledHandButtons.count(), { timeout: 15_000 })
-    .toBeGreaterThan(0);
-
-  const secondLegal = enabledHandButtons.first();
-  await secondLegal.click();
 
   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
 });

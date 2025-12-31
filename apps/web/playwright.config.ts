@@ -1,12 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
+import path from "node:path";
 
 const rawBaseUrl =
   process.env.PW_BASE_URL ??
   process.env.E2E_BASE_URL ??
-  "http://127.0.0.1:3000";
+  "http://127.0.0.1:3100";
 const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
 const useWebServer =
   !process.env.E2E_NO_WEBSERVER && !process.env.PW_EXTERNAL_SERVER;
+const repoRoot = path.resolve(process.cwd(), "..", "..");
 
 export default defineConfig({
   testDir: "./test/e2e",
@@ -28,9 +30,9 @@ export default defineConfig({
   outputDir: "reports/playwright/test-results",
   webServer: useWebServer
     ? {
-        command:
-          "pnpm exec next dev --webpack --hostname 127.0.0.1 --port 3000",
-        url: `${baseURL}/game`,
+        command: "pnpm -C apps/web dev -- --port 3100",
+        url: "http://127.0.0.1:3100",
+        cwd: repoRoot,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
       }
