@@ -11,6 +11,7 @@
     "test:engine": "pnpm -C packages/engine test",
     "test:web": "pnpm -C apps/web test",
     "qa": "pnpm install && pnpm -C packages/engine coverage && pnpm -C apps/web test && pnpm -C apps/web build && pnpm -C apps/web test:e2e && pnpm -C apps/web audit:lighthouse",
+    "deploy": "bash scripts/deploy.sh",
     "auto:commit": "node scripts/auto-commit.js"
   },
   "devDependencies": {

@@ -21,6 +21,19 @@ if echo "$CHANGED" | grep -Eq '(^pnpm-lock\.yaml|^package\.json|^apps/web/packag
   pnpm install
 fi
 
+if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
+  echo "deploy: running lint"
+  pnpm lint
+
+  echo "deploy: running unit tests"
+  pnpm test
+
+  if [ "${TWENTYNINE_DEPLOY_E2E:-1}" = "1" ]; then
+    echo "deploy: running e2e tests"
+    E2E_PORT="${E2E_PORT:-3101}" pnpm -C apps/web test:e2e
+  fi
+fi
+
 echo "deploy: building web app"
 pnpm -C apps/web build
 
