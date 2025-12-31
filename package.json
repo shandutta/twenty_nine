@@ -6,8 +6,10 @@
     "build": "pnpm -C apps/web build",
     "start": "pnpm -C apps/web start",
     "lint": "pnpm -C apps/web lint",
-    "test": "pnpm -C packages/engine test",
+    "test": "pnpm -C packages/engine test && pnpm -C apps/web test",
+    "coverage": "pnpm -C packages/engine coverage && pnpm -C apps/web coverage",
     "test:engine": "pnpm -C packages/engine test",
+    "test:web": "pnpm -C apps/web test",
     "auto:commit": "node scripts/auto-commit.js"
   },
   "devDependencies": {

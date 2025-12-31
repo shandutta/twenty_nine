@@ -84,3 +84,9 @@ export async function POST(request: Request) {
     usage: data?.usage ?? null,
   });
 }
+
+export async function GET() {
+  return NextResponse.json({
+    configured: Boolean(process.env.OPENROUTER_API_KEY),
+  });
+}

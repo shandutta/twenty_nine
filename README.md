@@ -24,6 +24,16 @@ pnpm run test
 pnpm run build
 ```
 
+## Coverage
+
+```bash
+pnpm run coverage
+```
+
+Current thresholds:
+- Engine: lines ≥ 95%, branches ≥ 90% (functions/statements ≥ 95%).
+- Web: lines ≥ 70%, branches ≥ 60% (functions/statements ≥ 70%).
+
 ## Engine tests
 
 ```bash
