@@ -32,6 +32,13 @@ Artifacts:
 - Playwright HTML report: `apps/web/reports/playwright/html`
 - Lighthouse report: `apps/web/reports/lighthouse/game.html`
 
+External server mode (if you already started the app elsewhere):
+
+```bash
+PW_BASE_URL=http://127.0.0.1:3000 E2E_NO_WEBSERVER=1 pnpm -C apps/web test:e2e
+LIGHTHOUSE_BASE_URL=http://127.0.0.1:3000 pnpm -C apps/web audit:lighthouse
+```
+
 ## Coverage
 
 ```bash

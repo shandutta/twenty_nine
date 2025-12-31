@@ -4,9 +4,12 @@ import path from "node:path";
 import lighthouse from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
 
-const host = process.env.HOSTNAME ?? "127.0.0.1";
-const port = Number(process.env.PORT ?? 3000);
-const url = `http://${host}:${port}/game`;
+const baseUrlEnv =
+  process.env.LIGHTHOUSE_BASE_URL ?? process.env.AUDIT_BASE_URL ?? "";
+const rawBaseUrl =
+  baseUrlEnv.length > 0 ? baseUrlEnv : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3000}`;
+const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
+const url = `${baseURL}/game`;
 
 const waitForServer = async (targetUrl, timeoutMs = 60_000) => {
   const start = Date.now();
@@ -55,26 +58,30 @@ process.on("exit", () => {
 });
 
 try {
-  serverProcess = startServer();
-  const serverExit = new Promise((_, reject) => {
-    serverProcess.once("exit", (code, signal) => {
-      if (code === 0) {
-        return;
-      }
-      reject(
-        new Error(
-          `Server exited before ready (code ${code ?? "unknown"}, signal ${
-            signal ?? "none"
-          })`
-        )
-      );
+  if (!baseUrlEnv) {
+    serverProcess = startServer();
+    const serverExit = new Promise((_, reject) => {
+      serverProcess.once("exit", (code, signal) => {
+        if (code === 0) {
+          return;
+        }
+        reject(
+          new Error(
+            `Server exited before ready (code ${code ?? "unknown"}, signal ${
+              signal ?? "none"
+            })`
+          )
+        );
+      });
     });
-  });
-  const serverError = new Promise((_, reject) => {
-    serverProcess.once("error", reject);
-  });
+    const serverError = new Promise((_, reject) => {
+      serverProcess.once("error", reject);
+    });
 
-  await Promise.race([waitForServer(url), serverExit, serverError]);
+    await Promise.race([waitForServer(url), serverExit, serverError]);
+  } else {
+    await waitForServer(url);
+  }
 
   const chrome = await chromeLauncher.launch({
     chromeFlags: ["--headless=new", "--no-sandbox"],
