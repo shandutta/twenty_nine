@@ -1,0 +1,9 @@
+node_modules
+.next
+dist
+coverage
+reports
+docs/ux/lighthouse
+docs/ux/screens
+pnpm-lock.yaml
+AGENTS.md

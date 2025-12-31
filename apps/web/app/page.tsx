@@ -1,247 +1,257 @@
-"use client";
-
-import { useMemo } from "react";
-import { useTwentyNineGame } from "@/lib/use-twentynine-game";
+import Link from "next/link";
+import { ArrowRight, Crown, Sparkles, Target, Trophy } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { Card, Suit } from "@/lib/engine";
 
-const suitLabel: Record<Suit, string> = {
-  clubs: "C",
-  diamonds: "D",
-  hearts: "H",
-  spades: "S",
-};
+const featureCards = [
+  {
+    title: "Strategic bidding",
+    description: "Call the contract, hide the trump, and shape the tempo of the hand.",
+    icon: Target,
+  },
+  {
+    title: "Classic 29 rules",
+    description: "J, 9, A, 10 lead the pack. Last trick bonus included.",
+    icon: Trophy,
+  },
+  {
+    title: "Deterministic bots",
+    description: "Reliable opponents for practice today, multiplayer ambitions tomorrow.",
+    icon: Sparkles,
+  },
+];
 
-const cardId = (card: Card) => `${card.rank}-${card.suit}`;
-
-const seatLabels = ["You", "Right Bot", "Top Bot", "Left Bot"];
-
-const seatPositions: Record<number, string> = {
-  0: "bottom-4 left-1/2 -translate-x-1/2",
-  1: "right-6 top-1/2 -translate-y-1/2",
-  2: "top-6 left-1/2 -translate-x-1/2",
-  3: "left-6 top-1/2 -translate-y-1/2",
-};
-
-const trickPositions: Record<number, string> = {
-  0: "bottom-24 left-1/2 -translate-x-1/2",
-  1: "right-28 top-1/2 -translate-y-1/2",
-  2: "top-24 left-1/2 -translate-x-1/2",
-  3: "left-28 top-1/2 -translate-y-1/2",
-};
-
-const CardFace = ({ card }: { card: Card }) => {
-  return (
-    <div className="flex h-16 w-12 flex-col items-center justify-center rounded-xl border border-white/10 bg-white/90 text-sm font-semibold text-slate-900 shadow-[0_10px_24px_-12px_rgba(15,23,42,0.8)]">
-      <span className="text-xs uppercase tracking-wide text-slate-500">
-        {card.rank}
-      </span>
-      <span className="text-lg">{suitLabel[card.suit]}</span>
-    </div>
-  );
-};
-
-const CardButton = ({
-  card,
-  isLegal,
-  isActive,
-  onPlay,
-}: {
-  card: Card;
-  isLegal: boolean;
-  isActive: boolean;
-  onPlay: (card: Card) => void;
-}) => {
-  const disabled = !isLegal || !isActive;
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={() => onPlay(card)}
-      className={cn(
-        "group relative h-24 w-16 rounded-2xl border border-white/15 bg-white/90 px-2 py-3 text-left text-sm font-semibold text-slate-900 shadow-[0_16px_32px_-18px_rgba(15,23,42,0.8)] transition",
-        "hover:-translate-y-1 hover:shadow-[0_18px_32px_-16px_rgba(15,23,42,0.9)]",
-        disabled && "cursor-not-allowed opacity-40 hover:translate-y-0",
-        isLegal && isActive && "ring-2 ring-amber-300/80",
-      )}
-    >
-      <div className="text-xs uppercase tracking-wide text-slate-500">
-        {card.rank}
-      </div>
-      <div className="text-lg">{suitLabel[card.suit]}</div>
-    </button>
-  );
-};
+const QuickStat = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-2xl border border-emerald-200/10 bg-emerald-950/40 px-4 py-3">
+    <div className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">{label}</div>
+    <div className="text-lg font-semibold text-emerald-50">{value}</div>
+  </div>
+);
 
 export default function Home() {
-  const { state, legalPlays, playCardForHuman, reset } = useTwentyNineGame();
-
-  const trickNumber = Math.min(state.trickIndex + 1, 8);
-
-  const legalSet = useMemo(() => {
-    return new Set(legalPlays.map(cardId));
-  }, [legalPlays]);
-
-  const canPlay = state.currentPlayer === 0 && state.status === "playing";
-  const hand = state.hands[0] ?? [];
-
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(254,240,138,0.35),_transparent_60%),radial-gradient(circle_at_15%_80%,_rgba(56,189,248,0.12),_transparent_55%),linear-gradient(140deg,_rgba(255,251,235,0.98),_rgba(240,253,244,0.96))] px-4 py-6 text-slate-900">
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 lg:flex-row">
-        <div className="flex flex-1 flex-col gap-6">
-          <header className="flex flex-col gap-2 animate-rise">
-            <p className="text-xs uppercase tracking-[0.3em] text-amber-700/80">
-              Twenty-Nine Table
-            </p>
-            <h1 className="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">
-              Trick {trickNumber} of 8
-            </h1>
-          </header>
+    <div className="relative min-h-screen overflow-hidden bg-[#071511] text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(94,234,212,0.18),_transparent_60%),radial-gradient(circle_at_80%_20%,_rgba(16,185,129,0.2),_transparent_50%),linear-gradient(120deg,_rgba(6,18,14,1),_rgba(4,10,8,1))]" />
+      <div className="pointer-events-none absolute inset-0 opacity-30 mix-blend-screen [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.08),transparent_40%)]" />
 
-          <section className="relative flex-1 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_30%_20%,_rgba(22,163,74,0.35),_transparent_55%),radial-gradient(circle_at_70%_80%,_rgba(16,185,129,0.25),_transparent_50%),linear-gradient(160deg,_rgba(15,118,110,0.35),_rgba(15,23,42,0.55))] p-6 shadow-[0_30px_60px_-40px_rgba(15,23,42,0.9)] animate-rise animate-stagger-1">
-            <div className="absolute inset-0 rounded-[32px] border border-white/10 opacity-70" />
-            <div className="absolute left-1/2 top-1/2 flex h-32 w-32 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs uppercase tracking-[0.3em] text-emerald-100/70">
-              Trick
-            </div>
-
-            {state.trick.plays.map((play) => (
-              <div
-                key={cardId(play.card)}
-                className={cn(
-                  "absolute",
-                  trickPositions[play.player] ?? "left-1/2 top-1/2",
-                )}
-              >
-                <CardFace card={play.card} />
-              </div>
-            ))}
-
-            {seatLabels.map((label, index) => (
-              <div
-                key={label}
-                className={cn(
-                  "absolute flex flex-col items-center gap-1 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs uppercase tracking-[0.2em] text-emerald-50/80",
-                  seatPositions[index],
-                  state.currentPlayer === index &&
-                    state.status === "playing" &&
-                    "border-amber-300/80 text-amber-100",
-                )}
-              >
-                <span>{label}</span>
-                <span className="text-[10px] text-emerald-100/60">
-                  {state.hands[index]?.length ?? 0} cards
-                </span>
-              </div>
-            ))}
-          </section>
-
-          <section className="rounded-[28px] border border-slate-200/70 bg-white/80 p-4 shadow-[0_16px_40px_-30px_rgba(148,163,184,0.6)] animate-rise animate-stagger-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                  Your hand
-                </p>
-                <p className="text-sm text-slate-600">
-                  {canPlay ? "Your turn. Play a legal card." : "Waiting on bots..."}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={reset}
-                className="rounded-full border border-slate-300 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-700 transition hover:border-amber-400 hover:text-amber-800"
-              >
-                New hand
-              </button>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {hand.map((card) => (
-                <CardButton
-                  key={cardId(card)}
-                  card={card}
-                  isLegal={legalSet.has(cardId(card))}
-                  isActive={canPlay}
-                  onPlay={playCardForHuman}
-                />
-              ))}
-            </div>
-            {state.status === "hand-complete" && (
-              <div className="mt-4 rounded-2xl border border-amber-400/50 bg-amber-100/60 p-4 text-sm text-amber-900">
-                Hand complete. Team 1: {state.scores[0]}, Team 2: {state.scores[1]}.
-              </div>
-            )}
-          </section>
+      <header className="relative mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-6 px-6 pt-8">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10">
+            <span className="text-lg font-semibold text-emerald-100">29</span>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-[0.45em] text-emerald-200/80">TwentyNine</p>
+            <p className="text-sm text-slate-300">South Asian trick-taking</p>
+          </div>
         </div>
+        <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+          <a href="#how" className="transition hover:text-emerald-200">
+            How it plays
+          </a>
+          <a href="#modes" className="transition hover:text-emerald-200">
+            Modes
+          </a>
+          <a href="#rules" className="transition hover:text-emerald-200">
+            Rules
+          </a>
+        </nav>
+        <Button asChild variant="secondary" className="border border-emerald-200/30 bg-emerald-50 text-emerald-900">
+          <Link href="/game">
+            Start solo <ArrowRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </header>
 
-        <aside className="w-full max-w-xl rounded-[28px] border border-slate-200/70 bg-white/85 p-6 shadow-[0_20px_50px_-40px_rgba(148,163,184,0.6)] animate-rise animate-stagger-3 lg:w-72">
-          <div className="space-y-6">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                Contract
-              </p>
-              <div className="mt-2 rounded-2xl border border-slate-200/70 bg-white/90 p-3 text-sm">
-                <div className="flex items-center justify-between text-slate-900">
-                  <span>Bidder</span>
-                  <span className="font-semibold">Team 1</span>
+      <main className="relative mx-auto grid w-full max-w-6xl gap-12 px-6 pb-24 pt-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <section className="space-y-6">
+          <Badge className="w-fit border border-emerald-200/30 bg-emerald-400/10 text-emerald-100">
+            Solo table is live
+          </Badge>
+          <h1 className="text-4xl font-semibold leading-tight text-emerald-50 md:text-5xl">
+            A modern table for the classic 29 card game.
+          </h1>
+          <p className="text-base leading-relaxed text-slate-300 md:text-lg">
+            Bid, conceal trump, and engineer the last trick. TwentyNine is built for deliberate play with crisp visual
+            cues so you always know what matters next.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="lg" className="bg-emerald-400 text-emerald-950 hover:bg-emerald-300">
+              <Link href="/game">
+                Play the solo table <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="border-emerald-200/40 bg-transparent text-emerald-100 hover:bg-emerald-400/10"
+            >
+              <a href="#rules">Learn the rules</a>
+            </Button>
+          </div>
+          <div className="grid gap-4 pt-2 sm:grid-cols-3">
+            <QuickStat label="Hand" value="8 tricks" />
+            <QuickStat label="Deck" value="32 cards" />
+            <QuickStat label="Points" value="29 total" />
+          </div>
+        </section>
+
+        <section className="relative">
+          <div className="absolute inset-0 -rotate-2 rounded-[32px] border border-emerald-200/10 bg-emerald-500/5" />
+          <div className="relative rounded-[32px] border border-emerald-200/20 bg-gradient-to-br from-emerald-950/90 via-emerald-900/60 to-slate-950/90 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.45)]">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-emerald-200/20 bg-emerald-400/10">
+                  <Crown className="h-5 w-5 text-emerald-200" />
                 </div>
-                <div className="mt-1 flex items-center justify-between text-slate-600">
-                  <span>Target</span>
-                  <span>16</span>
+                <div>
+                  <p className="text-sm font-semibold text-emerald-50">Table Preview</p>
+                  <p className="text-xs text-emerald-200/70">Solo - Deterministic bots</p>
                 </div>
               </div>
+              <Badge className="border border-emerald-200/30 bg-emerald-400/10 text-emerald-100">Round 3</Badge>
             </div>
 
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                Trump
-              </p>
-              <div className="mt-2 rounded-2xl border border-slate-200/70 bg-white/90 p-3 text-sm text-slate-900">
-                <div className="flex items-center justify-between">
-                  <span>Status</span>
-                  <span className="font-semibold">
-                    {state.trumpRevealed ? "Revealed" : "Hidden"}
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-slate-600">
-                  <span>Suit</span>
-                  <span>{state.trumpSuit}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                Score
-              </p>
-              <div className="mt-2 rounded-2xl border border-slate-200/70 bg-white/90 p-3 text-sm text-slate-900">
-                <div className="flex items-center justify-between">
-                  <span>Team 1</span>
-                  <span className="font-semibold">{state.scores[0]}</span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-slate-600">
-                  <span>Team 2</span>
-                  <span>{state.scores[1]}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                Log
-              </p>
-              <div className="mt-2 max-h-64 space-y-2 overflow-y-auto rounded-2xl border border-slate-200/70 bg-slate-900/90 p-3 text-xs text-slate-100/80">
-                {state.log
-                  .slice()
-                  .reverse()
-                  .map((entry, index) => (
-                    <div key={`${entry}-${index}`} className="leading-relaxed">
-                      {entry}
+            <div className="mt-6 grid gap-4">
+              <div className="grid grid-cols-3 gap-4">
+                {["Bot 2", "Bot 3", "Bot 1"].map((label) => (
+                  <div key={label} className="rounded-2xl border border-emerald-200/10 bg-black/30 p-4 text-center">
+                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-200/60">{label}</div>
+                    <div className="mt-3 flex justify-center gap-1">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div
+                          key={`${label}-${i}`}
+                          className="h-10 w-7 rounded-lg border border-emerald-200/20 bg-gradient-to-br from-emerald-50 to-emerald-100/40"
+                        />
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-3xl border border-emerald-200/20 bg-emerald-950/60 p-6">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-emerald-200/70">
+                  <span>Current trick</span>
+                  <span>Trump hidden</span>
+                </div>
+                <div className="mt-6 grid grid-cols-2 gap-4">
+                  {
+                    [
+                      { label: "West", card: "J♠" },
+                      { label: "North", card: "9♠" },
+                      { label: "East", card: "Q♠" },
+                      { label: "You", card: "A♠" },
+                    ].map((slot) => (
+                      <div key={slot.label} className="rounded-2xl border border-emerald-200/10 bg-black/40 p-3">
+                        <div className="text-xs text-emerald-200/60">{slot.label}</div>
+                        <div className="mt-2 text-lg font-semibold text-emerald-50">{slot.card}</div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex items-center justify-between rounded-2xl border border-emerald-200/20 bg-black/40 px-4 py-3">
+              <div>
+                <div className="text-xs uppercase tracking-[0.25em] text-emerald-200/60">Your hand</div>
+                <div className="mt-1 text-sm text-emerald-50">Play a highlighted card</div>
+              </div>
+              <div className="flex gap-2">
+                {[
+                  { label: "J♣", active: true },
+                  { label: "9♥", active: false },
+                  { label: "10♦", active: true },
+                ].map((card) => (
+                  <div
+                    key={card.label}
+                    className={cn(
+                      "flex h-12 w-8 items-center justify-center rounded-lg border text-xs font-semibold",
+                      card.active
+                        ? "border-emerald-300/50 bg-emerald-200 text-emerald-900"
+                        : "border-emerald-200/20 bg-emerald-50/20 text-emerald-100"
+                    )}
+                  >
+                    {card.label}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </aside>
-      </div>
+        </section>
+      </main>
+
+      <section id="how" className="relative mx-auto w-full max-w-6xl px-6 pb-20">
+        <div className="grid gap-6 md:grid-cols-3">
+          {featureCards.map((feature) => (
+            <div
+              key={feature.title}
+              className="rounded-3xl border border-emerald-200/10 bg-black/40 p-6 shadow-[0_20px_40px_rgba(0,0,0,0.35)]"
+            >
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-200/20 bg-emerald-400/10">
+                <feature.icon className="h-5 w-5 text-emerald-200" />
+              </div>
+              <h3 className="mt-5 text-lg font-semibold text-emerald-50">{feature.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-emerald-100/70">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="modes" className="relative mx-auto w-full max-w-6xl px-6 pb-20">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <div className="rounded-3xl border border-emerald-200/10 bg-emerald-950/70 p-6">
+            <h2 className="text-2xl font-semibold text-emerald-50">Solo today, multiplayer tomorrow</h2>
+            <p className="mt-3 text-sm text-emerald-100/70">
+              Train with deterministic bots and transparent hints. Multiplayer, LLM opponents, and ranked play are on the
+              roadmap once the table feels perfect.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3 text-xs text-emerald-100/70">
+              {[
+                "Deterministic play",
+                "Revealed trump logic",
+                "Royals (K+Q) support",
+                "Seeded engine",
+              ].map((tag) => (
+                <span key={tag} className="rounded-full border border-emerald-200/20 bg-black/40 px-3 py-1">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-emerald-200/10 bg-black/50 p-6">
+            <h3 className="text-lg font-semibold text-emerald-50">Upcoming</h3>
+            <ul className="mt-4 space-y-3 text-sm text-emerald-100/70">
+              <li>- Real-time tables with friends</li>
+              <li>- Ranked ladders with season formats</li>
+              <li>- Drafted house rules & custom bids</li>
+              <li>- Voice and table-chat emotes</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="rules" className="relative mx-auto w-full max-w-6xl px-6 pb-24">
+        <div className="rounded-3xl border border-emerald-200/10 bg-black/50 p-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-emerald-50">Rules at a glance</h2>
+            <Badge className="border border-emerald-200/20 bg-emerald-400/10 text-emerald-100">29 points total</Badge>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {[
+              "32-card deck: 7 through A in each suit",
+              "Rank order: J > 9 > A > 10 > K > Q > 8 > 7",
+              "Trump chosen by bidder, revealed on first break",
+              "Last trick wins +1 bonus point",
+            ].map((rule) => (
+              <div key={rule} className="rounded-2xl border border-emerald-200/10 bg-emerald-950/50 px-4 py-3">
+                <span className="text-sm text-emerald-100/80">{rule}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

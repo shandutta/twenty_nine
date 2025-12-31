@@ -29,6 +29,7 @@ pnpm run qa
 ```
 
 Artifacts:
+
 - Playwright HTML report: `apps/web/reports/playwright/html`
 - Lighthouse report: `apps/web/reports/lighthouse/game.html`
 
@@ -49,6 +50,7 @@ pnpm run coverage
 ```
 
 Current thresholds:
+
 - Engine: lines ≥ 95%, branches ≥ 90% (functions/statements ≥ 95%).
 - Web: lines ≥ 70%, branches ≥ 60% (functions/statements ≥ 70%).
 
@@ -88,10 +90,12 @@ House rules live in the engine `RulesConfig` and can be overridden in `createGam
 ## UX changelog
 
 Before:
+
 - Basic stacked panels with limited hierarchy and minimal status guidance.
 - Card interactions were functional but lacked clear legal/illegal affordances.
 
 After:
+
 - Dedicated top bar for match score, contract, trump status, and turn/phase guidance.
 - Centered trick pile with lead suit, leader highlight, and motion polish.
 - Clearer hand affordances, right-rail logs, and tooltipped Royals status.

@@ -2,13 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 import path from "node:path";
 
 const serverPort = process.env.E2E_PORT ?? "3100";
-const rawBaseUrl =
-  process.env.PW_BASE_URL ??
-  process.env.E2E_BASE_URL ??
-  `http://127.0.0.1:${serverPort}`;
+const rawBaseUrl = process.env.PW_BASE_URL ?? process.env.E2E_BASE_URL ?? `http://127.0.0.1:${serverPort}`;
 const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
-const useWebServer =
-  !process.env.E2E_NO_WEBSERVER && !process.env.PW_EXTERNAL_SERVER;
+const useWebServer = !process.env.E2E_NO_WEBSERVER && !process.env.PW_EXTERNAL_SERVER;
 const repoRoot = path.resolve(process.cwd(), "..", "..");
 
 export default defineConfig({
@@ -24,10 +20,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  reporter: [
-    ["list"],
-    ["html", { outputFolder: "reports/playwright/html", open: "never" }],
-  ],
+  reporter: [["list"], ["html", { outputFolder: "reports/playwright/html", open: "never" }]],
   outputDir: "reports/playwright/test-results",
   webServer: useWebServer
     ? {

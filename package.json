@@ -12,9 +12,12 @@
     "test:web": "pnpm -C apps/web test",
     "qa": "pnpm install && pnpm -C packages/engine coverage && pnpm -C apps/web test && pnpm -C apps/web build && pnpm -C apps/web test:e2e && pnpm -C apps/web audit:lighthouse",
     "deploy": "bash scripts/deploy.sh",
-    "auto:commit": "node scripts/auto-commit.js"
+    "auto:commit": "node scripts/auto-commit.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.3",
+    "prettier": "^3.2.5"
   }
 }

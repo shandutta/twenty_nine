@@ -34,9 +34,12 @@ describe("/game UI", () => {
   let playCardMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      json: async () => ({ configured: true }),
-    })) as unknown as typeof fetch);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        json: async () => ({ configured: true }),
+      })) as unknown as typeof fetch
+    );
 
     const legal = card("hearts", "7");
     const illegal = card("spades", "A");
@@ -73,9 +76,7 @@ describe("/game UI", () => {
     render(<GamePage />);
     const legalButtons = screen.getAllByRole("button", { name: "7 of Hearts" });
     expect(legalButtons[0]).not.toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: "A of Spades" })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: "A of Spades" })).toBeDisabled();
   });
 
   it("clicking a legal card dispatches play", () => {
@@ -86,9 +87,12 @@ describe("/game UI", () => {
   });
 
   it("renders game-over UI and coach warning when OpenRouter missing", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => ({
-      json: async () => ({ configured: false }),
-    })) as unknown as typeof fetch);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        json: async () => ({ configured: false }),
+      })) as unknown as typeof fetch
+    );
 
     const legal = card("hearts", "7");
     const completedTricks: CompletedTrick[] = [
@@ -145,9 +149,7 @@ describe("/game UI", () => {
 
     render(<GamePage />);
 
-    const warnings = await screen.findAllByText(
-      /OPENROUTER_API_KEY not configured/i
-    );
+    const warnings = await screen.findAllByText(/OPENROUTER_API_KEY not configured/i);
     expect(warnings).toHaveLength(2);
     const bonus = screen.getAllByText(/Last trick bonus: Team 0/i);
     expect(bonus.length).toBeGreaterThan(0);

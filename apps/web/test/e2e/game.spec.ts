@@ -29,26 +29,22 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
 
-  const screenshotDir = path.resolve(
-    process.cwd(),
-    "..",
-    "..",
-    "docs",
-    "ux",
-    "screens"
-  );
-  await mkdir(screenshotDir, { recursive: true });
-  const capture = async (width: number) => {
-    await page.setViewportSize({ width, height: 900 });
-    await page.waitForTimeout(250);
-    await page.screenshot({
-      path: path.join(screenshotDir, `game-${width}.png`),
-      fullPage: true,
-    });
-  };
-  await capture(1280);
-  await capture(768);
-  await capture(390);
+  const shouldCaptureScreenshots = process.env.E2E_SCREENSHOTS !== "0";
+  if (shouldCaptureScreenshots) {
+    const screenshotDir = path.resolve(process.cwd(), "..", "..", "docs", "ux", "screens");
+    await mkdir(screenshotDir, { recursive: true });
+    const capture = async (width: number) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.waitForTimeout(250);
+      await page.screenshot({
+        path: path.join(screenshotDir, `game-${width}.png`),
+        fullPage: true,
+      });
+    };
+    await capture(1280);
+    await capture(768);
+    await capture(390);
+  }
 
   const handButtons = page
     .locator("section")
@@ -107,9 +103,7 @@ test("game page smoke flow", async ({ page }) => {
   await expect(handButtons.first()).toBeVisible();
 
   const playLegalMove = async () => {
-    await expect
-      .poll(async () => enabledHandButtons.count(), { timeout: 20_000 })
-      .toBeGreaterThan(0);
+    await expect.poll(async () => enabledHandButtons.count(), { timeout: 20_000 }).toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
     await expect(legal).toBeEnabled();
     const label = await legal.textContent();

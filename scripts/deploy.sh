@@ -22,6 +22,9 @@ if echo "$CHANGED" | grep -Eq '(^pnpm-lock\.yaml|^package\.json|^apps/web/packag
 fi
 
 if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
+  echo "deploy: running prettier check"
+  pnpm format:check
+
   echo "deploy: running lint"
   pnpm lint
 
@@ -30,7 +33,7 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
 
   if [ "${TWENTYNINE_DEPLOY_E2E:-1}" = "1" ]; then
     echo "deploy: running e2e tests"
-    E2E_PORT="${E2E_PORT:-3101}" pnpm -C apps/web test:e2e
+    E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
   fi
 fi
 

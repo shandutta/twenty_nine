@@ -4,12 +4,9 @@ import path from "node:path";
 import lighthouse from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
 
-const baseUrlEnv =
-  process.env.LIGHTHOUSE_BASE_URL ?? process.env.AUDIT_BASE_URL ?? "";
+const baseUrlEnv = process.env.LIGHTHOUSE_BASE_URL ?? process.env.AUDIT_BASE_URL ?? "";
 const rawBaseUrl =
-  baseUrlEnv.length > 0
-    ? baseUrlEnv
-    : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3100}`;
+  baseUrlEnv.length > 0 ? baseUrlEnv : `http://${process.env.HOSTNAME ?? "127.0.0.1"}:${process.env.PORT ?? 3100}`;
 const baseURL = rawBaseUrl.replace(/\/game\/?$/, "").replace(/\/$/, "");
 const parsedBaseUrl = new URL(baseURL);
 const host = parsedBaseUrl.hostname;
@@ -33,18 +30,14 @@ const waitForServer = async (targetUrl, timeoutMs = 60_000) => {
 };
 
 const startServer = () =>
-  spawn(
-    "pnpm",
-    ["exec", "next", "start", "--hostname", host, "--port", String(port)],
-    {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      env: {
-        ...process.env,
-        NODE_ENV: "production",
-      },
-    }
-  );
+  spawn("pnpm", ["exec", "next", "start", "--hostname", host, "--port", String(port)], {
+    cwd: process.cwd(),
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      NODE_ENV: "production",
+    },
+  });
 
 let serverProcess;
 
@@ -80,13 +73,7 @@ try {
         if (code === 0) {
           return;
         }
-        reject(
-          new Error(
-            `Server exited before ready (code ${code ?? "unknown"}, signal ${
-              signal ?? "none"
-            })`
-          )
-        );
+        reject(new Error(`Server exited before ready (code ${code ?? "unknown"}, signal ${signal ?? "none"})`));
       });
     });
     const serverError = new Promise((_, reject) => {
@@ -109,14 +96,7 @@ try {
     logLevel: "info",
   });
 
-  const reportDir = path.resolve(
-    process.cwd(),
-    "..",
-    "..",
-    "docs",
-    "ux",
-    "lighthouse"
-  );
+  const reportDir = path.resolve(process.cwd(), "..", "..", "docs", "ux", "lighthouse");
   await mkdir(reportDir, { recursive: true });
   const reportPath = path.join(reportDir, "game.html");
   const jsonPath = path.join(reportDir, "game.json");

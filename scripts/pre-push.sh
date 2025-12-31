@@ -15,6 +15,9 @@ if [ "${TWENTYNINE_SKIP_PREPUSH:-0}" = "1" ]; then
   exit 0
 fi
 
+echo "pre-push: running prettier check"
+pnpm format:check
+
 echo "pre-push: running lint"
 pnpm lint
 
@@ -26,7 +29,7 @@ pnpm -C apps/web build
 
 if [ "${TWENTYNINE_PREPUSH_E2E:-1}" = "1" ]; then
   echo "pre-push: running e2e tests"
-  E2E_PORT="${E2E_PORT:-3101}" pnpm -C apps/web test:e2e
+  E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
 else
   echo "pre-push: e2e skipped (TWENTYNINE_PREPUSH_E2E=0)"
 fi

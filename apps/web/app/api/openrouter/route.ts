@@ -16,9 +16,7 @@ const isMessage = (value: unknown): value is OpenRouterMessage => {
     return false;
   }
   const message = value as OpenRouterMessage;
-  return (
-    typeof message.role === "string" && typeof message.content === "string"
-  );
+  return typeof message.role === "string" && typeof message.content === "string";
 };
 
 export async function GET() {
@@ -30,10 +28,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "OPENROUTER_API_KEY is not configured." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "OPENROUTER_API_KEY is not configured." }, { status: 500 });
   }
 
   let payload: OpenRouterRequest;
@@ -44,10 +39,7 @@ export async function POST(request: Request) {
   }
 
   if (!Array.isArray(payload?.messages) || !payload.messages.every(isMessage)) {
-    return NextResponse.json(
-      { error: "Request must include a messages array." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Request must include a messages array." }, { status: 400 });
   }
 
   const body = {
@@ -70,8 +62,7 @@ export async function POST(request: Request) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message =
-      data?.error?.message || data?.error || "OpenRouter request failed.";
+    const message = data?.error?.message || data?.error || "OpenRouter request failed.";
     return NextResponse.json({ error: message }, { status: response.status });
   }
 
