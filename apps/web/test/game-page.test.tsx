@@ -97,23 +97,24 @@ describe("/game UI", () => {
 
   it("disables illegal moves", () => {
     render(<GamePage />);
-    const legalButton = screen.getByRole("button", { name: "7 of Hearts" });
-    const illegalButton = screen.getByRole("button", { name: "A of Spades" });
+    const [legalButton] = screen.getAllByRole("button", { name: "7 of Hearts" });
+    const [illegalButton] = screen.getAllByRole("button", { name: "A of Spades" });
     expect(legalButton).not.toBeDisabled();
     expect(illegalButton).toBeDisabled();
   });
 
   it("clicking a legal card dispatches play", () => {
     render(<GamePage />);
-    const button = screen.getByRole("button", { name: "7 of Hearts" });
+    const [button] = screen.getAllByRole("button", { name: "7 of Hearts" });
     fireEvent.click(button);
     expect(playCardMock).toHaveBeenCalledWith({ suit: "hearts", rank: "7", id: "hearts-7" });
   });
 
-  it("renders the AI tools tab", () => {
+  it("renders the AI tools tab", async () => {
     render(<GamePage />);
-    fireEvent.click(screen.getByRole("button", { name: /AI/i }));
-    expect(screen.getByRole("heading", { name: "LLM Bots" })).toBeInTheDocument();
+    const [aiTab] = screen.getAllByRole("tab", { name: /AI/i });
+    fireEvent.mouseDown(aiTab, { button: 0 });
+    expect(await screen.findByRole("heading", { name: "LLM Bots" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "AI Coach" })).toBeInTheDocument();
   });
 });
