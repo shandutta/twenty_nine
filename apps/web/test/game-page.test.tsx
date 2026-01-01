@@ -154,13 +154,15 @@ describe("/game UI", () => {
     const finals = screen.getAllByText(/Final: Team 0 wins/i);
     expect(finals.length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+    const aiButtons = screen.getAllByRole("button", { name: "AI" });
+    fireEvent.click(aiButtons[0]);
     const warnings = await screen.findAllByText(/OPENROUTER_API_KEY not configured/i);
     expect(warnings).toHaveLength(2);
     const coachHeader = screen.getAllByText("AI Coach")[0];
     expect(coachHeader).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Log" }));
+    const logButtons = screen.getAllByRole("button", { name: "Log" });
+    fireEvent.click(logButtons[0]);
     const tricks = await screen.findAllByText(/Trick 1/i);
     expect(tricks.length).toBeGreaterThan(0);
   });
