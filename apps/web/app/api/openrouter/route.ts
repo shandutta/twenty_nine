@@ -19,6 +19,10 @@ const isMessage = (value: unknown): value is OpenRouterMessage => {
   return typeof message.role === "string" && typeof message.content === "string";
 };
 
+export async function GET() {
+  return NextResponse.json({ configured: Boolean(process.env.OPENROUTER_API_KEY) });
+}
+
 export async function POST(request: Request) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {

@@ -51,7 +51,7 @@ function useHydrated() {
   return useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false,
+    () => false
   );
 }
 
