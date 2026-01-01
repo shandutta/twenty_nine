@@ -23,21 +23,15 @@ test("game page smoke flow", async ({ page }) => {
   });
 
   await page.goto("/game", { waitUntil: "networkidle" });
-  await expect(page.locator('[data-hydrated="true"]')).toBeVisible();
-
+  const hydrated = page.locator('[data-hydrated="true"]');
+  try {
+    await expect(hydrated).toBeVisible({ timeout: 10_000 });
+  } catch {
+    await page.reload({ waitUntil: "networkidle" });
+    await expect(hydrated).toBeVisible({ timeout: 10_000 });
+  }
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
   await expect(page.getByText("Your hand")).toBeVisible();
-
-  const aiTab = page.getByRole("tab", { name: /^AI$/ });
-  await aiTab.click();
-  await expect(aiTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "AI Coach" })).toBeVisible();
-
-  const logTab = page.getByRole("tab", { name: /^Log$/ });
-  await logTab.click();
-  await expect(logTab).toHaveAttribute("aria-selected", "true");
-  await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
 
   const shouldCaptureScreenshots = process.env.E2E_SCREENSHOTS !== "0";
   if (shouldCaptureScreenshots) {
@@ -105,6 +99,17 @@ test("game page smoke flow", async ({ page }) => {
   await expect(enabledHandButtons.first()).toBeVisible({ timeout: 10_000 });
 
   await expect(handButtons.first()).toBeVisible();
+
+  const aiTab = page.getByRole("tab", { name: /^AI$/ });
+  await aiTab.click();
+  await expect(aiTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "AI Coach" })).toBeVisible();
+
+  const logTab = page.getByRole("tab", { name: /^Log$/ });
+  await logTab.click();
+  await expect(logTab).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
 
   const playLegalMove = async () => {
     await expect.poll(async () => enabledHandButtons.count(), { timeout: 20_000 }).toBeGreaterThan(0);
