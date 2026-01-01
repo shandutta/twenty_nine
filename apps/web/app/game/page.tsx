@@ -39,6 +39,7 @@ export default function GamePage() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
@@ -71,6 +72,10 @@ export default function GamePage() {
     return () => {
       isMounted = false;
     };
+  }, []);
+
+  useEffect(() => {
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -150,7 +155,10 @@ export default function GamePage() {
   };
 
   return (
-    <div className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]">
+    <div
+      className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]"
+      data-hydrated={hydrated ? "true" : "false"}
+    >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(15,118,110,0.2),_transparent_50%)]" />
       <GameSidebar
         gameState={gameState}
