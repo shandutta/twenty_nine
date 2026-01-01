@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { ArrowRight, Crown, Sparkles, Target, Trophy } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import Link from "next/link"
+import { ArrowRight, Crown, Sparkles, Target, Trophy } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 const featureCards = [
   {
@@ -20,14 +20,14 @@ const featureCards = [
     description: "Reliable opponents for practice today, multiplayer ambitions tomorrow.",
     icon: Sparkles,
   },
-];
+]
 
 const QuickStat = ({ label, value }: { label: string; value: string }) => (
   <div className="rounded-2xl border border-emerald-200/10 bg-emerald-950/40 px-4 py-3">
     <div className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">{label}</div>
     <div className="text-lg font-semibold text-emerald-50">{value}</div>
   </div>
-);
+)
 
 export default function Home() {
   return (
@@ -253,5 +253,5 @@ export default function Home() {
         </div>
       </section>
     </div>
-  );
+  )
 }
