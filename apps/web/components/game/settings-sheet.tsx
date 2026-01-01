@@ -1,24 +1,24 @@
-"use client"
+"use client";
 
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Separator } from "@/components/ui/separator"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Volume2, Sparkles, Play } from "lucide-react"
-import { useState } from "react"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Volume2, Sparkles, Play } from "lucide-react";
+import { useState } from "react";
 
 interface SettingsSheetProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  soundEnabled: boolean
-  onSoundChange: (enabled: boolean) => void
-  animationsEnabled: boolean
-  onAnimationsChange: (enabled: boolean) => void
-  autoPlay: boolean
-  onAutoPlayChange: (enabled: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  soundEnabled: boolean;
+  onSoundChange: (enabled: boolean) => void;
+  animationsEnabled: boolean;
+  onAnimationsChange: (enabled: boolean) => void;
+  autoPlay: boolean;
+  onAutoPlayChange: (enabled: boolean) => void;
 }
 
 export function SettingsSheet({
@@ -31,9 +31,9 @@ export function SettingsSheet({
   autoPlay,
   onAutoPlayChange,
 }: SettingsSheetProps) {
-  const [volume, setVolume] = useState([75])
-  const [cardSpeed, setCardSpeed] = useState("normal")
-  const [targetScore, setTargetScore] = useState("6")
+  const [volume, setVolume] = useState([75]);
+  const [cardSpeed, setCardSpeed] = useState("normal");
+  const [targetScore, setTargetScore] = useState("6");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -142,5 +142,5 @@ export function SettingsSheet({
         </div>
       </SheetContent>
     </Sheet>
-  )
+  );
 }

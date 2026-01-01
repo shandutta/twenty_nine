@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  adjustBidTargetForRoyals,
-  canDeclareRoyals,
-  hasRoyals,
-} from "../src/index";
+import { adjustBidTargetForRoyals, canDeclareRoyals, hasRoyals } from "../src/index";
 import type { Card, EngineConfig, Rank, Suit } from "../src/index";
 
 const card = (suit: Suit, rank: Rank): Card => ({ suit, rank });
@@ -67,7 +63,7 @@ describe("royals bid target adjustments", () => {
         declarerTeam: 0,
         bidderTeam: 0,
         config,
-      }),
+      })
     ).toBe(16);
 
     expect(
@@ -76,7 +72,7 @@ describe("royals bid target adjustments", () => {
         declarerTeam: 0,
         bidderTeam: 0,
         config,
-      }),
+      })
     ).toBe(16);
   });
 
@@ -87,7 +83,7 @@ describe("royals bid target adjustments", () => {
         declarerTeam: 1,
         bidderTeam: 0,
         config,
-      }),
+      })
     ).toBe(24);
 
     expect(
@@ -96,7 +92,7 @@ describe("royals bid target adjustments", () => {
         declarerTeam: 1,
         bidderTeam: 0,
         config,
-      }),
+      })
     ).toBe(29);
   });
 });

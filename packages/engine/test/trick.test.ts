@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  createDeck,
-  getLegalPlays,
-  scoreTrick,
-  winningPlay,
-} from "../src/index";
+import { createDeck, getLegalPlays, scoreTrick, winningPlay } from "../src/index";
 import type { Card, Rank, Suit, TrickState } from "../src/index";
 
 const card = (suit: Suit, rank: Rank): Card => ({ suit, rank });

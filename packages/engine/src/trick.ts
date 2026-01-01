@@ -23,22 +23,12 @@ export const getLegalPlays = (hand: Card[], trick: TrickState): Card[] => {
   return follow.length > 0 ? follow : hand;
 };
 
-export const isLegalPlay = (
-  hand: Card[],
-  trick: TrickState,
-  card: Card,
-): boolean => {
+export const isLegalPlay = (hand: Card[], trick: TrickState, card: Card): boolean => {
   const legal = getLegalPlays(hand, trick);
-  return legal.some(
-    (candidate) =>
-      candidate.suit === card.suit && candidate.rank === card.rank,
-  );
+  return legal.some((candidate) => candidate.suit === card.suit && candidate.rank === card.rank);
 };
 
-export const shouldRevealTrump = (
-  hand: Card[],
-  trick: TrickState,
-): boolean => {
+export const shouldRevealTrump = (hand: Card[], trick: TrickState): boolean => {
   const lead = leadSuit(trick);
   if (!lead) return false;
   return hand.every((card) => card.suit !== lead);
@@ -75,11 +65,7 @@ const highestByRank = (plays: TrickPlay[]): TrickPlay => {
   });
 };
 
-export const winningPlay = (
-  trick: TrickState,
-  trumpSuit: Suit,
-  trumpRevealed: boolean,
-): TrickPlay => {
+export const winningPlay = (trick: TrickState, trumpSuit: Suit, trumpRevealed: boolean): TrickPlay => {
   if (trick.plays.length === 0) {
     throw new Error("Cannot determine winner of an empty trick.");
   }
@@ -96,9 +82,7 @@ export const winningPlay = (
     }
   }
 
-  const leadSuitPlays = trick.plays.filter(
-    (play) => play.card.suit === lead,
-  );
+  const leadSuitPlays = trick.plays.filter((play) => play.card.suit === lead);
   return highestByRank(leadSuitPlays);
 };
 
@@ -106,9 +90,6 @@ export const trickPoints = (trick: TrickState): number => {
   return trick.plays.reduce((sum, play) => sum + cardPoints(play.card), 0);
 };
 
-export const scoreTrick = (
-  trick: TrickState,
-  isLastTrick: boolean,
-): number => {
+export const scoreTrick = (trick: TrickState, isLastTrick: boolean): number => {
   return trickPoints(trick) + (isLastTrick ? 1 : 0);
 };

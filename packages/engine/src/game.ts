@@ -28,9 +28,7 @@ export type GameState = {
   config: EngineConfig;
 };
 
-export type GameAction =
-  | { type: "playCard"; player: number; card: Card }
-  | { type: "declareRoyals"; player: number };
+export type GameAction = { type: "playCard"; player: number; card: Card } | { type: "declareRoyals"; player: number };
 
 const DEFAULT_CONFIG: EngineConfig = {
   minBid: 16,
@@ -40,8 +38,7 @@ const DEFAULT_CONFIG: EngineConfig = {
 
 const nextPlayer = (player: number): number => (player + 1) % 4;
 
-export const teamForPlayer = (player: number): TeamId =>
-  player % 2 === 0 ? 0 : 1;
+export const teamForPlayer = (player: number): TeamId => (player % 2 === 0 ? 0 : 1);
 
 const createRng = (seed: number): (() => number) => {
   let state = seed >>> 0;
@@ -118,13 +115,7 @@ const rankTieBreaker = (a: Card, b: Card): number => {
   return 0;
 };
 
-export const chooseBotCard = ({
-  hand,
-  trick,
-}: {
-  hand: Card[];
-  trick: TrickState;
-}): Card => {
+export const chooseBotCard = ({ hand, trick }: { hand: Card[]; trick: TrickState }): Card => {
   const legal = getLegalPlays(hand, trick);
   if (legal.length === 1) return legal[0];
 
@@ -167,10 +158,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
       ...state,
       bidTarget: newTarget,
       royalsDeclaredBy: declarerTeam,
-      log: [
-        ...state.log,
-        `Royals declared by Team ${declarerTeam + 1}. Bid target -> ${newTarget}.`,
-      ],
+      log: [...state.log, `Royals declared by Team ${declarerTeam + 1}. Bid target -> ${newTarget}.`],
     };
   }
 
@@ -184,10 +172,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
   }
 
   const hand = state.hands[action.player];
-  const cardIndex = hand.findIndex(
-    (card) =>
-      card.suit === action.card.suit && card.rank === action.card.rank,
-  );
+  const cardIndex = hand.findIndex((card) => card.suit === action.card.suit && card.rank === action.card.rank);
   if (cardIndex === -1) {
     throw new Error("Card not found in hand.");
   }
@@ -202,16 +187,10 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
 
   const nextHands = state.hands.map((cards, index) => {
     if (index !== action.player) return cards;
-    return cards.filter(
-      (card) =>
-        card.suit !== action.card.suit || card.rank !== action.card.rank,
-    );
+    return cards.filter((card) => card.suit !== action.card.suit || card.rank !== action.card.rank);
   });
 
-  const log = [
-    ...state.log,
-    `P${action.player + 1} played ${cardLabel(action.card)}.`,
-  ];
+  const log = [...state.log, `P${action.player + 1} played ${cardLabel(action.card)}.`];
 
   if (trumpRevealed && !state.trumpRevealed) {
     log.push("Trump revealed.");
@@ -231,25 +210,16 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
   const winner = winningPlay(trick, state.trumpSuit, trumpRevealed);
   const winnerTeam = teamForPlayer(winner.player);
   const isLastTrick = state.trickNumber === 7;
-  const trickScore = trick.plays.reduce(
-    (sum, play) => sum + cardPoints(play.card),
-    0,
-  );
+  const trickScore = trick.plays.reduce((sum, play) => sum + cardPoints(play.card), 0);
   const totalScore = trickScore + (isLastTrick ? 1 : 0);
 
   const points: [number, number] = [...state.points] as [number, number];
   points[winnerTeam] += totalScore;
 
-  const tricksWon: [number, number] = [
-    ...state.tricksWon,
-  ] as [number, number];
+  const tricksWon: [number, number] = [...state.tricksWon] as [number, number];
   tricksWon[winnerTeam] += 1;
 
-  log.push(
-    `Trick ${state.trickNumber + 1} won by Team ${
-      winnerTeam + 1
-    } (+${totalScore}).`,
-  );
+  log.push(`Trick ${state.trickNumber + 1} won by Team ${winnerTeam + 1} (+${totalScore}).`);
 
   const nextTrickNumber = state.trickNumber + 1;
   const phase: GamePhase = nextTrickNumber >= 8 ? "hand-complete" : "playing";

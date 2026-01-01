@@ -1,13 +1,5 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
-import {
-  compareRanks,
-  createDeck,
-  createTrick,
-  getLegalPlays,
-  playCard,
-  scoreTrick,
-  winningPlay,
-} from "@/lib/engine";
+import { compareRanks, createDeck, createTrick, getLegalPlays, playCard, scoreTrick, winningPlay } from "@/lib/engine";
 import type { Card, Suit, TrickState } from "@/lib/engine";
 
 export type GameState = {
@@ -22,10 +14,7 @@ export type GameState = {
   status: "playing" | "hand-complete";
 };
 
-type GameAction =
-  | { type: "playCard"; player: number; card: Card }
-  | { type: "botPlay" }
-  | { type: "reset" };
+type GameAction = { type: "playCard"; player: number; card: Card } | { type: "botPlay" } | { type: "reset" };
 
 const PLAYER_COUNT = 4;
 const TRICKS_PER_HAND = 8;
@@ -61,12 +50,7 @@ const pickLowest = (cards: Card[]): Card => {
   });
 };
 
-const pickBotCard = (
-  hand: Card[],
-  trick: TrickState,
-  trumpSuit: Suit,
-  trumpRevealed: boolean,
-): Card => {
+const pickBotCard = (hand: Card[], trick: TrickState, trumpSuit: Suit, trumpRevealed: boolean): Card => {
   const legal = getLegalPlays(hand, trick);
   const lead = trick.plays[0]?.card.suit ?? null;
   const trumps = hand.filter((card) => card.suit === trumpSuit);
@@ -91,9 +75,7 @@ const pickBotCard = (
 };
 
 const removeCard = (hand: Card[], card: Card): Card[] => {
-  const index = hand.findIndex(
-    (item) => item.rank === card.rank && item.suit === card.suit,
-  );
+  const index = hand.findIndex((item) => item.rank === card.rank && item.suit === card.suit);
   if (index === -1) return hand;
   const next = [...hand];
   next.splice(index, 1);
@@ -169,9 +151,7 @@ const applyPlay = (state: GameState, player: number, card: Card): GameState => {
   scores[winnerTeam] += points;
 
   const trickIndex = state.trickIndex + 1;
-  log.push(
-    `Trick ${state.trickIndex + 1} won by Player ${winner.player + 1} (+${points}).`,
-  );
+  log.push(`Trick ${state.trickIndex + 1} won by Player ${winner.player + 1} (+${points}).`);
 
   const status = trickIndex >= TRICKS_PER_HAND ? "hand-complete" : "playing";
   if (status === "hand-complete") {
