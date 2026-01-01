@@ -1,11 +1,25 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { Analytics } from "@vercel/analytics/next"
-import "./globals.css"
+import type React from "react";
+import type { Metadata, Viewport } from "next";
+import { Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import "./globals.css";
+
+const bodyFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const displayFont = Cormorant_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "Twenty-Nine | Card Game",
-  description: "Play the classic South Asian trick-taking card game Twenty-Nine",
+  title: "TwentyNine | Bengali 29 Card Game",
+  description: "Play the classic South Asian/Bengali trick-taking game 29 with a modern solo table.",
   generator: "v0.app",
   icons: {
     icon: [
@@ -24,25 +38,25 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-icon.png",
   },
-}
+};
 
 export const viewport: Viewport = {
-  themeColor: "#1a2e1a",
+  themeColor: "#0b1511",
   width: "device-width",
   initialScale: 1,
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="font-sans antialiased">
+      <body className={`${bodyFont.variable} ${displayFont.variable} font-sans antialiased`}>
         {children}
         <Analytics />
       </body>
     </html>
-  )
+  );
 }

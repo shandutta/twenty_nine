@@ -1,23 +1,22 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import type { Card, Suit } from "@twentynine/engine"
-import { GameTable } from "@/components/game/table"
-import { GameSidebar } from "@/components/game/sidebar"
-import { SettingsSheet } from "@/components/game/settings-sheet"
-import { useGameController } from "@/components/game/use-game-controller"
+import { useEffect, useMemo, useState } from "react";
+import type { Card, Suit } from "@twentynine/engine";
+import { GameTable } from "@/components/game/table";
+import { GameSidebar } from "@/components/game/sidebar";
+import { SettingsSheet } from "@/components/game/settings-sheet";
+import { useGameController } from "@/components/game/use-game-controller";
 
 const suitSymbols: Record<Suit, string> = {
   hearts: "♥",
   diamonds: "♦",
   clubs: "♣",
   spades: "♠",
-}
+};
 
-const formatCard = (card: Card): string => `${card.rank}${suitSymbols[card.suit]}`
+const formatCard = (card: Card): string => `${card.rank}${suitSymbols[card.suit]}`;
 
-const formatCardList = (cards: Card[]): string =>
-  cards.length === 0 ? "--" : cards.map(formatCard).join(", ")
+const formatCardList = (cards: Card[]): string => (cards.length === 0 ? "--" : cards.map(formatCard).join(", "));
 
 export default function GamePage() {
   const {
@@ -30,67 +29,66 @@ export default function GamePage() {
     botSettings,
     setBotEnabled,
     setBotDifficulty,
-  } = useGameController()
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [soundEnabled, setSoundEnabled] = useState(true)
-  const [animationsEnabled, setAnimationsEnabled] = useState(true)
-  const [autoPlay, setAutoPlay] = useState(false)
-  const [coachEnabled, setCoachEnabled] = useState(false)
-  const [coachLoading, setCoachLoading] = useState(false)
-  const [coachError, setCoachError] = useState<string | null>(null)
-  const [coachResponse, setCoachResponse] = useState<string | null>(null)
-  const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null)
+  } = useGameController();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [coachEnabled, setCoachEnabled] = useState(false);
+  const [coachLoading, setCoachLoading] = useState(false);
+  const [coachError, setCoachError] = useState<string | null>(null);
+  const [coachResponse, setCoachResponse] = useState<string | null>(null);
+  const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
 
   const playerLabel = useMemo(() => {
-    return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`
-  }, [gameState.players])
+    return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
+  }, [gameState.players]);
 
   const lastMoveSummary = lastMove
     ? `${playerLabel(lastMove.action.player)} played ${formatCard(lastMove.action.card)}`
-    : "No moves yet."
+    : "No moves yet.";
 
-  const legalAlternatives = lastMove ? formatCardList(lastMove.legalMoves) : "--"
+  const legalAlternatives = lastMove ? formatCardList(lastMove.legalMoves) : "--";
 
-  const canRequestCoach =
-    coachEnabled && Boolean(lastMove) && !coachLoading && openRouterConfigured !== false
+  const canRequestCoach = coachEnabled && Boolean(lastMove) && !coachLoading && openRouterConfigured !== false;
 
   useEffect(() => {
-    let isMounted = true
+    let isMounted = true;
     const checkConfig = async () => {
       try {
-        const response = await fetch("/api/openrouter")
-        const data = (await response.json().catch(() => null)) as { configured?: boolean } | null
+        const response = await fetch("/api/openrouter");
+        const data = (await response.json().catch(() => null)) as { configured?: boolean } | null;
         if (isMounted) {
-          setOpenRouterConfigured(Boolean(data?.configured))
+          setOpenRouterConfigured(Boolean(data?.configured));
         }
       } catch {
         if (isMounted) {
-          setOpenRouterConfigured(false)
+          setOpenRouterConfigured(false);
         }
       }
-    }
-    void checkConfig()
+    };
+    void checkConfig();
     return () => {
-      isMounted = false
-    }
-  }, [])
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
-    setCoachResponse(null)
-    setCoachError(null)
-  }, [lastMove?.action, coachEnabled])
+    setCoachResponse(null);
+    setCoachError(null);
+  }, [lastMove?.action, coachEnabled]);
 
   const requestCoach = async () => {
     if (!coachEnabled || !lastMove) {
-      return
+      return;
     }
     if (openRouterConfigured === false) {
-      setCoachError("Set OPENROUTER_API_KEY in apps/web/.env.local first.")
-      return
+      setCoachError("Set OPENROUTER_API_KEY in apps/web/.env.local first.");
+      return;
     }
-    setCoachLoading(true)
-    setCoachError(null)
-    setCoachResponse(null)
+    setCoachLoading(true);
+    setCoachError(null);
+    setCoachResponse(null);
 
     const message = {
       trump: engineState.trumpRevealed ? engineState.trumpSuit : "hidden",
@@ -105,7 +103,7 @@ export default function GamePage() {
         card: formatCard(lastMove.action.card),
       },
       legalAlternatives: lastMove.legalMoves.map(formatCard),
-    }
+    };
 
     try {
       const response = await fetch("/api/openrouter", {
@@ -126,32 +124,34 @@ export default function GamePage() {
             },
           ],
         }),
-      })
+      });
 
-      const data = (await response.json().catch(() => null)) as
-        | { error?: string; message?: { content?: string } }
-        | null
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        message?: { content?: string };
+      } | null;
 
       if (!response.ok) {
-        setCoachError(data?.error ?? "OpenRouter request failed.")
-        return
+        setCoachError(data?.error ?? "OpenRouter request failed.");
+        return;
       }
 
-      const content = data?.message?.content
+      const content = data?.message?.content;
       if (!content) {
-        setCoachError("No response from coach.")
-        return
+        setCoachError("No response from coach.");
+        return;
       }
-      setCoachResponse(content)
+      setCoachResponse(content);
     } catch {
-      setCoachError("Unable to reach OpenRouter.")
+      setCoachError("Unable to reach OpenRouter.");
     } finally {
-      setCoachLoading(false)
+      setCoachLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(15,118,110,0.2),_transparent_50%)]" />
       <GameSidebar
         gameState={gameState}
         onNewGame={onNewGame}
@@ -169,7 +169,7 @@ export default function GamePage() {
         legalAlternatives={legalAlternatives}
         canRequestCoach={canRequestCoach}
       />
-      <main className="flex-1 overflow-hidden">
+      <main className="relative flex-1 overflow-hidden">
         <GameTable
           gameState={gameState}
           onPlayCard={onPlayCard}
@@ -188,5 +188,5 @@ export default function GamePage() {
         onAutoPlayChange={setAutoPlay}
       />
     </div>
-  )
+  );
 }

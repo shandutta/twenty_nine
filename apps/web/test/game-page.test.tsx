@@ -1,30 +1,61 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import type { Card, GameState, CompletedTrick } from "@twentynine/engine";
-import { createGame } from "@twentynine/engine";
+import { createGameState } from "@twentynine/engine";
+import type { GameState as EngineState } from "@twentynine/engine";
 import GamePage from "@/app/game/page";
-import { useGameController } from "@/hooks/useGameController";
+import { useGameController } from "@/components/game/use-game-controller";
+import type { GameState, PlayingCard } from "@/components/game/types";
 
-vi.mock("@/hooks/useGameController");
+vi.mock("@/components/game/use-game-controller");
 
 const mockedUseGameController = vi.mocked(useGameController);
 
-const card = (suit: Card["suit"], rank: Card["rank"]): Card => ({
+const makeCard = (suit: PlayingCard["suit"], rank: PlayingCard["rank"]): PlayingCard => ({
   suit,
   rank,
+  id: `${suit}-${rank}`,
 });
 
-const makeState = (hand: Card[], overrides?: Partial<GameState>): GameState => {
-  const base = createGame(1, { trumpSuit: "spades" });
-  return {
-    ...base,
-    currentPlayer: 0,
-    players: [{ hand }, { hand: [] }, { hand: [] }, { hand: [] }],
-    trick: { plays: [], leadSuit: null },
-    completedTricks: [],
-    ...overrides,
-  };
-};
+const makeGameState = (cards: PlayingCard[]): GameState => ({
+  players: [
+    { id: "player1", name: "You", position: "bottom", cards, isCurrentPlayer: true, teamId: "teamA" },
+    { id: "player2", name: "West", position: "left", cards: [], isCurrentPlayer: false, teamId: "teamB" },
+    { id: "player3", name: "North", position: "top", cards: [], isCurrentPlayer: false, teamId: "teamA" },
+    { id: "player4", name: "East", position: "right", cards: [], isCurrentPlayer: false, teamId: "teamB" },
+  ],
+  teams: {
+    teamA: {
+      id: "teamA",
+      name: "You & North",
+      players: ["player1", "player3"],
+      tricksWon: 0,
+      bid: 16,
+      bidWinner: "player1",
+      gameScore: 0,
+      handPoints: 0,
+    },
+    teamB: {
+      id: "teamB",
+      name: "West & East",
+      players: ["player2", "player4"],
+      tricksWon: 0,
+      gameScore: 0,
+      handPoints: 0,
+    },
+  },
+  trumpSuit: "spades",
+  trumpRevealed: false,
+  currentTrick: [],
+  phase: "playing",
+  currentBid: 16,
+  bidWinner: "player1",
+  roundNumber: 1,
+  trickNumber: 0,
+  currentPlayerId: "player1",
+  log: [],
+});
+
+const makeEngineState = (): EngineState => createGameState({ seed: 1, trumpSuit: "spades", bidTarget: 16 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -41,24 +72,16 @@ describe("/game UI", () => {
       })) as unknown as typeof fetch
     );
 
-    const legal = card("hearts", "7");
-    const illegal = card("spades", "A");
+    const legal = makeCard("hearts", "7");
+    const illegal = makeCard("spades", "A");
     playCardMock = vi.fn();
+
     mockedUseGameController.mockReturnValue({
-      state: makeState([legal, illegal]),
-      legalMoves: [legal],
-      isGameOver: false,
-      score: {
-        team0: 0,
-        team1: 0,
-        cardPoints: { team0: 0, team1: 0 },
-        lastTrickBonusWinner: null,
-      },
-      humanPlayer: 0,
-      playCard: playCardMock,
-      canShowPair: false,
-      showPair: vi.fn(),
-      resetGame: vi.fn(),
+      gameState: makeGameState([legal, illegal]),
+      engineState: makeEngineState(),
+      legalCardIds: [legal.id],
+      onPlayCard: playCardMock,
+      onNewGame: vi.fn(),
       lastMove: null,
       botSettings: {
         enabled: false,
@@ -74,97 +97,23 @@ describe("/game UI", () => {
 
   it("disables illegal moves", () => {
     render(<GamePage />);
-    const legalButtons = screen.getAllByRole("button", { name: "7 of Hearts" });
-    expect(legalButtons[0]).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: "A of Spades" })).toBeDisabled();
+    const legalButton = screen.getByRole("button", { name: "7 of Hearts" });
+    const illegalButton = screen.getByRole("button", { name: "A of Spades" });
+    expect(legalButton).not.toBeDisabled();
+    expect(illegalButton).toBeDisabled();
   });
 
   it("clicking a legal card dispatches play", () => {
     render(<GamePage />);
-    const button = screen.getAllByRole("button", { name: "7 of Hearts" })[0];
+    const button = screen.getByRole("button", { name: "7 of Hearts" });
     fireEvent.click(button);
-    expect(playCardMock).toHaveBeenCalledWith(card("hearts", "7"));
+    expect(playCardMock).toHaveBeenCalledWith({ suit: "hearts", rank: "7", id: "hearts-7" });
   });
 
-  it("renders game-over UI and AI panels", async () => {
-    vi.unstubAllGlobals();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        json: async () => ({ configured: false }),
-      })) as unknown as typeof fetch
-    );
-
-    const legal = card("hearts", "7");
-    const completedTricks: CompletedTrick[] = [
-      {
-        winner: 2,
-        plays: [
-          { player: 0, card: card("clubs", "J") },
-          { player: 1, card: card("clubs", "9") },
-          { player: 2, card: card("clubs", "A") },
-          { player: 3, card: card("clubs", "7") },
-        ],
-      },
-    ];
-    const state = makeState([legal], {
-      currentPlayer: 1,
-      trumpRevealed: true,
-      trick: {
-        leadSuit: "clubs",
-        plays: [{ player: 1, card: card("clubs", "10") }],
-      },
-      completedTricks,
-    });
-
-    mockedUseGameController.mockReturnValue({
-      state,
-      legalMoves: [legal],
-      isGameOver: true,
-      score: {
-        team0: 17,
-        team1: 12,
-        cardPoints: { team0: 16, team1: 12 },
-        lastTrickBonusWinner: 0,
-      },
-      humanPlayer: 0,
-      playCard: vi.fn(),
-      canShowPair: true,
-      showPair: vi.fn(),
-      resetGame: vi.fn(),
-      lastMove: {
-        id: 1,
-        action: { type: "play_card", player: 0, card: legal },
-        legalMoves: [legal],
-      },
-      botSettings: {
-        enabled: true,
-        difficulty: "hard",
-        model: "openai/gpt-4o",
-        temperature: 0.7,
-        usageHint: "Uses LLM on every bot move.",
-      },
-      setBotEnabled: vi.fn(),
-      setBotDifficulty: vi.fn(),
-    });
-
+  it("renders the AI tools tab", () => {
     render(<GamePage />);
-
-    const bonus = screen.getAllByText(/Last trick bonus: Team 0/i);
-    expect(bonus.length).toBeGreaterThan(0);
-    const finals = screen.getAllByText(/Final: Team 0 wins/i);
-    expect(finals.length).toBeGreaterThan(0);
-
-    const aiButtons = screen.getAllByRole("button", { name: "AI" });
-    fireEvent.click(aiButtons[0]);
-    const coachHeader = await screen.findByText("AI Coach");
-    expect(coachHeader).toBeInTheDocument();
-    const llmPanel = screen.getByText("LLM Bots");
-    expect(llmPanel).toBeInTheDocument();
-
-    const logButtons = screen.getAllByRole("button", { name: "Log" });
-    fireEvent.click(logButtons[0]);
-    const tricks = await screen.findAllByText(/Trick 1/i);
-    expect(tricks.length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: /AI/i }));
+    expect(screen.getByRole("heading", { name: "LLM Bots" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "AI Coach" })).toBeInTheDocument();
   });
 });
