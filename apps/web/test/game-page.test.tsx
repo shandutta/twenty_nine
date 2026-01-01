@@ -87,6 +87,7 @@ describe("/game UI", () => {
   });
 
   it("renders game-over UI and coach warning when OpenRouter missing", async () => {
+    vi.unstubAllGlobals();
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => ({
