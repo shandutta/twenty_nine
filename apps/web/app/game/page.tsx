@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { Card, Suit } from "@twentynine/engine";
 import { GameTable } from "@/components/game/table";
 import { GameSidebar } from "@/components/game/sidebar";
 import { SettingsSheet } from "@/components/game/settings-sheet";
 import { useGameController } from "@/components/game/use-game-controller";
+import { Spinner } from "@/components/ui/spinner";
 
 const suitSymbols: Record<Suit, string> = {
   hearts: "♥",
@@ -18,7 +19,43 @@ const formatCard = (card: Card): string => `${card.rank}${suitSymbols[card.suit]
 
 const formatCardList = (cards: Card[]): string => (cards.length === 0 ? "--" : cards.map(formatCard).join(", "));
 
-export default function GamePage() {
+function GameShell({ children, hydrated }: { children: ReactNode; hydrated: boolean }) {
+  return (
+    <div
+      className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]"
+      data-hydrated={hydrated ? "true" : "false"}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(15,118,110,0.2),_transparent_50%)]" />
+      {children}
+    </div>
+  );
+}
+
+function GameLoading() {
+  return (
+    <GameShell hydrated={false}>
+      <main className="relative flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-black/40 px-4 py-2 text-emerald-50">
+            <Spinner className="size-5 text-[#f2c879]" />
+            <span className="text-sm uppercase tracking-[0.2em]">Shuffling the deck</span>
+          </div>
+          <p className="text-xs text-emerald-100/70">Setting the felt and dealing the first hand.</p>
+        </div>
+      </main>
+    </GameShell>
+  );
+}
+
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
+}
+
+function GamePageClient() {
   const {
     gameState,
     engineState,
@@ -39,7 +76,6 @@ export default function GamePage() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
-  const [hydrated, setHydrated] = useState(false);
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
@@ -72,10 +108,6 @@ export default function GamePage() {
     return () => {
       isMounted = false;
     };
-  }, []);
-
-  useEffect(() => {
-    setHydrated(true);
   }, []);
 
   useEffect(() => {
@@ -155,11 +187,7 @@ export default function GamePage() {
   };
 
   return (
-    <div
-      className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]"
-      data-hydrated={hydrated ? "true" : "false"}
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(15,118,110,0.2),_transparent_50%)]" />
+    <GameShell hydrated>
       <GameSidebar
         gameState={gameState}
         onNewGame={onNewGame}
@@ -195,6 +223,16 @@ export default function GamePage() {
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
       />
-    </div>
+    </GameShell>
   );
+}
+
+export default function GamePage() {
+  const hydrated = useHydrated();
+
+  if (!hydrated) {
+    return <GameLoading />;
+  }
+
+  return <GamePageClient />;
 }
