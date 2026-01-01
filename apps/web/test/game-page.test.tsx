@@ -149,16 +149,19 @@ describe("/game UI", () => {
 
     render(<GamePage />);
 
-    const warnings = await screen.findAllByText(/OPENROUTER_API_KEY not configured/i);
-    expect(warnings).toHaveLength(2);
     const bonus = screen.getAllByText(/Last trick bonus: Team 0/i);
     expect(bonus.length).toBeGreaterThan(0);
-    const tricks = screen.getAllByText(/Trick 1/i);
-    expect(tricks.length).toBeGreaterThan(0);
     const finals = screen.getAllByText(/Final: Team 0 wins/i);
     expect(finals.length).toBeGreaterThan(0);
 
+    fireEvent.click(screen.getByRole("button", { name: "AI" }));
+    const warnings = await screen.findAllByText(/OPENROUTER_API_KEY not configured/i);
+    expect(warnings).toHaveLength(2);
     const coachHeader = screen.getAllByText("AI Coach")[0];
     expect(coachHeader).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
+    const tricks = await screen.findAllByText(/Trick 1/i);
+    expect(tricks.length).toBeGreaterThan(0);
   });
 });
