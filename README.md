@@ -26,6 +26,7 @@ pnpm -C apps/web exec playwright install chromium
 pnpm -C apps/web test:e2e
 pnpm -C apps/web audit:lighthouse
 pnpm run qa
+pnpm run deploy:prod
 ```
 
 Artifacts:
