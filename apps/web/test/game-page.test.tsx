@@ -86,7 +86,7 @@ describe("/game UI", () => {
     expect(playCardMock).toHaveBeenCalledWith(card("hearts", "7"));
   });
 
-  it("renders game-over UI and coach warning when OpenRouter missing", async () => {
+  it("renders game-over UI and AI panels", async () => {
     vi.unstubAllGlobals();
     vi.stubGlobal(
       "fetch",
@@ -157,10 +157,10 @@ describe("/game UI", () => {
 
     const aiButtons = screen.getAllByRole("button", { name: "AI" });
     fireEvent.click(aiButtons[0]);
-    const warnings = await screen.findAllByText(/OPENROUTER_API_KEY not configured/i);
-    expect(warnings).toHaveLength(2);
-    const coachHeader = screen.getAllByText("AI Coach")[0];
+    const coachHeader = await screen.findByText("AI Coach");
     expect(coachHeader).toBeInTheDocument();
+    const llmPanel = screen.getByText("LLM Bots");
+    expect(llmPanel).toBeInTheDocument();
 
     const logButtons = screen.getAllByRole("button", { name: "Log" });
     fireEvent.click(logButtons[0]);
