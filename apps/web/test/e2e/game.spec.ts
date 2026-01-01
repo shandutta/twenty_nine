@@ -53,14 +53,8 @@ test("game page smoke flow", async ({ page }) => {
     await capture(390);
   }
 
-  const handButtons = page
-    .locator("section")
-    .locator("button")
-    .filter({ hasText: /^(10|[7-9]|J|Q|K|A)[CDHS]$/ });
-  const enabledHandButtons = page
-    .locator("section")
-    .locator("button:not([disabled])")
-    .filter({ hasText: /^(10|[7-9]|J|Q|K|A)[CDHS]$/ });
+  const handButtons = page.locator('button[aria-label*=" of "]');
+  const enabledHandButtons = page.locator('button[aria-label*=" of "]:not([disabled])');
 
   const biddingHeading = page.getByRole("heading", { name: "Bidding" });
   const trumpHeading = page.getByRole("heading", { name: "Choose Trump" });
@@ -113,10 +107,10 @@ test("game page smoke flow", async ({ page }) => {
     await expect.poll(async () => enabledHandButtons.count(), { timeout: 20_000 }).toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
     await expect(legal).toBeEnabled();
-    const label = await legal.textContent();
+    const label = await legal.getAttribute("aria-label");
     await legal.click();
     if (label) {
-      await expect(handButtons.filter({ hasText: label })).toHaveCount(0);
+      await expect(page.locator(`button[aria-label="${label}"]`)).toHaveCount(0);
     }
   };
 
