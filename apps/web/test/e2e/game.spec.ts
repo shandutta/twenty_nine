@@ -27,12 +27,12 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
   await expect(page.getByText("Your hand")).toBeVisible();
 
-  const aiTab = page.getByRole("button", { name: "AI" }).first();
+  const aiTab = page.getByRole("button", { name: /^AI$/ });
   await aiTab.click();
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "AI Coach" })).toBeVisible();
 
-  const logTab = page.getByRole("button", { name: "Log" }).first();
+  const logTab = page.getByRole("button", { name: /^Log$/ });
   await logTab.click();
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
 
