@@ -70,6 +70,7 @@ export function GameSidebar({
       : "Hidden"
     : "Pending";
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
+  const phaseLabel = gameState.phase.replace("-", " ");
   const royalsTeamId = gameState.royalsDeclaredBy;
   const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
   const royalsDirection = royalsTeamId && bidderTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
@@ -122,7 +123,7 @@ export function GameSidebar({
               <CardContent className="space-y-2 text-sm text-emerald-100/70">
                 <div className="flex items-center justify-between">
                   <span>Phase</span>
-                  <Badge className="border-white/10 bg-white/5 text-emerald-50">{gameState.phase}</Badge>
+                  <Badge className="border-white/10 bg-white/5 text-emerald-50">{phaseLabel}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Current Player</span>
