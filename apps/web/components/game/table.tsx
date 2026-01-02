@@ -2,15 +2,18 @@
 
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import type { GameState, PlayingCard, Player, Suit } from "@/components/game/types";
+import { RotateCcw } from "lucide-react";
 
 interface GameTableProps {
   gameState: GameState;
   onPlayCard: (card: PlayingCard) => void;
   legalCardIds: string[];
   animationsEnabled: boolean;
+  onNewGame: () => void;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -263,7 +266,7 @@ function OpponentArea({
   );
 }
 
-export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabled }: GameTableProps) {
+export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabled, onNewGame }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
   const topPlayer = gameState.players.find((p) => p.position === "top")!;
@@ -298,19 +301,29 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
               <StatusChip label="Trump" value={trumpLabel} highlight={gameState.trumpRevealed} />
               <StatusChip label="Trick" value={`${Math.min(gameState.trickNumber + 1, 8)} / 8`} />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-xs text-emerald-100/70">
-              <div className="flex items-center justify-between gap-6">
-                <span className="text-emerald-200">You + North</span>
-                <span className="text-emerald-50">
-                  {teamA.tricksWon} tricks · {teamA.handPoints} pts
-                </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-xs text-emerald-100/70">
+                <div className="flex items-center justify-between gap-6">
+                  <span className="text-emerald-200">You + North</span>
+                  <span className="text-emerald-50">
+                    {teamA.tricksWon} tricks · {teamA.handPoints} pts
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between gap-6">
+                  <span className="text-rose-200">West + East</span>
+                  <span className="text-emerald-50">
+                    {teamB.tricksWon} tricks · {teamB.handPoints} pts
+                  </span>
+                </div>
               </div>
-              <div className="mt-1 flex items-center justify-between gap-6">
-                <span className="text-rose-200">West + East</span>
-                <span className="text-emerald-50">
-                  {teamB.tricksWon} tricks · {teamB.handPoints} pts
-                </span>
-              </div>
+              <Button
+                onClick={onNewGame}
+                size="sm"
+                className="gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span>New Game</span>
+              </Button>
             </div>
           </div>
 

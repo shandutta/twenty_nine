@@ -256,7 +256,7 @@ export function GameSidebar({
       <div className="p-4 border-t border-white/10 space-y-2">
         <Button onClick={onNewGame} className="w-full gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
           <RotateCcw className="h-4 w-4" />
-          New Round
+          New Game
         </Button>
       </div>
     </aside>

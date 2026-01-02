@@ -211,6 +211,7 @@ function GamePageClient() {
           onPlayCard={onPlayCard}
           legalCardIds={legalCardIds}
           animationsEnabled={animationsEnabled}
+          onNewGame={onNewGame}
         />
       </main>
       <SettingsSheet
