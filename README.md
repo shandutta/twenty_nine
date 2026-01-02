@@ -1,157 +1,62 @@
 # TwentyNine
 
-Monorepo for the 29 card game (web app + engine).
+TwentyNine is a solo-first, modern take on the classic Bengali trick-taking game 29. It is a felt table you can open in seconds, with AI tablemates that think in real time and a coach that explains your last move while the hand is still warm.
 
-## Setup
+![TwentyNine game table](docs/ux/screens/game-1280.png)
 
-```bash
-pnpm install
-```
+## Why it feels different
 
-## How to run
+- It is built for flow: legal moves only, clear turn cues, and a log that tells you what just happened.
+- The bots can be LLM-driven. When enabled, they reason over legal moves every turn and play to the contract.
+- The coach is on demand: one tap and you get a concise review of the last play plus better alternatives.
+- Under the table, the rules engine is deterministic and serializable. Given the same state and action, it will always produce the same next state.
 
-```bash
-pnpm -C apps/web dev
-```
+## The game in 60 seconds
 
-Then open `http://localhost:3000/game`.
+- 32-card deck (7 through A in each suit).
+- Rank order: J > 9 > A > 10 > K > Q > 8 > 7.
+- Point cards: J=3, 9=2, A=1, 10=1 (28 total) plus a last-trick bonus for a total of 29.
+- Players must follow suit if possible.
+- Trump stays hidden until a player cannot follow suit, then it is revealed and trumps start to win tricks.
+- Royals (Pair): K+Q of trump can be declared after trump is revealed and your team has won a trick; it adjusts the contract by +/-4 with floor/cap.
 
-## How to test
+## AI tablemates and a coach
 
-```bash
-pnpm run lint
-pnpm run test
-pnpm run build
-pnpm -C apps/web exec playwright install chromium
-pnpm -C apps/web test:e2e
-pnpm -C apps/web audit:lighthouse
-pnpm run qa
-pnpm run deploy:prod
-```
+- LLM bots are optional and run through OpenRouter. Each bot move is selected from legal moves only; if the model fails, a deterministic heuristic is used.
+- AI Coach analyzes the last move and suggests alternatives with short, actionable feedback.
 
-Artifacts:
+## How it works (under the hood)
 
-- Playwright HTML report: `apps/web/reports/playwright/html`
-- Lighthouse report: `apps/web/reports/lighthouse/game.html`
+- Engine: pure TypeScript state machine in `packages/engine`.
+- UI: Next.js app in `apps/web` that enforces legal moves and renders the table.
+- AI: a server-side `/api/openrouter` route brokers bot and coach calls.
 
-External server mode (if you already started the app elsewhere):
-
-```bash
-PW_BASE_URL=http://127.0.0.1:3000 E2E_NO_WEBSERVER=1 pnpm -C apps/web test:e2e
-LIGHTHOUSE_BASE_URL=http://127.0.0.1:3000 pnpm -C apps/web audit:lighthouse
-```
-
-Note: `next/font/google` downloads fonts at build time. If your environment blocks outbound
-network, either allow access to Google Fonts or switch to self-hosted fonts.
-
-## Coverage
-
-```bash
-pnpm run coverage
-```
-
-Current thresholds:
-
-- Engine: lines ≥ 95%, branches ≥ 90% (functions/statements ≥ 95%).
-- Web: lines ≥ 70%, branches ≥ 60% (functions/statements ≥ 70%).
-
-## Engine tests
-
-```bash
-pnpm -C packages/engine test
-```
-
-## Web build
-
-```bash
-pnpm -C apps/web build
-```
-
-## Web dev
-
-```bash
-pnpm -C apps/web dev
-```
-
-## AI features (optional)
-
-Set `OPENROUTER_API_KEY` in `apps/web/.env.local` to enable the AI Coach and LLM bot strategies. A template is in `apps/web/.env.example`.
-
-## Rule toggles (engine config)
-
-House rules live in the engine `RulesConfig` and can be overridden in `createGame`:
-
-- `autoRevealOnFirstFail` (boolean): auto-reveal trump on first inability to follow suit.
-- `pair.enabled` (boolean): enable/disable Royals (K+Q of trump) rule.
-- `pair.adjustBy` (number): target adjustment amount (default 4).
-- `pair.minTarget` / `pair.maxTarget` (number): clamp bid target after adjustment.
-- `pair.requireTrumpRevealed` (boolean): pair only after trump is revealed.
-- `pair.requireTrickAfterReveal` (boolean): pair only after the team has taken a trick post-reveal.
-
-## UX changelog
-
-Before:
-
-- Basic stacked panels with limited hierarchy and minimal status guidance.
-- Card interactions were functional but lacked clear legal/illegal affordances.
-
-After:
-
-- Dedicated top bar for match score, contract, trump status, and turn/phase guidance.
-- Centered trick pile with lead suit, leader highlight, and motion polish.
-- Clearer hand affordances, right-rail logs, and tooltipped Royals status.
-
-## Known limitations
-
-- No bidding/auction phase yet; bid target defaults to 16.
-- Trump selection is currently deterministic (seed-based), not chosen by a bidder.
-- Multiplayer is not implemented (solo only).
-- Lighthouse scores are informational only (no thresholds enforced).
-
-## Deployment (VPS + Caddy)
-
-Build and start the Next.js server on your VPS, then proxy it with Caddy.
-
-### Build & run
+## Quickstart
 
 ```bash
 pnpm install
-pnpm -C apps/web build
-pnpm -C apps/web start -- --hostname 127.0.0.1 --port 3000
+pnpm dev
 ```
 
-### Environment variables
+Open `http://localhost:3000/game`.
 
-Create `apps/web/.env.local` on the server:
+## Optional AI features
+
+Create `apps/web/.env.local` and set:
 
 ```
 OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
-### Caddy reverse proxy (example)
+## Status and roadmap
 
-```
-example.com {
-  encode zstd gzip
-  reverse_proxy 127.0.0.1:3000
-}
-```
+Current status: v0.4. The core solo hand flow is playable with deterministic scoring, trump reveal, royals, AI bots, and an AI coach. The UX is solid but not yet polished to a professional finish, and LLM tuning is ongoing.
 
-### systemd unit (optional)
+Planned next steps:
 
-```
-[Unit]
-Description=TwentyNine Next.js server
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/home/shan/twentynine
-Environment=NODE_ENV=production
-ExecStart=/usr/bin/pnpm -C apps/web start -- --hostname 127.0.0.1 --port 3000
-Restart=on-failure
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-```
+- Richer bidding phase with player-selected trump.
+- Seventh-card trump variant.
+- Single-hand variant (play alone with no trumps).
+- Joker indicator for no-trumps.
+- Better bot strategy and deeper coaching.
+- Multiplayer (authoritative server state, rooms, reconnection).

@@ -57,8 +57,21 @@ export function GameSidebar({
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
   const bidderName = gameState.players.find((player) => player.id === gameState.bidWinner)?.name ?? "-";
+  const bidderTeamId = teamA.players.includes(gameState.bidWinner ?? "") ? "teamA" : "teamB";
   const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
+  const royalsTeamId = gameState.royalsDeclaredBy;
+  const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
+  const royalsDirection = royalsTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
+  const royalsStatus = royalsTeamId
+    ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
+    : "Not declared";
+  const royalsBadgeClass =
+    royalsTeamId === "teamA"
+      ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+      : royalsTeamId === "teamB"
+        ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
+        : "border-white/10 bg-white/5 text-emerald-50";
 
   return (
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
@@ -122,6 +135,10 @@ export function GameSidebar({
                   <span>Trick</span>
                   <span className="text-emerald-50">{Math.min(gameState.trickNumber + 1, 8)} / 8</span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>Royals</span>
+                  <Badge className={royalsBadgeClass}>{royalsStatus}</Badge>
+                </div>
               </CardContent>
             </Card>
 
@@ -157,6 +174,7 @@ export function GameSidebar({
                 <p>• Must follow suit when possible.</p>
                 <p>• Trump reveals when a player can’t follow suit.</p>
                 <p>• Last trick grants the 29th point.</p>
+                <p>• Royals (K+Q of trump) can adjust the target +/-4 after trump is revealed.</p>
               </CardContent>
             </Card>
           </TabsContent>

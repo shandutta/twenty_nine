@@ -47,6 +47,10 @@ export interface GameState {
   phase: "playing" | "finished";
   currentBid: number;
   bidWinner: string | null;
+  royalsDeclaredBy: "teamA" | "teamB" | null;
+  royalsAdjustment: number;
+  royalsMinTarget: number;
+  royalsMaxTarget: number;
   roundNumber: number;
   trickNumber: number;
   currentPlayerId: string;

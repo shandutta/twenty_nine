@@ -74,6 +74,8 @@ function GamePageClient() {
     onNewGame,
     canRevealTrump,
     onRevealTrump,
+    canDeclareRoyals,
+    onDeclareRoyals,
     lastMove,
     botSettings,
     llmInUse,
@@ -234,6 +236,8 @@ function GamePageClient() {
           onNewGame={requestNewGame}
           canRevealTrump={canRevealTrump}
           onRevealTrump={onRevealTrump}
+          canDeclareRoyals={canDeclareRoyals}
+          onDeclareRoyals={onDeclareRoyals}
           llmInUse={llmInUse}
         />
       </main>

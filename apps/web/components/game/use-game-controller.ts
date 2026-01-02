@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   cardPoints,
+  canDeclareRoyals,
   chooseBotCard,
   createGameState,
   getLegalPlays,
@@ -10,7 +11,7 @@ import {
   teamForPlayer,
 } from "@twentynine/engine";
 import type { Card, GameAction, GameState as EngineState, Suit } from "@twentynine/engine";
-import type { GameState, PlayingCard, Player, Team } from "./types";
+import type { GameState, LastTrickSummary, PlayingCard, Player, Team } from "./types";
 
 type PlayerMeta = {
   id: string;
@@ -272,7 +273,7 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     card: toPlayingCard(play.card),
   }));
 
-  const lastTrick = state.lastTrick
+  const lastTrick: LastTrickSummary | null = state.lastTrick
     ? {
         trickNumber: state.lastTrick.number,
         winnerPlayerId: PLAYER_META[state.lastTrick.winner].id,
@@ -291,6 +292,10 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     phase: state.phase === "playing" ? "playing" : "finished",
     currentBid: state.bidTarget,
     bidWinner: state.bidderTeam === 0 ? PLAYER_META[0].id : PLAYER_META[1].id,
+    royalsDeclaredBy: state.royalsDeclaredBy === null ? null : state.royalsDeclaredBy === 0 ? "teamA" : "teamB",
+    royalsAdjustment: state.config.royalsAdjustment,
+    royalsMinTarget: state.config.minBid,
+    royalsMaxTarget: state.config.maxBidTarget,
     roundNumber,
     trickNumber: state.trickNumber,
     currentPlayerId: PLAYER_META[state.currentPlayer].id,
@@ -310,6 +315,15 @@ export const useGameController = () => {
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(engineState);
 
+  const preset = BOT_PRESETS[botDifficulty];
+  const botSettings = useMemo<BotSettings>(
+    () => ({
+      ...preset,
+      enabled: botEnabled,
+    }),
+    [botEnabled, preset]
+  );
+
   useEffect(() => {
     stateRef.current = engineState;
   }, [engineState]);
@@ -319,15 +333,6 @@ export const useGameController = () => {
       setLlmInUse(false);
     }
   }, [botSettings.enabled, engineState.currentPlayer]);
-
-  const preset = BOT_PRESETS[botDifficulty];
-  const botSettings = useMemo<BotSettings>(
-    () => ({
-      ...preset,
-      enabled: botEnabled,
-    }),
-    [botEnabled, preset]
-  );
 
   const dispatch = useCallback((action: GameAction) => {
     setEngineState((prev) => {
@@ -377,6 +382,26 @@ export const useGameController = () => {
     if (!canRevealTrump) return;
     dispatch({ type: "revealTrump", player: HUMAN_PLAYER });
   }, [canRevealTrump, dispatch]);
+
+  const canDeclareRoyalsForHuman = useMemo(() => {
+    if (engineState.phase !== "playing") return false;
+    if (engineState.royalsDeclaredBy !== null) return false;
+    if (engineState.lastTrickWinnerTeam === null) return false;
+    const hand = engineState.hands[HUMAN_PLAYER] ?? [];
+    const declarerTeam = teamForPlayer(HUMAN_PLAYER);
+    return canDeclareRoyals({
+      hand,
+      trumpSuit: engineState.trumpSuit,
+      trumpRevealed: engineState.trumpRevealed,
+      lastTrickWinnerTeam: engineState.lastTrickWinnerTeam,
+      declarerTeam,
+    });
+  }, [engineState]);
+
+  const handleDeclareRoyals = useCallback(() => {
+    if (!canDeclareRoyalsForHuman) return;
+    dispatch({ type: "declareRoyals", player: HUMAN_PLAYER });
+  }, [canDeclareRoyalsForHuman, dispatch]);
 
   useEffect(() => {
     if (engineState.phase !== "playing") return;
@@ -440,6 +465,8 @@ export const useGameController = () => {
     onNewGame: handleNewGame,
     canRevealTrump,
     onRevealTrump: handleRevealTrump,
+    canDeclareRoyals: canDeclareRoyalsForHuman,
+    onDeclareRoyals: handleDeclareRoyals,
     lastMove,
     botSettings,
     llmInUse,

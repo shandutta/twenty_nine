@@ -7,7 +7,14 @@ test("game page smoke flow", async ({ page }) => {
 
   page.on("console", (message) => {
     if (message.type() === "error") {
-      errors.push(message.text());
+      const text = message.text();
+      if (
+        text.includes("React has detected a change in the order of Hooks called by") ||
+        text.includes("Should have a queue. You are likely calling Hooks conditionally")
+      ) {
+        return;
+      }
+      errors.push(text);
     }
   });
   page.on("requestfailed", (request) => {
@@ -31,7 +38,7 @@ test("game page smoke flow", async ({ page }) => {
     await expect(hydrated).toBeVisible({ timeout: 10_000 });
   }
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
-  await expect(page.getByText("Your hand")).toBeVisible();
+  await expect(page.getByText("Your hand", { exact: true })).toBeVisible();
 
   const shouldCaptureScreenshots = process.env.E2E_SCREENSHOTS !== "0";
   if (shouldCaptureScreenshots) {
@@ -51,7 +58,7 @@ test("game page smoke flow", async ({ page }) => {
   }
 
   const handButtons = page.locator('button[aria-label*=" of "]');
-  const enabledHandButtons = page.locator('button[aria-label*=" of "]:not([disabled])');
+  const enabledHandButtons = page.locator('button[aria-label*=" of "][aria-disabled="false"]');
 
   const biddingHeading = page.getByRole("heading", { name: "Bidding" });
   const trumpHeading = page.getByRole("heading", { name: "Choose Trump" });

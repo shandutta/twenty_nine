@@ -49,6 +49,10 @@ const makeGameState = (cards: PlayingCard[]): GameState => ({
   phase: "playing",
   currentBid: 16,
   bidWinner: "player1",
+  royalsDeclaredBy: null,
+  royalsAdjustment: 4,
+  royalsMinTarget: 16,
+  royalsMaxTarget: 29,
   roundNumber: 1,
   trickNumber: 0,
   currentPlayerId: "player1",
@@ -85,6 +89,8 @@ describe("/game UI", () => {
       onNewGame: vi.fn(),
       canRevealTrump: false,
       onRevealTrump: vi.fn(),
+      canDeclareRoyals: false,
+      onDeclareRoyals: vi.fn(),
       lastMove: null,
       botSettings: {
         enabled: false,
@@ -104,10 +110,11 @@ describe("/game UI", () => {
     render(<GamePage />);
     const legalButtons = await screen.findAllByRole("button", { name: "7 of Hearts" });
     const illegalButtons = await screen.findAllByRole("button", { name: "A of Spades" });
-    const legalButton = legalButtons.find((button) => !button.hasAttribute("disabled")) ?? legalButtons[0];
-    const illegalButton = illegalButtons.find((button) => button.hasAttribute("disabled")) ?? illegalButtons[0];
-    expect(legalButton).not.toBeDisabled();
-    expect(illegalButton).toBeDisabled();
+    const isAriaDisabled = (button: HTMLElement) => button.getAttribute("aria-disabled") === "true";
+    const legalButton = legalButtons.find((button) => !isAriaDisabled(button)) ?? legalButtons[0];
+    const illegalButton = illegalButtons.find((button) => isAriaDisabled(button)) ?? illegalButtons[0];
+    expect(isAriaDisabled(legalButton)).toBe(false);
+    expect(isAriaDisabled(illegalButton)).toBe(true);
   });
 
   it("renders the AI tools tab", async () => {

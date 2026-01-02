@@ -17,6 +17,8 @@ interface GameTableProps {
   onNewGame: () => void;
   canRevealTrump: boolean;
   onRevealTrump: () => void;
+  canDeclareRoyals: boolean;
+  onDeclareRoyals: () => void;
   llmInUse: boolean;
 }
 
@@ -200,14 +202,17 @@ function StatusChip({
   value,
   highlight,
   className,
+  title,
 }: {
   label: string;
   value: string;
   highlight?: boolean;
   className?: string;
+  title?: string;
 }) {
   return (
     <div
+      title={title}
       className={cn(
         "rounded-2xl border px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
         highlight
@@ -302,6 +307,10 @@ export function GameTable({
   legalCardIds,
   animationsEnabled,
   onNewGame,
+  canRevealTrump,
+  onRevealTrump,
+  canDeclareRoyals,
+  onDeclareRoyals,
   llmInUse,
 }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
@@ -314,7 +323,25 @@ export function GameTable({
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
   const bidderName = gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-";
+  const bidderTeamId = teamA.players.includes(gameState.bidWinner ?? "") ? "teamA" : "teamB";
   const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
+  const royalsTeamId = gameState.royalsDeclaredBy;
+  const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
+  const royalsDirection = royalsTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
+  const royalsValue = royalsTeamId
+    ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
+    : canDeclareRoyals
+      ? `Available (${royalsDirection}${gameState.royalsAdjustment})`
+      : "Not available";
+  const royalsTitle = royalsTeamId
+    ? `Royals declared by ${royalsTeam?.name ?? "Team"}. Target ${royalsDirection}${gameState.royalsAdjustment} (min ${gameState.royalsMinTarget}, max ${gameState.royalsMaxTarget}).`
+    : `Declare with K+Q of trump after your team wins a trick post-reveal. Adjusts target by ${gameState.royalsAdjustment} (min ${gameState.royalsMinTarget}, max ${gameState.royalsMaxTarget}).`;
+  const royalsClassName =
+    royalsTeamId === "teamA"
+      ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-50"
+      : royalsTeamId === "teamB"
+        ? "border-rose-400/40 bg-rose-500/10 text-emerald-50"
+        : undefined;
   const lastTrick = gameState.lastTrick;
   const lastTrickWinner = lastTrick ? gameState.players.find((p) => p.id === lastTrick.winnerPlayerId) : null;
   const lastTrickTeam = lastTrick ? (lastTrick.winnerTeamId === "teamA" ? teamA : teamB) : null;
@@ -418,6 +445,13 @@ export function GameTable({
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip label="Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
                 <StatusChip
+                  label="Royals"
+                  value={royalsValue}
+                  highlight={canDeclareRoyals}
+                  title={royalsTitle}
+                  className={royalsClassName}
+                />
+                <StatusChip
                   label="Trump"
                   value={trumpLabel}
                   highlight={gameState.trumpRevealed}
@@ -437,6 +471,16 @@ export function GameTable({
                     className="h-9 rounded-full border border-[#f2c879]/50 bg-[#1a1306]/70 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:bg-[#f2c879]/20"
                   >
                     Reveal Trump
+                  </Button>
+                )}
+                {canDeclareRoyals && (
+                  <Button
+                    onClick={onDeclareRoyals}
+                    size="sm"
+                    title={royalsTitle}
+                    className="h-9 rounded-full border border-[#f2c879]/60 bg-[#2a1a06]/80 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_10px_28px_rgba(0,0,0,0.4)] hover:bg-[#f2c879]/20"
+                  >
+                    Declare Royals
                   </Button>
                 )}
               </div>
