@@ -1,6 +1,6 @@
 import { cardPoints, compareRanks, createDeck } from "./cards";
 import type { Card, Suit } from "./cards";
-import { createTrick, getLegalPlays, playCard, winningPlay } from "./trick";
+import { createTrick, getLegalPlays, playCard, shouldRevealTrump, winningPlay } from "./trick";
 import type { TrickState } from "./trick";
 import { adjustBidTargetForRoyals, canDeclareRoyals } from "./royals";
 import type { TeamId } from "./royals";
@@ -21,6 +21,13 @@ export type GameState = {
   bidderTeam: TeamId;
   bidTarget: number;
   lastTrickWinnerTeam: TeamId | null;
+  lastTrick: {
+    number: number;
+    winner: number;
+    card: Card;
+    points: number;
+    team: TeamId;
+  } | null;
   royalsDeclaredBy: TeamId | null;
   phase: GamePhase;
   log: string[];
@@ -28,7 +35,10 @@ export type GameState = {
   config: EngineConfig;
 };
 
-export type GameAction = { type: "playCard"; player: number; card: Card } | { type: "declareRoyals"; player: number };
+export type GameAction =
+  | { type: "playCard"; player: number; card: Card }
+  | { type: "declareRoyals"; player: number }
+  | { type: "revealTrump"; player: number };
 
 const DEFAULT_CONFIG: EngineConfig = {
   minBid: 16,
@@ -101,6 +111,7 @@ export const createGameState = ({
     bidderTeam,
     bidTarget,
     lastTrickWinnerTeam: null,
+    lastTrick: null,
     royalsDeclaredBy: null,
     phase: "playing",
     log: [`Hand start. Dealer: P${dealer + 1}.`],
@@ -159,6 +170,23 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
       bidTarget: newTarget,
       royalsDeclaredBy: declarerTeam,
       log: [...state.log, `Royals declared by Team ${declarerTeam + 1}. Bid target -> ${newTarget}.`],
+    };
+  }
+
+  if (action.type === "revealTrump") {
+    if (state.phase !== "playing") return state;
+    if (state.trumpRevealed) return state;
+    if (action.player !== state.currentPlayer) return state;
+
+    const hand = state.hands[action.player] ?? [];
+    if (!shouldRevealTrump(hand, state.trick)) {
+      return state;
+    }
+
+    return {
+      ...state,
+      trumpRevealed: true,
+      log: [...state.log, `Trump revealed by P${action.player + 1}.`],
     };
   }
 
@@ -235,6 +263,13 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     points,
     tricksWon,
     lastTrickWinnerTeam: winnerTeam,
+    lastTrick: {
+      number: state.trickNumber + 1,
+      winner: winner.player,
+      card: winner.card,
+      points: totalScore,
+      team: winnerTeam,
+    },
     phase,
     log,
   };
