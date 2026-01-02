@@ -53,6 +53,7 @@ const makeGameState = (cards: PlayingCard[]): GameState => ({
   trickNumber: 0,
   currentPlayerId: "player1",
   log: [],
+  lastTrick: null,
 });
 
 const makeEngineState = (): EngineState => createGameState({ seed: 1, trumpSuit: "spades", bidTarget: 16 });
@@ -82,14 +83,17 @@ describe("/game UI", () => {
       legalCardIds: [legal.id],
       onPlayCard: playCardMock,
       onNewGame: vi.fn(),
+      canRevealTrump: false,
+      onRevealTrump: vi.fn(),
       lastMove: null,
       botSettings: {
         enabled: false,
         difficulty: "easy",
-        model: "openai/gpt-4o-mini",
+        model: "google/gemini-3-pro-preview",
         temperature: 0.2,
-        usageHint: "Uses LLM only when 2 or fewer legal moves.",
+        usageHint: "Uses LLM on every bot move (conservative style).",
       },
+      llmInUse: false,
       setBotEnabled: vi.fn(),
       setBotDifficulty: vi.fn(),
     });

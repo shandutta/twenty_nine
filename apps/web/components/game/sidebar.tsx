@@ -61,7 +61,7 @@ export function GameSidebar({
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
 
   return (
-    <aside className="hidden lg:flex w-80 flex-col border-r border-white/10 bg-[#0c1813]">
+    <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
       <div className="p-5 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
@@ -74,7 +74,7 @@ export function GameSidebar({
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="flex-1 flex flex-col">
+      <Tabs defaultValue="overview" className="flex-1 min-h-0">
         <TabsList className="mx-4 mt-4 grid grid-cols-3">
           <TabsTrigger value="overview" className="gap-2">
             <Trophy className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function GameSidebar({
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 px-4">
+        <ScrollArea className="flex-1 min-h-0 px-4">
           <TabsContent value="overview" className="mt-4 space-y-4">
             <Card className="bg-black/40 border-white/10">
               <CardHeader className="pb-2">
@@ -173,7 +173,7 @@ export function GameSidebar({
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-emerald-50">Enable LLM strategy</p>
-                    <p className="text-xs text-emerald-100/60">Let bots consult OpenRouter on tricky turns.</p>
+                    <p className="text-xs text-emerald-100/60">Let bots consult OpenRouter on every move.</p>
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>

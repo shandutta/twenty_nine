@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,9 @@ interface GameTableProps {
   legalCardIds: string[];
   animationsEnabled: boolean;
   onNewGame: () => void;
+  canRevealTrump: boolean;
+  onRevealTrump: () => void;
+  llmInUse: boolean;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -191,12 +195,25 @@ function CardBack({ size = "small" }: { size?: "small" | "medium" }) {
   );
 }
 
-function StatusChip({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+function StatusChip({
+  label,
+  value,
+  highlight,
+  className,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+  className?: string;
+}) {
   return (
     <div
       className={cn(
-        "rounded-full border px-3 py-2",
-        highlight ? "border-[#f2c879] bg-[#f2c879] text-[#2b1c07]" : "border-white/15 bg-black/30 text-emerald-50"
+        "rounded-2xl border px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+        highlight
+          ? "border-[#f2c879]/70 bg-gradient-to-br from-[#f2c879] to-[#d9a74e] text-[#2b1c07]"
+          : "border-white/12 bg-black/30 text-emerald-50",
+        className
       )}
     >
       <div
@@ -208,6 +225,19 @@ function StatusChip({ label, value, highlight }: { label: string; value: string;
         {label}
       </div>
       <div className="text-sm font-semibold">{value}</div>
+    </div>
+  );
+}
+
+function LiveAiIndicator({ active }: { active: boolean }) {
+  if (!active) return null;
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-[#f2c879]/35 bg-[#f2c879]/10 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#f6dca0]">
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#f2c879]/70 opacity-75" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f2c879]" />
+      </span>
+      Live AI planning
     </div>
   );
 }
@@ -266,7 +296,14 @@ function OpponentArea({
   );
 }
 
-export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabled, onNewGame }: GameTableProps) {
+export function GameTable({
+  gameState,
+  onPlayCard,
+  legalCardIds,
+  animationsEnabled,
+  onNewGame,
+  llmInUse,
+}: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
   const topPlayer = gameState.players.find((p) => p.position === "top")!;
@@ -278,10 +315,89 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
   const teamB = gameState.teams.teamB;
   const bidderName = gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-";
   const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
+  const lastTrick = gameState.lastTrick;
+  const lastTrickWinner = lastTrick ? gameState.players.find((p) => p.id === lastTrick.winnerPlayerId) : null;
+  const lastTrickTeam = lastTrick
+    ? lastTrick.winnerTeamId === "teamA"
+      ? teamA
+      : teamB
+    : null;
+  const lastTrickAccent = lastTrick
+    ? lastTrick.winnerTeamId === "teamA"
+      ? "text-emerald-200"
+      : "text-rose-200"
+    : "text-emerald-200";
+  const lastTrickBadge = lastTrick
+    ? lastTrick.winnerTeamId === "teamA"
+      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
+      : "border-rose-400/40 bg-rose-500/15 text-rose-100"
+    : "border-emerald-400/40 bg-emerald-500/15 text-emerald-100";
+  const lastTrickCardLabel = lastTrick
+    ? `${lastTrick.winningCard.rank}${suitSymbols[lastTrick.winningCard.suit]}`
+    : "--";
+
+  const [showTrickToast, setShowTrickToast] = useState(false);
+  const lastTrickNumber = lastTrick?.trickNumber ?? null;
+
+  useEffect(() => {
+    if (lastTrickNumber === null) {
+      const hideTimer = setTimeout(() => {
+        setShowTrickToast(false);
+      }, 0);
+      return () => {
+        clearTimeout(hideTimer);
+      };
+    }
+
+    const showTimer = setTimeout(() => {
+      setShowTrickToast(true);
+    }, 0);
+    const hideTimer = setTimeout(() => {
+      setShowTrickToast(false);
+    }, 2600);
+
+    return () => {
+      clearTimeout(showTimer);
+      clearTimeout(hideTimer);
+    };
+  }, [lastTrickNumber]);
 
   return (
     <TooltipProvider>
       <div className="relative h-full w-full p-4 md:p-8">
+        {lastTrick && (
+          <div
+            className={cn(
+              "pointer-events-none absolute left-1/2 top-20 z-20 -translate-x-1/2 transition-all duration-300",
+              showTrickToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"
+            )}
+            aria-live="polite"
+          >
+            <div className="flex items-center gap-4 rounded-3xl border border-white/15 bg-[#0b1612]/95 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)]">
+              <div className="flex flex-col gap-1">
+                <span className="text-[10px] uppercase tracking-[0.35em] text-emerald-100/60">
+                  Trick {lastTrick.trickNumber} resolved
+                </span>
+                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-50">
+                  <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
+                  <span className="text-emerald-100/70">won</span>
+                  <Badge className={cn("border text-[10px] uppercase tracking-[0.18em]", lastTrickBadge)}>
+                    {lastTrickTeam?.name ?? "Team"}
+                  </Badge>
+                  <span className="text-emerald-50">+{lastTrick.points} pts</span>
+                </div>
+                <div className="text-xs text-emerald-100/70">
+                  Winning card: <span className="text-emerald-50">{lastTrickCardLabel}</span>
+                </div>
+              </div>
+              <div className="hidden sm:block">
+                <div className="origin-center scale-75 md:scale-90">
+                  <PlayedCard card={lastTrick.winningCard} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="absolute inset-4 md:inset-8 rounded-[36px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,0,0,0.5),_transparent_70%)]" />
           <div className="absolute inset-6 rounded-[28px] border border-white/10" />
@@ -289,41 +405,69 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
         </div>
 
         <div className="relative h-full flex flex-col px-4 md:px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Badge className="border border-white/15 bg-white/5 text-emerald-50">Solo Table</Badge>
-              <span className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-                Round {gameState.roundNumber}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <StatusChip label="Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
-              <StatusChip label="Trump" value={trumpLabel} highlight={gameState.trumpRevealed} />
-              <StatusChip label="Trick" value={`${Math.min(gameState.trickNumber + 1, 8)} / 8`} />
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded-2xl border border-white/10 bg-black/30 px-4 py-2 text-xs text-emerald-100/70">
-                <div className="flex items-center justify-between gap-6">
-                  <span className="text-emerald-200">You + North</span>
-                  <span className="text-emerald-50">
-                    {teamA.tricksWon} tricks · {teamA.handPoints} pts
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center justify-between gap-6">
-                  <span className="text-rose-200">West + East</span>
-                  <span className="text-emerald-50">
-                    {teamB.tricksWon} tricks · {teamB.handPoints} pts
-                  </span>
+          <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c1813]/85 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(2,6,5,0.7),_transparent_70%)]" />
+            <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.05)_0,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_8px)]" />
+            <div className="relative flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <Badge className="gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-emerald-50 shadow-[inset_0_0_12px_rgba(34,197,94,0.15)]">
+                  <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.65)]" />
+                  <span className="text-[10px] uppercase tracking-[0.32em]">Solo Table</span>
+                </Badge>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.32em] text-emerald-100/60">
+                  <span>Round</span>
+                  <span className="text-emerald-50">{gameState.roundNumber}</span>
                 </div>
               </div>
-              <Button
-                onClick={onNewGame}
-                size="sm"
-                className="gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
-              >
-                <RotateCcw className="h-4 w-4" />
-                <span>New Game</span>
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusChip label="Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
+                <StatusChip
+                  label="Trump"
+                  value={trumpLabel}
+                  highlight={gameState.trumpRevealed}
+                  className={cn(
+                    canRevealTrump &&
+                      !gameState.trumpRevealed &&
+                      "ring-2 ring-[#f2c879]/30 shadow-[0_0_18px_rgba(242,200,121,0.25)]"
+                  )}
+                />
+                <StatusChip label="Trick" value={`${Math.min(gameState.trickNumber + 1, 8)} / 8`} />
+                <LiveAiIndicator active={llmInUse} />
+                {canRevealTrump && (
+                  <Button
+                    onClick={onRevealTrump}
+                    size="sm"
+                    title="Reveal trump (void in lead suit)"
+                    className="h-9 rounded-full border border-[#f2c879]/50 bg-[#1a1306]/70 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:bg-[#f2c879]/20"
+                  >
+                    Reveal Trump
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1410]/70 via-black/40 to-[#123324]/40 px-4 py-2 text-xs text-emerald-100/70 shadow-[inset_0_0_18px_rgba(0,0,0,0.35)]">
+                  <div className="flex items-center justify-between gap-6">
+                    <span className="text-emerald-200">You + North</span>
+                    <span className="text-emerald-50">
+                      {teamA.tricksWon} tricks · {teamA.handPoints} pts
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between gap-6 border-t border-white/10 pt-1">
+                    <span className="text-rose-200">West + East</span>
+                    <span className="text-emerald-50">
+                      {teamB.tricksWon} tricks · {teamB.handPoints} pts
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  onClick={onNewGame}
+                  size="sm"
+                  className="hidden sm:inline-flex md:hidden gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span>New Game</span>
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -405,6 +549,21 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
               animationsEnabled={animationsEnabled}
             />
           </div>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center sm:hidden">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur">
+          <span className="text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
+            Round {gameState.roundNumber}
+          </span>
+          <Button
+            onClick={onNewGame}
+            size="sm"
+            className="gap-2 rounded-full bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+          >
+            <RotateCcw className="h-4 w-4" />
+            <span>New Game</span>
+          </Button>
         </div>
       </div>
     </TooltipProvider>

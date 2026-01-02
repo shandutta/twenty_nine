@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -299,24 +299,17 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setCardOrder((prev) => {
-      const currentIds = player.cards.map((card) => card.id);
-      const currentSet = new Set(currentIds);
-      const filteredPrev = prev.filter((id) => currentSet.has(id));
-      const missing = defaultOrder.filter((id) => !filteredPrev.includes(id));
-      const nextOrder = filteredPrev.length ? [...filteredPrev, ...missing] : defaultOrder;
-      if (nextOrder.length === prev.length && nextOrder.every((id, i) => id === prev[i])) {
-        return prev;
-      }
-      return nextOrder;
-    });
-  }, [player.cards, defaultOrder]);
+  const effectiveOrder = useMemo(() => {
+    const currentSet = new Set(defaultOrder);
+    const filteredPrev = cardOrder.filter((id) => currentSet.has(id));
+    const missing = defaultOrder.filter((id) => !filteredPrev.includes(id));
+    return filteredPrev.length ? [...filteredPrev, ...missing] : defaultOrder;
+  }, [cardOrder, defaultOrder]);
 
   const orderedCards = useMemo(() => {
     const cardMap = new Map(player.cards.map((card) => [card.id, card]));
-    return cardOrder.map((id) => cardMap.get(id)).filter(Boolean) as PlayingCard[];
-  }, [player.cards, cardOrder]);
+    return effectiveOrder.map((id) => cardMap.get(id)).filter(Boolean) as PlayingCard[];
+  }, [player.cards, effectiveOrder]);
 
   const handleDragStart = (cardId: string) => (event: DragEvent<HTMLButtonElement>) => {
     setDraggingId(cardId);
@@ -338,7 +331,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
       setDragOverId(null);
       return;
     }
-    setCardOrder((prev) => moveCard(prev, draggedId, cardId));
+    setCardOrder(() => moveCard(effectiveOrder, draggedId, cardId));
     setDraggingId(null);
     setDragOverId(null);
   };

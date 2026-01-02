@@ -7,6 +7,16 @@ import { GameSidebar } from "@/components/game/sidebar";
 import { SettingsSheet } from "@/components/game/settings-sheet";
 import { useGameController } from "@/components/game/use-game-controller";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const suitSymbols: Record<Suit, string> = {
   hearts: "♥",
@@ -62,8 +72,11 @@ function GamePageClient() {
     legalCardIds,
     onPlayCard,
     onNewGame,
+    canRevealTrump,
+    onRevealTrump,
     lastMove,
     botSettings,
+    llmInUse,
     setBotEnabled,
     setBotDifficulty,
   } = useGameController();
@@ -76,6 +89,7 @@ function GamePageClient() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
+  const [confirmNewGameOpen, setConfirmNewGameOpen] = useState(false);
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
@@ -88,6 +102,12 @@ function GamePageClient() {
   const legalAlternatives = lastMove ? formatCardList(lastMove.legalMoves) : "--";
 
   const canRequestCoach = coachEnabled && Boolean(lastMove) && !coachLoading && openRouterConfigured !== false;
+  const requestNewGame = () => setConfirmNewGameOpen(true);
+
+  const confirmNewGame = () => {
+    onNewGame();
+    setConfirmNewGameOpen(false);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -190,7 +210,7 @@ function GamePageClient() {
     <GameShell hydrated>
       <GameSidebar
         gameState={gameState}
-        onNewGame={onNewGame}
+        onNewGame={requestNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
@@ -211,7 +231,10 @@ function GamePageClient() {
           onPlayCard={onPlayCard}
           legalCardIds={legalCardIds}
           animationsEnabled={animationsEnabled}
-          onNewGame={onNewGame}
+          onNewGame={requestNewGame}
+          canRevealTrump={canRevealTrump}
+          onRevealTrump={onRevealTrump}
+          llmInUse={llmInUse}
         />
       </main>
       <SettingsSheet
@@ -223,7 +246,29 @@ function GamePageClient() {
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
+        onNewGame={requestNewGame}
       />
+      <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>
+        <AlertDialogContent className="border-white/10 bg-[#0c1813] text-emerald-50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Start a new game?</AlertDialogTitle>
+            <AlertDialogDescription className="text-emerald-100/70">
+              This will shuffle a fresh deck, reset the current round, and clear the trick log.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10">
+              Keep Playing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmNewGame}
+              className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+            >
+              Start New Game
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </GameShell>
   );
 }

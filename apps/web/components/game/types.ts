@@ -27,6 +27,14 @@ export interface Player {
   teamId: "teamA" | "teamB";
 }
 
+export interface LastTrickSummary {
+  trickNumber: number;
+  winnerPlayerId: string;
+  winnerTeamId: "teamA" | "teamB";
+  winningCard: PlayingCard;
+  points: number;
+}
+
 export interface GameState {
   players: Player[];
   teams: {
@@ -43,4 +51,5 @@ export interface GameState {
   trickNumber: number;
   currentPlayerId: string;
   log: string[];
+  lastTrick: LastTrickSummary | null;
 }
