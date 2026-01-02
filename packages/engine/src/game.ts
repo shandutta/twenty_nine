@@ -130,13 +130,13 @@ export const chooseBotCard = ({ hand, trick }: { hand: Card[]; trick: TrickState
   const legal = getLegalPlays(hand, trick);
   if (legal.length === 1) return legal[0];
 
-  const byPoints = legal.slice().sort((a, b) => {
-    const pointDiff = cardPoints(b) - cardPoints(a);
+  const bySafety = legal.slice().sort((a, b) => {
+    const pointDiff = cardPoints(a) - cardPoints(b);
     if (pointDiff !== 0) return pointDiff;
-    return rankTieBreaker(b, a);
+    return rankTieBreaker(a, b);
   });
 
-  return byPoints[0];
+  return bySafety[0];
 };
 
 export const reduceGame = (state: GameState, action: GameAction): GameState => {
