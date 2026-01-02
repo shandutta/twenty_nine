@@ -6,7 +6,7 @@ const card = (suit: Suit, rank: Card["rank"]): Card => ({ suit, rank });
 
 describe("trump reveal action", () => {
   it("allows a player to reveal trump when void in the lead suit", () => {
-    const base = createGameState({ seed: 7, trumpSuit: "spades" });
+    const base = createGameState({ seed: 7, trumpSuit: "spades", phase: "playing" });
     const state = {
       ...base,
       currentPlayer: 0,
@@ -22,7 +22,7 @@ describe("trump reveal action", () => {
   });
 
   it("ignores reveal requests when the player can follow suit", () => {
-    const base = createGameState({ seed: 11, trumpSuit: "spades" });
+    const base = createGameState({ seed: 11, trumpSuit: "spades", phase: "playing" });
     const state = {
       ...base,
       currentPlayer: 0,

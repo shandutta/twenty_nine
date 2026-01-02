@@ -60,7 +60,8 @@ const makeGameState = (cards: PlayingCard[]): GameState => ({
   lastTrick: null,
 });
 
-const makeEngineState = (): EngineState => createGameState({ seed: 1, trumpSuit: "spades", bidTarget: 16 });
+const makeEngineState = (): EngineState =>
+  createGameState({ seed: 1, trumpSuit: "spades", bidTarget: 16, phase: "playing" });
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -86,6 +87,12 @@ describe("/game UI", () => {
       engineState: makeEngineState(),
       legalCardIds: [legal.id],
       onPlayCard: playCardMock,
+      bidOptions: [],
+      canBid: false,
+      onPlaceBid: vi.fn(),
+      onPassBid: vi.fn(),
+      canChooseTrump: false,
+      onChooseTrump: vi.fn(),
       onNewGame: vi.fn(),
       canRevealTrump: false,
       onRevealTrump: vi.fn(),

@@ -14,4 +14,8 @@ export type EngineConfig = {
    * The absolute royals adjustment amount (use 4 for Twenty-Nine).
    */
   royalsAdjustment: number;
+  /**
+   * Who leads the first trick after trump selection.
+   */
+  openingLead: "left-of-dealer" | "bidder";
 };

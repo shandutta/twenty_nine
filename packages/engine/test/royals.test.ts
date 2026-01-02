@@ -8,6 +8,7 @@ const config: EngineConfig = {
   minBid: 16,
   maxBidTarget: 29,
   royalsAdjustment: 4,
+  openingLead: "left-of-dealer",
 };
 
 describe("royals declaration rules", () => {

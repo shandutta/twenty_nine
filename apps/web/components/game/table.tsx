@@ -14,6 +14,12 @@ interface GameTableProps {
   onPlayCard: (card: PlayingCard) => void;
   legalCardIds: string[];
   animationsEnabled: boolean;
+  bidOptions: number[];
+  canBid: boolean;
+  onPlaceBid: (amount: number) => void;
+  onPassBid: () => void;
+  canChooseTrump: boolean;
+  onChooseTrump: (suit: Suit) => void;
   onNewGame: () => void;
   canRevealTrump: boolean;
   onRevealTrump: () => void;
@@ -28,6 +34,8 @@ const suitSymbols: Record<string, string> = {
   clubs: "♣",
   spades: "♠",
 };
+
+const TRUMP_OPTIONS: Suit[] = ["clubs", "diamonds", "hearts", "spades"];
 
 function getSuitColor(suit: Suit) {
   return suit === "hearts" || suit === "diamonds" ? "text-rose-500" : "text-slate-900";
@@ -306,6 +314,12 @@ export function GameTable({
   onPlayCard,
   legalCardIds,
   animationsEnabled,
+  bidOptions,
+  canBid,
+  onPlaceBid,
+  onPassBid,
+  canChooseTrump,
+  onChooseTrump,
   onNewGame,
   canRevealTrump,
   onRevealTrump,
@@ -322,12 +336,25 @@ export function GameTable({
 
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
-  const bidderName = gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-";
-  const bidderTeamId = teamA.players.includes(gameState.bidWinner ?? "") ? "teamA" : "teamB";
-  const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
+  const bidderName = gameState.bidWinner
+    ? gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-"
+    : "--";
+  const bidderTeamId = gameState.bidWinner
+    ? teamA.players.includes(gameState.bidWinner)
+      ? "teamA"
+      : "teamB"
+    : null;
+  const trumpLabel = gameState.trumpSuit
+    ? gameState.trumpRevealed
+      ? suitSymbols[gameState.trumpSuit]
+      : "Hidden"
+    : "Pending";
+  const currentPlayerName = gameState.players.find((p) => p.id === gameState.currentPlayerId)?.name ?? "--";
+  const isBidding = gameState.phase === "bidding";
+  const isChoosingTrump = gameState.phase === "choose-trump";
   const royalsTeamId = gameState.royalsDeclaredBy;
   const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
-  const royalsDirection = royalsTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
+  const royalsDirection = royalsTeamId && bidderTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
   const royalsValue = royalsTeamId
     ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
     : canDeclareRoyals
@@ -418,6 +445,84 @@ export function GameTable({
                   <PlayedCard card={lastTrick.winningCard} />
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+        {(isBidding || isChoosingTrump) && (
+          <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center px-4">
+            <div className="pointer-events-auto w-full max-w-lg rounded-[28px] border border-white/10 bg-[#0b1612]/95 p-5 shadow-[0_22px_60px_rgba(0,0,0,0.55)] backdrop-blur">
+              {isBidding ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-emerald-50">Bidding</h2>
+                    <Badge className="border-white/10 bg-white/5 text-emerald-100">
+                      Min {gameState.royalsMinTarget} · Max {gameState.royalsMaxTarget}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-emerald-100/70">
+                    Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
+                    {bidderName !== "--" && <span className="text-emerald-100/70"> · {bidderName}</span>}
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                    {canBid ? "Your turn to bid" : `Waiting for ${currentPlayerName}`}
+                  </div>
+                  {canBid && bidOptions.length > 0 && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {bidOptions.map((bid) => (
+                        <Button
+                          key={bid}
+                          onClick={() => onPlaceBid(bid)}
+                          size="sm"
+                          className="h-9 rounded-full bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+                        >
+                          Bid {bid}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-3">
+                    <Button
+                      onClick={onPassBid}
+                      size="sm"
+                      disabled={!canBid}
+                      className="h-9 rounded-full border border-white/15 bg-white/5 px-5 text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                    >
+                      Pass
+                    </Button>
+                    {!canBid && <span className="text-xs text-emerald-100/60">Bots are bidding…</span>}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-emerald-50">Choose Trump</h2>
+                    <Badge className="border-white/10 bg-white/5 text-emerald-100">
+                      Contract {gameState.currentBid ?? "--"}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-emerald-100/70">
+                    Bid winner: <span className="text-emerald-50">{bidderName}</span>
+                  </div>
+                  <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                    {canChooseTrump ? "Pick the trump suit" : `Waiting for ${currentPlayerName}`}
+                  </div>
+                  {canChooseTrump && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {TRUMP_OPTIONS.map((suit) => (
+                        <Button
+                          key={suit}
+                          onClick={() => onChooseTrump(suit)}
+                          size="sm"
+                          className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                        >
+                          <span className="mr-2 text-base">{suitSymbols[suit]}</span>
+                          {suit[0].toUpperCase() + suit.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

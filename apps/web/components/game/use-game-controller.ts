@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  SUITS,
   cardPoints,
   canDeclareRoyals,
   chooseBotCard,
@@ -74,6 +75,51 @@ const cardId = (card: Card) => `${card.suit}-${card.rank}`;
 const cardLabel = (card: Card) => `${card.rank} of ${card.suit}`;
 
 const TEAM_LABELS = ["Team A (You & North)", "Team B (West & East)"] as const;
+
+const estimateHandStrength = (hand: Card[]): number => {
+  const basePoints = hand.reduce((sum, card) => sum + cardPoints(card), 0);
+  const highCards = hand.filter((card) => card.rank === "J" || card.rank === "9").length;
+  return basePoints + highCards * 0.6;
+};
+
+const chooseBotBidAmount = (
+  hand: Card[],
+  currentBid: number | null,
+  config: EngineState["config"]
+): number | null => {
+  const strength = estimateHandStrength(hand);
+  const minBid = config.minBid;
+  const maxBid = config.maxBidTarget;
+  const minRaise = currentBid !== null ? currentBid + 1 : minBid;
+  const desired = Math.min(maxBid, Math.max(minBid, Math.round(strength)));
+
+  if (desired < minRaise) {
+    return null;
+  }
+
+  return Math.min(desired, maxBid);
+};
+
+const chooseBotTrumpSuit = (hand: Card[]): Suit => {
+  let bestSuit: Suit = SUITS[0];
+  let bestScore = Number.NEGATIVE_INFINITY;
+  for (const suit of SUITS) {
+    const suited = hand.filter((card) => card.suit === suit);
+    const suitPoints = suited.reduce((sum, card) => sum + cardPoints(card), 0);
+    const jackNineBonus = suited.reduce((sum, card) => {
+      if (card.rank === "J") return sum + 1.2;
+      if (card.rank === "9") return sum + 0.9;
+      return sum;
+    }, 0);
+    const lengthBonus = suited.length * 0.25;
+    const score = suitPoints + jackNineBonus + lengthBonus;
+    if (score > bestScore) {
+      bestScore = score;
+      bestSuit = suit;
+    }
+  }
+  return bestSuit;
+};
 
 const STRATEGY_GUIDE: Record<BotDifficulty, string> = {
   easy: [
@@ -167,6 +213,8 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   const playerMeta = PLAYER_META[player];
   const myTeam = teamForPlayer(player);
   const bidderTeam = state.bidderTeam;
+  const bidderLabel = bidderTeam === null ? "TBD" : TEAM_LABELS[bidderTeam];
+  const bidTarget = state.bidTarget ?? "--";
   const trickIndex = state.trickNumber + 1;
   const currentTrick = state.trick.plays.length
     ? state.trick.plays.map((play) => `${PLAYER_META[play.player].name}:${cardLabel(play.card)}`).join(", ")
@@ -189,7 +237,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     strategy,
     "",
     `Player: ${playerMeta.name} (${playerMeta.position}).`,
-    `Your team: ${TEAM_LABELS[myTeam]}. Bidder: ${TEAM_LABELS[bidderTeam]} (target ${state.bidTarget}).`,
+    `Your team: ${TEAM_LABELS[myTeam]}. Bidder: ${bidderLabel} (target ${bidTarget}).`,
     `Trick ${trickIndex} of 8. Lead suit: ${lead}. Trump: ${state.trumpRevealed ? state.trumpSuit : "hidden"}.`,
     `Early trick: ${state.trickNumber < 3 ? "yes" : "no"}.`,
     `Score: Team A ${state.points[0]} pts, Team B ${state.points[1]} pts.`,
@@ -248,13 +296,16 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     isCurrentPlayer: state.currentPlayer === index,
   }));
 
+  const bidderPlayerId = state.bidderPlayer !== null ? PLAYER_META[state.bidderPlayer].id : null;
+  const bidderTeamId = state.bidderPlayer !== null ? (state.bidderPlayer % 2 === 0 ? "teamA" : "teamB") : null;
+
   const teamA: Team = {
     id: "teamA",
     name: "You & North",
     players: [PLAYER_META[0].id, PLAYER_META[2].id],
     tricksWon: state.tricksWon[0],
-    bid: state.bidTarget,
-    bidWinner: state.bidderTeam === 0 ? PLAYER_META[0].id : PLAYER_META[1].id,
+    bid: bidderTeamId === "teamA" ? state.bidTarget ?? undefined : undefined,
+    bidWinner: bidderTeamId === "teamA" ? bidderPlayerId ?? undefined : undefined,
     gameScore: 0,
     handPoints: state.points[0],
   };
@@ -264,6 +315,8 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     name: "West & East",
     players: [PLAYER_META[1].id, PLAYER_META[3].id],
     tricksWon: state.tricksWon[1],
+    bid: bidderTeamId === "teamB" ? state.bidTarget ?? undefined : undefined,
+    bidWinner: bidderTeamId === "teamB" ? bidderPlayerId ?? undefined : undefined,
     gameScore: 0,
     handPoints: state.points[1],
   };
@@ -289,9 +342,9 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     trumpSuit: state.trumpSuit,
     trumpRevealed: state.trumpRevealed,
     currentTrick,
-    phase: state.phase === "playing" ? "playing" : "finished",
+    phase: state.phase === "hand-complete" ? "finished" : state.phase,
     currentBid: state.bidTarget,
-    bidWinner: state.bidderTeam === 0 ? PLAYER_META[0].id : PLAYER_META[1].id,
+    bidWinner: bidderPlayerId,
     royalsDeclaredBy: state.royalsDeclaredBy === null ? null : state.royalsDeclaredBy === 0 ? "teamA" : "teamB",
     royalsAdjustment: state.config.royalsAdjustment,
     royalsMinTarget: state.config.minBid,
@@ -345,6 +398,9 @@ export const useGameController = () => {
   }, []);
 
   const legalCards = useMemo(() => {
+    if (engineState.phase !== "playing") {
+      return [];
+    }
     const hand = engineState.hands[HUMAN_PLAYER];
     return getLegalPlays(hand, engineState.trick).map(cardId);
   }, [engineState]);
@@ -364,6 +420,47 @@ export const useGameController = () => {
     [dispatch, engineState, legalCards]
   );
 
+  const canBid = useMemo(
+    () => engineState.phase === "bidding" && engineState.currentPlayer === HUMAN_PLAYER,
+    [engineState]
+  );
+
+  const bidOptions = useMemo(() => {
+    if (!canBid) return [];
+    const minBid = engineState.config.minBid;
+    const maxBid = engineState.config.maxBidTarget;
+    const current = engineState.bidTarget ?? minBid - 1;
+    const start = Math.max(minBid, current + 1);
+    if (start > maxBid) return [];
+    return Array.from({ length: maxBid - start + 1 }, (_, i) => start + i);
+  }, [canBid, engineState]);
+
+  const handlePlaceBid = useCallback(
+    (amount: number) => {
+      if (!canBid) return;
+      dispatch({ type: "placeBid", player: HUMAN_PLAYER, amount });
+    },
+    [canBid, dispatch]
+  );
+
+  const handlePassBid = useCallback(() => {
+    if (!canBid) return;
+    dispatch({ type: "passBid", player: HUMAN_PLAYER });
+  }, [canBid, dispatch]);
+
+  const canChooseTrump = useMemo(
+    () => engineState.phase === "choose-trump" && engineState.currentPlayer === HUMAN_PLAYER,
+    [engineState]
+  );
+
+  const handleChooseTrump = useCallback(
+    (suit: Suit) => {
+      if (!canChooseTrump) return;
+      dispatch({ type: "chooseTrump", player: HUMAN_PLAYER, suit });
+    },
+    [canChooseTrump, dispatch]
+  );
+
   const handleNewGame = useCallback(() => {
     setEngineState(createGameState({ seed: Date.now() }));
     setRoundNumber((prev) => prev + 1);
@@ -372,6 +469,7 @@ export const useGameController = () => {
 
   const canRevealTrump = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (engineState.trumpSuit === null) return false;
     if (engineState.trumpRevealed) return false;
     if (engineState.currentPlayer !== HUMAN_PLAYER) return false;
     const hand = engineState.hands[HUMAN_PLAYER] ?? [];
@@ -385,6 +483,7 @@ export const useGameController = () => {
 
   const canDeclareRoyalsForHuman = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (engineState.trumpSuit === null) return false;
     if (engineState.royalsDeclaredBy !== null) return false;
     if (engineState.lastTrickWinnerTeam === null) return false;
     const hand = engineState.hands[HUMAN_PLAYER] ?? [];
@@ -404,7 +503,10 @@ export const useGameController = () => {
   }, [canDeclareRoyalsForHuman, dispatch]);
 
   useEffect(() => {
-    if (engineState.phase !== "playing") return;
+    if (engineState.phase !== "playing") {
+      setLlmInUse(false);
+    }
+    if (engineState.phase === "hand-complete") return;
     if (engineState.currentPlayer === HUMAN_PLAYER) return;
 
     if (botTimeout.current) {
@@ -418,6 +520,36 @@ export const useGameController = () => {
       const takeTurn = async () => {
         const snapshot = stateRef.current;
         if (snapshot.currentPlayer !== botPlayer) {
+          return;
+        }
+
+        if (snapshot.phase === "bidding") {
+          const hand = snapshot.hands[botPlayer] ?? [];
+          const bid = chooseBotBidAmount(hand, snapshot.bidTarget, snapshot.config);
+          const latest = stateRef.current;
+          if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
+            return;
+          }
+          if (bid === null) {
+            dispatch({ type: "passBid", player: botPlayer });
+          } else {
+            dispatch({ type: "placeBid", player: botPlayer, amount: bid });
+          }
+          return;
+        }
+
+        if (snapshot.phase === "choose-trump") {
+          const hand = snapshot.hands[botPlayer] ?? [];
+          const suit = chooseBotTrumpSuit(hand);
+          const latest = stateRef.current;
+          if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
+            return;
+          }
+          dispatch({ type: "chooseTrump", player: botPlayer, suit });
+          return;
+        }
+
+        if (snapshot.phase !== "playing") {
           return;
         }
 
@@ -462,6 +594,12 @@ export const useGameController = () => {
     engineState,
     legalCardIds: legalCards,
     onPlayCard: handlePlayCard,
+    bidOptions,
+    canBid,
+    onPlaceBid: handlePlaceBid,
+    onPassBid: handlePassBid,
+    canChooseTrump,
+    onChooseTrump: handleChooseTrump,
     onNewGame: handleNewGame,
     canRevealTrump,
     onRevealTrump: handleRevealTrump,

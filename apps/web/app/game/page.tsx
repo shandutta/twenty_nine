@@ -71,6 +71,12 @@ function GamePageClient() {
     engineState,
     legalCardIds,
     onPlayCard,
+    bidOptions,
+    canBid,
+    onPlaceBid,
+    onPassBid,
+    canChooseTrump,
+    onChooseTrump,
     onNewGame,
     canRevealTrump,
     onRevealTrump,
@@ -233,6 +239,12 @@ function GamePageClient() {
           onPlayCard={onPlayCard}
           legalCardIds={legalCardIds}
           animationsEnabled={animationsEnabled}
+          bidOptions={bidOptions}
+          canBid={canBid}
+          onPlaceBid={onPlaceBid}
+          onPassBid={onPassBid}
+          canChooseTrump={canChooseTrump}
+          onChooseTrump={onChooseTrump}
           onNewGame={requestNewGame}
           canRevealTrump={canRevealTrump}
           onRevealTrump={onRevealTrump}

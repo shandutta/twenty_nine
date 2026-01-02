@@ -56,13 +56,23 @@ export function GameSidebar({
 }: GameSidebarProps) {
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
-  const bidderName = gameState.players.find((player) => player.id === gameState.bidWinner)?.name ?? "-";
-  const bidderTeamId = teamA.players.includes(gameState.bidWinner ?? "") ? "teamA" : "teamB";
-  const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
+  const bidderName = gameState.bidWinner
+    ? gameState.players.find((player) => player.id === gameState.bidWinner)?.name ?? "-"
+    : "--";
+  const bidderTeamId = gameState.bidWinner
+    ? teamA.players.includes(gameState.bidWinner)
+      ? "teamA"
+      : "teamB"
+    : null;
+  const trumpLabel = gameState.trumpSuit
+    ? gameState.trumpRevealed
+      ? suitSymbols[gameState.trumpSuit]
+      : "Hidden"
+    : "Pending";
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
   const royalsTeamId = gameState.royalsDeclaredBy;
   const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
-  const royalsDirection = royalsTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
+  const royalsDirection = royalsTeamId && bidderTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
   const royalsStatus = royalsTeamId
     ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
     : "Not declared";

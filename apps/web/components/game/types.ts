@@ -44,8 +44,8 @@ export interface GameState {
   trumpSuit: Suit | null;
   trumpRevealed: boolean;
   currentTrick: { playerId: string; card: PlayingCard }[];
-  phase: "playing" | "finished";
-  currentBid: number;
+  phase: "bidding" | "choose-trump" | "playing" | "finished";
+  currentBid: number | null;
   bidWinner: string | null;
   royalsDeclaredBy: "teamA" | "teamB" | null;
   royalsAdjustment: number;

@@ -19,13 +19,35 @@ describe("useGameController", () => {
 
     const { result } = renderHook(() => useGameController());
 
-    const firstLegalId = result.current.legalCardIds[0];
-    expect(firstLegalId).toBeTruthy();
-    const humanCard = result.current.gameState.players[0].cards.find((card) => card.id === firstLegalId)!;
+    let safety = 0;
+    while (result.current.engineState.phase !== "playing" && safety < 25) {
+      if (result.current.engineState.phase === "bidding" && result.current.engineState.currentPlayer === 0) {
+        await act(async () => {
+          result.current.onPassBid();
+        });
+      }
+      if (result.current.engineState.phase === "choose-trump" && result.current.engineState.currentPlayer === 0) {
+        await act(async () => {
+          result.current.onChooseTrump("spades");
+        });
+      }
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      safety += 1;
+    }
 
-    await act(async () => {
-      result.current.onPlayCard(humanCard);
-    });
+    expect(result.current.engineState.phase).toBe("playing");
+
+    if (result.current.engineState.currentPlayer === 0) {
+      const firstLegalId = result.current.legalCardIds[0];
+      expect(firstLegalId).toBeTruthy();
+      const humanCard = result.current.gameState.players[0].cards.find((card) => card.id === firstLegalId)!;
+
+      await act(async () => {
+        result.current.onPlayCard(humanCard);
+      });
+    }
 
     const botPlayer = result.current.engineState.currentPlayer;
     const botLegal = getLegalPlays(result.current.engineState.hands[botPlayer], result.current.engineState.trick);
@@ -61,12 +83,34 @@ describe("useGameController", () => {
       result.current.setBotDifficulty("hard");
     });
 
-    const firstLegalId = result.current.legalCardIds[0];
-    const humanCard = result.current.gameState.players[0].cards.find((card) => card.id === firstLegalId)!;
+    let safety = 0;
+    while (result.current.engineState.phase !== "playing" && safety < 25) {
+      if (result.current.engineState.phase === "bidding" && result.current.engineState.currentPlayer === 0) {
+        await act(async () => {
+          result.current.onPassBid();
+        });
+      }
+      if (result.current.engineState.phase === "choose-trump" && result.current.engineState.currentPlayer === 0) {
+        await act(async () => {
+          result.current.onChooseTrump("hearts");
+        });
+      }
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+      safety += 1;
+    }
 
-    await act(async () => {
-      result.current.onPlayCard(humanCard);
-    });
+    expect(result.current.engineState.phase).toBe("playing");
+
+    if (result.current.engineState.currentPlayer === 0) {
+      const firstLegalId = result.current.legalCardIds[0];
+      const humanCard = result.current.gameState.players[0].cards.find((card) => card.id === firstLegalId)!;
+
+      await act(async () => {
+        result.current.onPlayCard(humanCard);
+      });
+    }
 
     const botPlayer = result.current.engineState.currentPlayer;
     const botLegal = getLegalPlays(result.current.engineState.hands[botPlayer], result.current.engineState.trick);

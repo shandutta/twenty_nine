@@ -50,11 +50,11 @@ OPENROUTER_API_KEY=your_openrouter_key_here
 
 ## Status and roadmap
 
-Current status: v0.4. The core solo hand flow is playable with deterministic scoring, trump reveal, royals, AI bots, and an AI coach. The UX is solid but not yet polished to a professional finish, and LLM tuning is ongoing.
+Current status: v0.4. The core solo hand flow is playable with deterministic scoring, bidding + trump selection, trump reveal, royals, AI bots, and an AI coach. The UX is solid but not yet polished to a professional finish, and LLM tuning is ongoing.
 
 Planned next steps:
 
-- Richer bidding phase with player-selected trump.
+- Expanded bidding conventions and house-rule variants.
 - Seventh-card trump variant.
 - Single-hand variant (play alone with no trumps).
 - Joker indicator for no-trumps.
