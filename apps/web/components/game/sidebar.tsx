@@ -195,6 +195,7 @@ export function GameSidebar({
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-emerald-100/60 space-y-1">
                   <p>Model: {botSettings.model}</p>
+                  <p>Fallbacks: {botSettings.fallbackModels.join(", ")}</p>
                   <p>Temperature: {botSettings.temperature}</p>
                   <p>{botSettings.usageHint}</p>
                 </div>

@@ -317,11 +317,7 @@ export function GameTable({
   const trumpLabel = gameState.trumpRevealed && gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : "Hidden";
   const lastTrick = gameState.lastTrick;
   const lastTrickWinner = lastTrick ? gameState.players.find((p) => p.id === lastTrick.winnerPlayerId) : null;
-  const lastTrickTeam = lastTrick
-    ? lastTrick.winnerTeamId === "teamA"
-      ? teamA
-      : teamB
-    : null;
+  const lastTrickTeam = lastTrick ? (lastTrick.winnerTeamId === "teamA" ? teamA : teamB) : null;
   const lastTrickAccent = lastTrick
     ? lastTrick.winnerTeamId === "teamA"
       ? "text-emerald-200"

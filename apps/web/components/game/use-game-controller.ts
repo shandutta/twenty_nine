@@ -30,6 +30,7 @@ export type BotSettings = {
   enabled: boolean;
   difficulty: BotDifficulty;
   model: string;
+  fallbackModels: string[];
   temperature: number;
   usageHint: string;
 };
@@ -47,19 +48,22 @@ const BOT_THINK_TIME_MS = 450;
 const BOT_PRESETS: Record<BotDifficulty, Omit<BotSettings, "enabled">> = {
   easy: {
     difficulty: "easy",
-    model: "google/gemini-3-pro-preview",
+    model: "openai/gpt-5.2-pro",
+    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.2,
     usageHint: "Uses LLM on every bot move (conservative style).",
   },
   medium: {
     difficulty: "medium",
-    model: "google/gemini-3-pro-preview",
+    model: "openai/gpt-5.2-pro",
+    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.3,
     usageHint: "Uses LLM on every bot move (balanced style).",
   },
   hard: {
     difficulty: "hard",
-    model: "anthropic/claude-opus-4.5",
+    model: "openai/gpt-5.2-pro",
+    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.4,
     usageHint: "Uses LLM on every bot move (maximizes expected points).",
   },
@@ -164,9 +168,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   const bidderTeam = state.bidderTeam;
   const trickIndex = state.trickNumber + 1;
   const currentTrick = state.trick.plays.length
-    ? state.trick.plays
-        .map((play) => `${PLAYER_META[play.player].name}:${cardLabel(play.card)}`)
-        .join(", ")
+    ? state.trick.plays.map((play) => `${PLAYER_META[play.player].name}:${cardLabel(play.card)}`).join(", ")
     : "none";
   const strategy = STRATEGY_GUIDE[settings.difficulty];
   const legalMovesWithPoints = legalMoves
@@ -174,7 +176,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     .join(", ");
 
   const prompt = [
-    "You are an expert 29 card game bot. Return JSON only with keys \"rank\" and \"suit\".",
+    'You are an expert 29 card game bot. Return JSON only with keys "rank" and "suit".',
     "Always choose from the provided legal moves.",
     "",
     "Strategy guardrails:",
@@ -197,36 +199,45 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     "Respond with JSON only.",
   ].join("\n");
 
-  try {
-    const response = await fetch("/api/openrouter", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: settings.model,
-        temperature: settings.temperature,
-        messages: [
-          {
-            role: "system",
-            content: "You choose legal cards for a 29 card game. Respond with JSON only.",
-          },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
+  const modelQueue = Array.from(new Set([settings.model, ...settings.fallbackModels].filter(Boolean)));
 
-    if (!response.ok) {
-      return null;
-    }
+  for (const model of modelQueue) {
+    try {
+      const response = await fetch("/api/openrouter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          temperature: settings.temperature,
+          messages: [
+            {
+              role: "system",
+              content: "You choose legal cards for a 29 card game. Respond with JSON only.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
 
-    const data = (await response.json().catch(() => null)) as { message?: { content?: string } } | null;
-    const content = data?.message?.content;
-    if (!content) {
-      return null;
+      if (!response.ok) {
+        continue;
+      }
+
+      const data = (await response.json().catch(() => null)) as { message?: { content?: string } } | null;
+      const content = data?.message?.content;
+      if (!content) {
+        continue;
+      }
+      const parsed = parseCardFromText(content, legalMoves);
+      if (parsed) {
+        return parsed;
+      }
+    } catch {
+      continue;
     }
-    return parseCardFromText(content, legalMoves);
-  } catch {
-    return null;
   }
+
+  return null;
 };
 
 const createUiState = (state: EngineState, roundNumber: number): GameState => {

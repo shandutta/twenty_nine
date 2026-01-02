@@ -89,7 +89,8 @@ describe("/game UI", () => {
       botSettings: {
         enabled: false,
         difficulty: "easy",
-        model: "google/gemini-3-pro-preview",
+        model: "openai/gpt-5.2-pro",
+        fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
         temperature: 0.2,
         usageHint: "Uses LLM on every bot move (conservative style).",
       },

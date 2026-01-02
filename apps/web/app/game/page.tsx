@@ -260,10 +260,7 @@ function GamePageClient() {
             <AlertDialogCancel className="border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10">
               Keep Playing
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmNewGame}
-              className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
-            >
+            <AlertDialogAction onClick={confirmNewGame} className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
               Start New Game
             </AlertDialogAction>
           </AlertDialogFooter>
