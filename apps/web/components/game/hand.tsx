@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { DragEvent } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -28,6 +29,9 @@ const suitNames: Record<Suit, string> = {
   spades: "Spades",
 };
 
+const suitOrder: Suit[] = ["spades", "hearts", "clubs", "diamonds"];
+const rankOrder = ["J", "9", "A", "10", "K", "Q", "8", "7"];
+
 function getSuitColor(suit: Suit) {
   return suit === "hearts" || suit === "diamonds" ? "text-rose-500" : "text-slate-900";
 }
@@ -42,6 +46,16 @@ const cardValues: Record<string, number> = {
   "8": 0,
   "7": 0,
 };
+
+function moveCard(order: string[], draggedId: string, targetId: string) {
+  const current = [...order];
+  const fromIndex = current.indexOf(draggedId);
+  const toIndex = current.indexOf(targetId);
+  if (fromIndex === -1 || toIndex === -1 || fromIndex === toIndex) return order;
+  current.splice(fromIndex, 1);
+  current.splice(toIndex, 0, draggedId);
+  return current;
+}
 
 function getPipPositions(rank: string): { x: number; y: number; inverted?: boolean }[] {
   const positions: Record<string, { x: number; y: number; inverted?: boolean }[]> = {
@@ -136,6 +150,12 @@ function PlayableCard({
   index,
   total,
   animationsEnabled,
+  isDragging,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: {
   card: PlayingCard;
   onClick: () => void;
@@ -143,6 +163,12 @@ function PlayableCard({
   index: number;
   total: number;
   animationsEnabled: boolean;
+  isDragging: boolean;
+  isDragOver: boolean;
+  onDragStart: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragOver: (event: DragEvent<HTMLButtonElement>) => void;
+  onDrop: (event: DragEvent<HTMLButtonElement>) => void;
+  onDragEnd: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const suitColor = getSuitColor(card.suit);
@@ -156,29 +182,43 @@ function PlayableCard({
   const rotation = (index - centerOffset) * 3;
   const yOffset = Math.abs(index - centerOffset) * 2;
   const shouldAnimate = animationsEnabled && isPlayable;
+  const isLifted = shouldAnimate && (isHovered || isDragging);
+
+  const handleClick = () => {
+    if (!isPlayable || isDragging) return;
+    onClick();
+  };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            onClick={onClick}
-            disabled={!isPlayable}
+            onClick={handleClick}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            draggable
+            onDragStart={onDragStart}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onDragEnd={onDragEnd}
             aria-label={`${card.rank} of ${suitNames[card.suit]}`}
+            aria-disabled={!isPlayable}
+            aria-grabbed={isDragging}
             className={cn(
-              "relative rounded-xl bg-white/95 shadow-lg border overflow-hidden",
+              "relative rounded-xl bg-white/92 backdrop-blur-[2px] shadow-lg border overflow-hidden select-none cursor-grab active:cursor-grabbing",
               animationsEnabled && "transition-all duration-200",
               "h-[110px] w-[76px] md:h-[150px] md:w-[105px]",
               isPlayable
-                ? "border-[#f2c879] ring-2 ring-[#f2c879]/40 hover:shadow-2xl cursor-pointer"
-                : "border-slate-200/70 opacity-60 cursor-not-allowed"
+                ? "border-[#f2c879] ring-2 ring-[#f2c879]/40 hover:shadow-2xl"
+                : "border-white/20 bg-white/85 opacity-80",
+              isDragOver && !isDragging && "ring-2 ring-emerald-200/70",
+              isDragging && "shadow-[0_22px_55px_rgba(0,0,0,0.35)]"
             )}
             style={{
-              transform: `rotate(${shouldAnimate && isHovered ? 0 : rotation}deg) translateY(${shouldAnimate && isHovered ? -20 : yOffset}px)`,
+              transform: `rotate(${isLifted ? 0 : rotation}deg) translateY(${isLifted ? -22 : yOffset}px) scale(${isDragging ? 1.04 : 1})`,
               marginLeft: index === 0 ? 0 : "-1.25rem",
-              zIndex: isHovered ? 50 : index,
+              zIndex: isHovered || isDragging ? 60 : index,
             }}
           >
             <div className="absolute top-1.5 left-2 flex flex-col items-center leading-none">
@@ -246,14 +286,67 @@ function PlayableCard({
 }
 
 export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animationsEnabled }: HandProps) {
-  const suitOrder: Suit[] = ["spades", "hearts", "clubs", "diamonds"];
-  const rankOrder = ["J", "9", "A", "10", "K", "Q", "8", "7"];
+  const sortedCards = useMemo(() => {
+    return [...player.cards].sort((a, b) => {
+      const suitDiff = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
+      if (suitDiff !== 0) return suitDiff;
+      return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
+    });
+  }, [player.cards]);
 
-  const sortedCards = [...player.cards].sort((a, b) => {
-    const suitDiff = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit);
-    if (suitDiff !== 0) return suitDiff;
-    return rankOrder.indexOf(a.rank) - rankOrder.indexOf(b.rank);
-  });
+  const defaultOrder = useMemo(() => sortedCards.map((card) => card.id), [sortedCards]);
+  const [cardOrder, setCardOrder] = useState<string[]>(() => defaultOrder);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCardOrder((prev) => {
+      const currentIds = player.cards.map((card) => card.id);
+      const currentSet = new Set(currentIds);
+      const filteredPrev = prev.filter((id) => currentSet.has(id));
+      const missing = defaultOrder.filter((id) => !filteredPrev.includes(id));
+      const nextOrder = filteredPrev.length ? [...filteredPrev, ...missing] : defaultOrder;
+      if (nextOrder.length === prev.length && nextOrder.every((id, i) => id === prev[i])) {
+        return prev;
+      }
+      return nextOrder;
+    });
+  }, [player.cards, defaultOrder]);
+
+  const orderedCards = useMemo(() => {
+    const cardMap = new Map(player.cards.map((card) => [card.id, card]));
+    return cardOrder.map((id) => cardMap.get(id)).filter(Boolean) as PlayingCard[];
+  }, [player.cards, cardOrder]);
+
+  const handleDragStart = (cardId: string) => (event: DragEvent<HTMLButtonElement>) => {
+    setDraggingId(cardId);
+    event.dataTransfer.setData("text/plain", cardId);
+    event.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (cardId: string) => (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (dragOverId !== cardId) {
+      setDragOverId(cardId);
+    }
+  };
+
+  const handleDrop = (cardId: string) => (event: DragEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    const draggedId = draggingId ?? event.dataTransfer.getData("text/plain");
+    if (!draggedId || draggedId === cardId) {
+      setDragOverId(null);
+      return;
+    }
+    setCardOrder((prev) => moveCard(prev, draggedId, cardId));
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setDragOverId(null);
+  };
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -270,15 +363,21 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
       </div>
 
       <div className="flex justify-center items-end px-10 md:px-16 py-2">
-        {sortedCards.map((card, index) => (
+        {orderedCards.map((card, index) => (
           <PlayableCard
             key={card.id}
             card={card}
             onClick={() => onPlayCard(card)}
             isPlayable={isCurrentTurn && legalCardIds.includes(card.id)}
             index={index}
-            total={sortedCards.length}
+            total={orderedCards.length}
             animationsEnabled={animationsEnabled}
+            isDragging={draggingId === card.id}
+            isDragOver={dragOverId === card.id}
+            onDragStart={handleDragStart(card.id)}
+            onDragOver={handleDragOver(card.id)}
+            onDrop={handleDrop(card.id)}
+            onDragEnd={handleDragEnd}
           />
         ))}
       </div>
@@ -287,7 +386,14 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         <Badge variant="outline" className="border-white/15 bg-white/5 text-emerald-50">
           {player.name}
         </Badge>
-        {isCurrentTurn && <span className="text-sm text-[#f2c879]">Play a legal card</span>}
+        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] md:text-xs text-emerald-100/70 backdrop-blur">
+          {isCurrentTurn ? (
+            <span className="text-[#f2c879]">Play a legal card</span>
+          ) : (
+            <span className="text-emerald-100/60">Reorder your hand</span>
+          )}
+          <span className="text-emerald-100/35">Drag to reorder</span>
+        </div>
       </div>
     </div>
   );
