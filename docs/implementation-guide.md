@@ -63,7 +63,7 @@ Engine (packages/engine):
 
 State and flow:
 
-- `createGameState` shuffles using a seeded RNG, deals 8 cards to each player, and chooses trump from the shuffled deck if not specified.
+- `createGameState` shuffles using a seeded RNG, deals 4 cards to each player for bidding, and holds the remaining 4 per player until trump is chosen (then deals the rest). When starting directly in `playing`, it deals the full 8-card hands.
 - `reduceGame` handles `playCard`, `revealTrump`, and `declareRoyals` actions.
 - Teams are players 0+2 vs 1+3.
 

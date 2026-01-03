@@ -445,8 +445,8 @@ export function GameTable({
           </div>
         )}
         {(isBidding || isChoosingTrump) && (
-          <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center px-4">
-            <div className="pointer-events-auto w-full max-w-lg rounded-[28px] border border-white/10 bg-[#0b1612]/95 p-5 shadow-[0_22px_60px_rgba(0,0,0,0.55)] backdrop-blur">
+          <div className="pointer-events-none absolute left-1/2 top-24 z-30 w-[min(92vw,520px)] -translate-x-1/2 sm:top-28">
+            <div className="pointer-events-auto rounded-[28px] border border-white/10 bg-[#0b1612]/95 p-5 shadow-[0_22px_60px_rgba(0,0,0,0.55)] backdrop-blur">
               {isBidding ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -455,6 +455,9 @@ export function GameTable({
                       Min {gameState.royalsMinTarget} · Max {gameState.royalsMaxTarget}
                     </Badge>
                   </div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                    First 4 cards only · Remaining cards after trump
+                  </p>
                   <div className="text-sm text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
                     {bidderName !== "--" && <span className="text-emerald-100/70"> · {bidderName}</span>}
@@ -496,6 +499,9 @@ export function GameTable({
                       Contract {gameState.currentBid ?? "--"}
                     </Badge>
                   </div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                    Trump from first 4 cards · Final deal after pick
+                  </p>
                   <div className="text-sm text-emerald-100/70">
                     Bid winner: <span className="text-emerald-50">{bidderName}</span>
                   </div>

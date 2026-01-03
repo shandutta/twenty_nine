@@ -10,6 +10,7 @@ export type GamePhase = "bidding" | "choose-trump" | "playing" | "hand-complete"
 
 export type GameState = {
   hands: Card[][];
+  undealt: Card[];
   trick: TrickState;
   trickNumber: number;
   leader: number;
@@ -83,12 +84,13 @@ export const shuffleDeck = (deck: Card[], seed: number): Card[] => {
   return cards;
 };
 
-const dealHands = (deck: Card[]): Card[][] => {
+const dealHands = (deck: Card[], cardsPerPlayer: number): { hands: Card[][]; remaining: Card[] } => {
   const hands: Card[][] = [[], [], [], []];
-  deck.forEach((card, index) => {
-    hands[index % 4].push(card);
-  });
-  return hands;
+  const totalToDeal = Math.min(deck.length, cardsPerPlayer * 4);
+  for (let i = 0; i < totalToDeal; i += 1) {
+    hands[i % 4].push(deck[i]);
+  }
+  return { hands, remaining: deck.slice(totalToDeal) };
 };
 
 const cardLabel = (card: Card): string => `${card.rank} of ${card.suit}`;
@@ -113,7 +115,8 @@ export const createGameState = ({
   config?: EngineConfig;
 }): GameState => {
   const deck = shuffleDeck(createDeck(), seed);
-  const hands = dealHands(deck);
+  const initialCardsPerPlayer = phase === "playing" || phase === "hand-complete" ? 8 : 4;
+  const { hands, remaining } = dealHands(deck, initialCardsPerPlayer);
   const derivedBidderTeam = bidderTeam ?? (bidderPlayer !== null ? teamForPlayer(bidderPlayer) : null);
   const resolvedBidTarget = bidTarget ?? (phase === "playing" || phase === "hand-complete" ? config.minBid : null);
   const chosenTrump = trumpSuit ?? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null);
@@ -124,6 +127,7 @@ export const createGameState = ({
 
   return {
     hands,
+    undealt: remaining,
     trick: createTrick(),
     trickNumber: 0,
     leader,
@@ -144,7 +148,11 @@ export const createGameState = ({
     phase,
     log:
       phase === "bidding"
-        ? [`Hand start. Dealer: P${dealer + 1}.`, `Bidding begins with P${nextPlayer(dealer) + 1}.`]
+        ? [
+            `Hand start. Dealer: P${dealer + 1}.`,
+            "First four cards dealt to each player.",
+            `Bidding begins with P${nextPlayer(dealer) + 1}.`,
+          ]
         : [`Hand start. Dealer: P${dealer + 1}.`],
     seed,
     config,
@@ -255,16 +263,25 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     if (action.player !== state.currentPlayer) return state;
     if (state.bidTarget === null || state.bidderPlayer === null || state.bidderTeam === null) return state;
 
+    const { hands: extraHands, remaining } =
+      state.undealt.length > 0 ? dealHands(state.undealt, 4) : { hands: [[], [], [], []], remaining: [] };
+    const nextHands = state.hands.map((hand, index) => hand.concat(extraHands[index]));
     const leader = openingLeader(state.dealer, state.bidderPlayer, state.config);
 
     return {
       ...state,
+      hands: nextHands,
+      undealt: remaining,
       trumpSuit: action.suit,
       trumpRevealed: false,
       phase: "playing",
       leader,
       currentPlayer: leader,
-      log: [...state.log, `Trump chosen by P${action.player + 1}: ${action.suit}.`],
+      log: [
+        ...state.log,
+        `Trump chosen by P${action.player + 1}: ${action.suit}.`,
+        state.undealt.length > 0 ? "Remaining cards dealt." : "Hand complete.",
+      ],
     };
   }
 
