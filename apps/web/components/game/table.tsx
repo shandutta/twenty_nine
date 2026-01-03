@@ -456,7 +456,7 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-xs text-emerald-100/70">
-                    Bidding uses the first four cards. Trump is set by the winner before the final deal.
+                    Bidding is based on the first four cards. The winner names trump before the final deal.
                   </p>
                   <div className="text-sm text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -500,7 +500,7 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-                    Trump from first 4 cards · Final deal after pick
+                    Bidding is based on the first four cards · Winner names trump before the final deal
                   </p>
                   <div className="text-sm text-emerald-100/70">
                     Bid winner: <span className="text-emerald-50">{bidderName}</span>

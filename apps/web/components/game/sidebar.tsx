@@ -134,7 +134,7 @@ export function GameSidebar({
                 <CardContent className="pt-0 space-y-2 text-xs text-emerald-100/70">
                   {isBidding && (
                     <p className="text-[11px] text-emerald-100/65">
-                      Bidding uses the first four cards. The winner sets trump, then the remaining cards are dealt.
+                      Bidding is based on the first four cards. The winner names trump before the final deal.
                     </p>
                   )}
                   <div className="flex items-center justify-between text-xs">
@@ -241,8 +241,8 @@ export function GameSidebar({
                 <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-2">
-                <p>• Bidding uses the first 4 cards; the winner chooses trump.</p>
-                <p>• The remaining 4 cards are dealt after trump is set.</p>
+                <p>• Bidding is based on the first four cards; the winner names trump.</p>
+                <p>• After trump is set, each player receives their final four cards.</p>
                 <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
                 <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target ±4.</p>
               </CardContent>
