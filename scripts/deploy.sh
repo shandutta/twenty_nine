@@ -10,7 +10,7 @@ if [ "$BRANCH" != "main" ]; then
   exit 0
 fi
 
-CHANGED=$(git diff-tree --no-commit-id --name-only -r HEAD)
+CHANGED=$(printf "%s\n%s\n" "$(git diff-tree --no-commit-id --name-only -r HEAD)" "$(git diff --name-only HEAD)" | sort -u)
 if ! echo "$CHANGED" | grep -Eq '^(apps/web/|packages/engine/|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml)'; then
   echo "deploy: no relevant changes; skipping"
   exit 0
@@ -33,7 +33,7 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
 
   if [ "${TWENTYNINE_DEPLOY_E2E:-1}" = "1" ]; then
     echo "deploy: running e2e tests"
-    E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
+    env -u NO_COLOR -u FORCE_COLOR E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
   fi
 fi
 

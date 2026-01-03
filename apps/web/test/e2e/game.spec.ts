@@ -66,21 +66,21 @@ test("game page smoke flow", async ({ page }) => {
   while (Date.now() < deadline) {
     const bidSelect = page.locator('[data-slot="select-trigger"]').first();
     const placeBid = page.getByRole("button", { name: /^Place bid$/ });
-    if (!(await placeBid.isEnabled().catch(() => false)) && (await bidSelect.isVisible().catch(() => false))) {
+    if ((await bidSelect.isVisible().catch(() => false)) && !(await placeBid.isEnabled().catch(() => false))) {
       await bidSelect.click();
       const option = page.getByRole("option", { name: /Bid \d+/ }).first();
       if (await option.isVisible().catch(() => false)) {
         await option.click();
       }
     }
-    if (await placeBid.isEnabled().catch(() => false)) {
+    if ((await placeBid.isVisible().catch(() => false)) && (await placeBid.isEnabled().catch(() => false))) {
       await placeBid.click();
       await page.waitForTimeout(300);
       continue;
     }
 
     const passButton = page.getByRole("button", { name: /^Pass$/ });
-    if (await passButton.isEnabled().catch(() => false)) {
+    if ((await passButton.isVisible().catch(() => false)) && (await passButton.isEnabled().catch(() => false))) {
       await passButton.click();
       await page.waitForTimeout(300);
       continue;
@@ -92,7 +92,7 @@ test("game page smoke flow", async ({ page }) => {
       .first();
     if ((await enabledTrump.count()) > 0) {
       await enabledTrump.scrollIntoViewIfNeeded();
-      await enabledTrump.click();
+      await enabledTrump.click({ force: true });
       await page.waitForTimeout(300);
       continue;
     }
