@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { GameState } from "@/components/game/types";
+import type { GameState, Suit } from "@/components/game/types";
 import type { BotDifficulty, BotSettings } from "@/components/game/use-game-controller";
 import { Settings, RotateCcw, Sparkles, ScrollText, Trophy } from "lucide-react";
 
@@ -28,6 +28,12 @@ interface GameSidebarProps {
   lastMoveSummary: string;
   legalAlternatives: string;
   canRequestCoach: boolean;
+  bidOptions: number[];
+  canBid: boolean;
+  onPlaceBid: (amount: number) => void;
+  onPassBid: () => void;
+  canChooseTrump: boolean;
+  onChooseTrump: (suit: Suit) => void;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -53,6 +59,12 @@ export function GameSidebar({
   lastMoveSummary,
   legalAlternatives,
   canRequestCoach,
+  bidOptions,
+  canBid,
+  onPlaceBid,
+  onPassBid,
+  canChooseTrump,
+  onChooseTrump,
 }: GameSidebarProps) {
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
@@ -66,7 +78,9 @@ export function GameSidebar({
       : "Hidden"
     : "Pending";
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
-  const phaseLabel = gameState.phase.replace("-", " ");
+  const phaseLabel = gameState.phase.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+  const isBidding = gameState.phase === "bidding";
+  const isChoosingTrump = gameState.phase === "choose-trump";
   const royalsTeamId = gameState.royalsDeclaredBy;
   const royalsTeam = royalsTeamId ? (royalsTeamId === "teamA" ? teamA : teamB) : null;
   const royalsDirection = royalsTeamId && bidderTeamId ? (royalsTeamId === bidderTeamId ? "-" : "+") : "+/-";
@@ -111,7 +125,82 @@ export function GameSidebar({
         </TabsList>
 
         <ScrollArea className="flex-1 min-h-0 px-4">
-          <TabsContent value="overview" className="mt-4 space-y-4">
+          <TabsContent value="overview" className="mt-4 space-y-3">
+            {(isBidding || isChoosingTrump) && (
+              <Card className="bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm text-emerald-50">
+                    {isBidding ? "Bidding" : "Choose Trump"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs text-emerald-100/70">
+                  {isBidding && (
+                    <p className="text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                      First 4 cards only · Remaining cards after trump
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-emerald-100/70">Current bid</span>
+                    <span className="text-emerald-50">
+                      {gameState.currentBid ?? "--"}
+                      {bidderName !== "--" && ` · ${bidderName}`}
+                    </span>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                    {isBidding
+                      ? canBid
+                        ? "Your turn to bid"
+                        : `Waiting for ${currentPlayer}`
+                      : canChooseTrump
+                        ? "Pick the trump suit"
+                        : `Waiting for ${currentPlayer}`}
+                  </div>
+                  {isBidding && canBid && bidOptions.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      {bidOptions.map((bid) => (
+                        <Button
+                          key={bid}
+                          size="sm"
+                          onClick={() => onPlaceBid(bid)}
+                          className="h-8 rounded-full bg-[#f2c879] text-[11px] font-semibold text-[#2b1c07] hover:bg-[#f8d690]"
+                        >
+                          Bid {bid}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                  {isBidding && (
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <Button
+                        onClick={onPassBid}
+                        size="sm"
+                        disabled={!canBid}
+                        className="h-8 rounded-full border border-white/15 bg-white/5 px-4 text-[11px] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                      >
+                        Pass
+                      </Button>
+                      {!canBid && <span className="text-[11px] text-emerald-100/60">Bots are bidding…</span>}
+                    </div>
+                  )}
+                  {isChoosingTrump && canChooseTrump && (
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      {(["clubs", "diamonds", "hearts", "spades"] as const).map((suit) => (
+                        <Button
+                          key={suit}
+                          size="sm"
+                          onClick={() => onChooseTrump(suit)}
+                          className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                        >
+                          <span className="mr-2 text-base">{suitSymbols[suit]}</span>
+                          {suit[0].toUpperCase() + suit.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="bg-black/40 border-white/10">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-emerald-50">Round Snapshot</CardTitle>
@@ -125,7 +214,7 @@ export function GameSidebar({
                   <span>Current Player</span>
                   <span className="text-emerald-50">{currentPlayer}</span>
                 </div>
-                <Separator className="bg-white/10" />
+                <Separator className="bg-white/10 my-2" />
                 <div className="flex items-center justify-between">
                   <span>Contract</span>
                   <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -150,6 +239,18 @@ export function GameSidebar({
             </Card>
 
             <Card className="bg-black/40 border-white/10">
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
+              </CardHeader>
+              <CardContent className="text-[11px] leading-relaxed text-emerald-100/70 space-y-2">
+                <p>• Bidding uses the first 4 cards; the winner chooses trump.</p>
+                <p>• The remaining 4 cards are dealt after trump is set.</p>
+                <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
+                <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target ±4.</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/40 border-white/10">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-emerald-50">Teams</CardTitle>
               </CardHeader>
@@ -170,18 +271,6 @@ export function GameSidebar({
                     </span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
-              </CardHeader>
-              <CardContent className="text-xs text-emerald-100/70 space-y-2">
-                <p>• Must follow suit when possible.</p>
-                <p>• Trump reveals when a player can’t follow suit.</p>
-                <p>• Last trick grants the 29th point.</p>
-                <p>• Royals (K+Q of trump) can adjust the target +/-4 after trump is revealed.</p>
               </CardContent>
             </Card>
           </TabsContent>

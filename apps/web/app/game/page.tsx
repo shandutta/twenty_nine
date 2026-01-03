@@ -232,6 +232,12 @@ function GamePageClient() {
         lastMoveSummary={lastMoveSummary}
         legalAlternatives={legalAlternatives}
         canRequestCoach={canRequestCoach}
+        bidOptions={bidOptions}
+        canBid={canBid}
+        onPlaceBid={onPlaceBid}
+        onPassBid={onPassBid}
+        canChooseTrump={canChooseTrump}
+        onChooseTrump={onChooseTrump}
       />
       <main className="relative flex-1 overflow-hidden">
         <GameTable

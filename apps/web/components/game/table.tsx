@@ -191,7 +191,7 @@ function CardBack({ size = "small" }: { size?: "small" | "medium" }) {
   const sizeClasses = size === "small" ? "h-14 w-10 md:h-16 md:w-11" : "h-16 w-11 md:h-20 md:w-14";
 
   return (
-    <div className={cn(sizeClasses, "rounded-lg bg-[#0f1f17] shadow-lg border border-white/10 overflow-hidden")}>
+    <div className={cn(sizeClasses, "rounded-lg bg-[#13261d] shadow-lg border border-white/15 overflow-hidden")}>
       <div className="w-full h-full p-1">
         <div
           className="w-full h-full rounded-md border border-white/15 bg-gradient-to-br from-white/10 via-transparent to-black/20"
@@ -286,7 +286,7 @@ function OpponentArea({
             </Badge>
           )}
         </div>
-        <div className={cn("flex -space-x-5", isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2")}>
+        <div className={cn("flex -space-x-2", isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2")}>
           {Array.from({ length: cardCount }).map((_, i) => (
             <CardBack key={i} size="medium" />
           ))}
@@ -445,7 +445,7 @@ export function GameTable({
           </div>
         )}
         {(isBidding || isChoosingTrump) && (
-          <div className="pointer-events-none absolute left-1/2 top-24 z-30 w-[min(92vw,520px)] -translate-x-1/2 sm:top-28">
+          <div className="pointer-events-none absolute left-1/2 top-6 z-30 w-[min(92vw,520px)] -translate-x-1/2 sm:top-10 md:hidden">
             <div className="pointer-events-auto rounded-[28px] border border-white/10 bg-[#0b1612]/95 p-5 shadow-[0_22px_60px_rgba(0,0,0,0.55)] backdrop-blur">
               {isBidding ? (
                 <div className="space-y-4">
@@ -618,7 +618,7 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="flex justify-center pt-4">
+          <div className="flex justify-center pt-6">
             <OpponentArea player={topPlayer} position="top" isTeammate={true} isActive={topPlayer.isCurrentPlayer} />
           </div>
 
@@ -687,11 +687,11 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="pt-2 pb-4 md:pb-6">
-            <Hand
-              player={bottomPlayer}
-              onPlayCard={onPlayCard}
-              isCurrentTurn={bottomPlayer.isCurrentPlayer}
+        <div className="pt-4 pb-8 md:pb-10">
+          <Hand
+            player={bottomPlayer}
+            onPlayCard={onPlayCard}
+            isCurrentTurn={bottomPlayer.isCurrentPlayer}
               legalCardIds={legalCardIds}
               animationsEnabled={animationsEnabled}
             />
