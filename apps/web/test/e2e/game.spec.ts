@@ -55,46 +55,46 @@ test("game page smoke flow", async ({ page }) => {
     await capture(1280);
     await capture(768);
     await capture(390);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.waitForTimeout(250);
   }
 
   const handButtons = page.locator('button[aria-label*=" of "]');
   const enabledHandButtons = page.locator('button[aria-label*=" of "][aria-disabled="false"]');
 
-  const biddingHeading = page.getByRole("heading", { name: "Bidding" });
-  const trumpHeading = page.getByRole("heading", { name: "Choose Trump" });
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
-    if (await biddingHeading.isVisible().catch(() => false)) {
-      const enabledBid = page
-        .locator("button:not([disabled])")
-        .filter({ hasText: /Bid \d+/ })
-        .first();
-      if (await enabledBid.isVisible().catch(() => false)) {
-        await enabledBid.click();
-        await page.waitForTimeout(300);
-        continue;
-      }
-      const passButton = page
-        .locator("button:not([disabled])")
-        .filter({ hasText: /^Pass$/ })
-        .first();
-      if (await passButton.isVisible().catch(() => false)) {
-        await passButton.click();
-        await page.waitForTimeout(300);
-        continue;
+    const bidSelect = page.locator('[data-slot="select-trigger"]').first();
+    const placeBid = page.getByRole("button", { name: /^Place bid$/ });
+    if (!(await placeBid.isEnabled().catch(() => false)) && (await bidSelect.isVisible().catch(() => false))) {
+      await bidSelect.click();
+      const option = page.getByRole("option", { name: /Bid \d+/ }).first();
+      if (await option.isVisible().catch(() => false)) {
+        await option.click();
       }
     }
+    if (await placeBid.isEnabled().catch(() => false)) {
+      await placeBid.click();
+      await page.waitForTimeout(300);
+      continue;
+    }
 
-    if (await trumpHeading.isVisible().catch(() => false)) {
-      const enabledTrump = page
-        .locator("button:not([disabled])")
-        .filter({ hasText: /Clubs|Diamonds|Hearts|Spades/ })
-        .first();
-      if (await enabledTrump.isVisible().catch(() => false)) {
-        await enabledTrump.click();
-        await page.waitForTimeout(300);
-        continue;
-      }
+    const passButton = page.getByRole("button", { name: /^Pass$/ });
+    if (await passButton.isEnabled().catch(() => false)) {
+      await passButton.click();
+      await page.waitForTimeout(300);
+      continue;
+    }
+
+    const enabledTrump = page
+      .locator("button:not([disabled])")
+      .filter({ hasText: /Clubs|Diamonds|Hearts|Spades/ })
+      .first();
+    if ((await enabledTrump.count()) > 0) {
+      await enabledTrump.scrollIntoViewIfNeeded();
+      await enabledTrump.click();
+      await page.waitForTimeout(300);
+      continue;
     }
 
     if ((await enabledHandButtons.count()) > 0) {
