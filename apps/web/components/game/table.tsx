@@ -455,8 +455,8 @@ export function GameTable({
                       Min {gameState.royalsMinTarget} · Max {gameState.royalsMaxTarget}
                     </Badge>
                   </div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-                    First 4 cards only · Remaining cards after trump
+                  <p className="text-xs text-emerald-100/70">
+                    Bidding uses the first four cards. Trump is set by the winner before the final deal.
                   </p>
                   <div className="text-sm text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -687,11 +687,11 @@ export function GameTable({
             </div>
           </div>
 
-        <div className="pt-4 pb-8 md:pb-10">
-          <Hand
-            player={bottomPlayer}
-            onPlayCard={onPlayCard}
-            isCurrentTurn={bottomPlayer.isCurrentPlayer}
+          <div className="pt-4 pb-8 md:pb-10">
+            <Hand
+              player={bottomPlayer}
+              onPlayCard={onPlayCard}
+              isCurrentTurn={bottomPlayer.isCurrentPlayer}
               legalCardIds={legalCardIds}
               animationsEnabled={animationsEnabled}
             />

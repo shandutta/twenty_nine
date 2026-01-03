@@ -127,16 +127,14 @@ export function GameSidebar({
         <ScrollArea className="flex-1 min-h-0 px-4">
           <TabsContent value="overview" className="mt-4 space-y-3">
             {(isBidding || isChoosingTrump) && (
-              <Card className="bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm text-emerald-50">
-                    {isBidding ? "Bidding" : "Choose Trump"}
-                  </CardTitle>
+              <Card className="gap-3 py-4 bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
+                <CardHeader className="pb-1">
+                  <CardTitle className="text-sm text-emerald-50">{isBidding ? "Bidding" : "Choose Trump"}</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2 text-xs text-emerald-100/70">
+                <CardContent className="pt-0 space-y-2 text-xs text-emerald-100/70">
                   {isBidding && (
-                    <p className="text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
-                      First 4 cards only · Remaining cards after trump
+                    <p className="text-[11px] text-emerald-100/65">
+                      Bidding uses the first four cards. The winner sets trump, then the remaining cards are dealt.
                     </p>
                   )}
                   <div className="flex items-center justify-between text-xs">
@@ -201,11 +199,11 @@ export function GameSidebar({
               </Card>
             )}
 
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
+            <Card className="gap-3 py-4 bg-black/40 border-white/10">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm text-emerald-50">Round Snapshot</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-emerald-100/70">
+              <CardContent className="pt-0 space-y-2 text-sm text-emerald-100/70">
                 <div className="flex items-center justify-between">
                   <span>Phase</span>
                   <Badge className="border-white/10 bg-white/5 text-emerald-50">{phaseLabel}</Badge>
@@ -238,11 +236,11 @@ export function GameSidebar({
               </CardContent>
             </Card>
 
-            <Card className="bg-black/40 border-white/10">
+            <Card className="gap-3 py-4 bg-black/40 border-white/10">
               <CardHeader className="pb-1">
                 <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
-              <CardContent className="text-[11px] leading-relaxed text-emerald-100/70 space-y-2">
+              <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-2">
                 <p>• Bidding uses the first 4 cards; the winner chooses trump.</p>
                 <p>• The remaining 4 cards are dealt after trump is set.</p>
                 <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
@@ -250,11 +248,11 @@ export function GameSidebar({
               </CardContent>
             </Card>
 
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
+            <Card className="gap-3 py-4 bg-black/40 border-white/10">
+              <CardHeader className="pb-1">
                 <CardTitle className="text-sm text-emerald-50">Teams</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3 text-sm">
+              <CardContent className="pt-0 space-y-3 text-sm">
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-emerald-200">{teamA.name}</span>
