@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import type { GameState, PlayingCard, Player, Suit } from "@/components/game/types";
@@ -286,10 +287,29 @@ function OpponentArea({
             </Badge>
           )}
         </div>
-        <div className={cn("flex -space-x-2", isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2")}>
-          {Array.from({ length: cardCount }).map((_, i) => (
-            <CardBack key={i} size="medium" />
-          ))}
+        <div
+          className={cn(
+            "relative inline-flex items-center rounded-full px-2 py-1",
+            isActive && "ring-2 ring-[#f2c879]/40 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
+          )}
+        >
+          <div className="absolute inset-0 rounded-full border border-white/10 bg-gradient-to-b from-[#0d1914]/85 via-[#08110e]/95 to-black/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
+          <div className="relative flex items-center gap-1">
+            {Array.from({ length: cardCount }).map((_, i) => {
+              const offset = i - (cardCount - 1) / 2;
+              const rotate = offset * 2.2;
+              const lift = -Math.abs(offset) * 1.5;
+              return (
+                <div
+                  key={i}
+                  className="transition-transform duration-300"
+                  style={{ transform: `translateY(${lift}px) rotate(${rotate}deg)` }}
+                >
+                  <CardBack size="medium" />
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     );
@@ -382,6 +402,10 @@ export function GameTable({
     ? `${lastTrick.winningCard.rank}${suitSymbols[lastTrick.winningCard.suit]}`
     : "--";
 
+  const [selectedBid, setSelectedBid] = useState("");
+  const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
+  const effectiveSelectedBid = bidValues.includes(selectedBid) ? selectedBid : (bidValues[0] ?? "");
+
   const [showTrickToast, setShowTrickToast] = useState(false);
   const lastTrickNumber = lastTrick?.trickNumber ?? null;
 
@@ -465,18 +489,28 @@ export function GameTable({
                   <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
                     {canBid ? "Your turn to bid" : `Waiting for ${currentPlayerName}`}
                   </div>
-                  {canBid && bidOptions.length > 0 && (
-                    <div className="grid grid-cols-4 gap-2">
-                      {bidOptions.map((bid) => (
-                        <Button
-                          key={bid}
-                          onClick={() => onPlaceBid(bid)}
-                          size="sm"
-                          className="h-9 rounded-full bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
-                        >
-                          Bid {bid}
-                        </Button>
-                      ))}
+                  {bidOptions.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
+                        <SelectTrigger className="h-9 min-w-[150px] rounded-full border-white/15 bg-white/5 text-emerald-50">
+                          <SelectValue placeholder="Choose bid" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bidOptions.map((bid) => (
+                            <SelectItem key={bid} value={String(bid)}>
+                              Bid {bid}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
+                        size="sm"
+                        disabled={!canBid || !effectiveSelectedBid}
+                        className="h-9 rounded-full bg-[#f2c879] px-5 text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                      >
+                        Place bid
+                      </Button>
                     </div>
                   )}
                   <div className="flex items-center justify-between gap-3">
@@ -528,10 +562,10 @@ export function GameTable({
             </div>
           </div>
         )}
-        <div className="absolute inset-4 md:inset-8 rounded-[36px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
+        <div className="absolute inset-4 md:inset-8 rounded-[28px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,0,0,0.5),_transparent_70%)]" />
-          <div className="absolute inset-6 rounded-[28px] border border-white/10" />
-          <div className="absolute inset-6 rounded-[28px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
+          <div className="absolute inset-6 rounded-[22px] border border-white/10" />
+          <div className="absolute inset-6 rounded-[22px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
         </div>
 
         <div className="relative h-full flex flex-col px-4 md:px-6 py-4">

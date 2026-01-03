@@ -25,9 +25,6 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
   echo "deploy: running prettier (write)"
   pnpm format
 
-  echo "deploy: running prettier check"
-  pnpm format:check
-
   echo "deploy: running lint"
   pnpm lint
 

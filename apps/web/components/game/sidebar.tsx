@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,10 @@ export function GameSidebar({
   canChooseTrump,
   onChooseTrump,
 }: GameSidebarProps) {
+  const [selectedBid, setSelectedBid] = useState("");
+  const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
+  const effectiveSelectedBid = bidValues.includes(selectedBid) ? selectedBid : (bidValues[0] ?? "");
+
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
   const bidderName = gameState.bidWinner
@@ -109,7 +114,7 @@ export function GameSidebar({
       </div>
 
       <Tabs defaultValue="overview" className="flex-1 min-h-0">
-        <TabsList className="mx-4 mt-4 grid grid-cols-3">
+        <TabsList className="mx-4 mt-3 grid grid-cols-3">
           <TabsTrigger value="overview" className="gap-2">
             <Trophy className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Overview</span>
@@ -125,13 +130,13 @@ export function GameSidebar({
         </TabsList>
 
         <ScrollArea className="flex-1 min-h-0 px-4">
-          <TabsContent value="overview" className="mt-4 space-y-3">
+          <TabsContent value="overview" className="mt-3 space-y-2">
             {(isBidding || isChoosingTrump) && (
-              <Card className="gap-3 py-4 bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
-                <CardHeader className="pb-1">
+              <Card className="gap-2 py-3 bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
+                <CardHeader className="pb-0 gap-1">
                   <CardTitle className="text-sm text-emerald-50">{isBidding ? "Bidding" : "Choose Trump"}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 space-y-2 text-xs text-emerald-100/70">
+                <CardContent className="pt-0 space-y-1.5 text-xs text-emerald-100/70">
                   {isBidding && (
                     <p className="text-[11px] text-emerald-100/65">
                       Bidding is based on the first four cards. The winner names trump before the final deal.
@@ -153,22 +158,32 @@ export function GameSidebar({
                         ? "Pick the trump suit"
                         : `Waiting for ${currentPlayer}`}
                   </div>
-                  {isBidding && canBid && bidOptions.length > 0 && (
-                    <div className="grid grid-cols-3 gap-2 pt-1">
-                      {bidOptions.map((bid) => (
-                        <Button
-                          key={bid}
-                          size="sm"
-                          onClick={() => onPlaceBid(bid)}
-                          className="h-8 rounded-full bg-[#f2c879] text-[11px] font-semibold text-[#2b1c07] hover:bg-[#f8d690]"
-                        >
-                          Bid {bid}
-                        </Button>
-                      ))}
+                  {isBidding && bidOptions.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
+                        <SelectTrigger className="h-8 min-w-[140px] rounded-full border-white/15 bg-white/5 text-[11px] text-emerald-50">
+                          <SelectValue placeholder="Choose bid" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {bidOptions.map((bid) => (
+                            <SelectItem key={bid} value={String(bid)}>
+                              Bid {bid}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        disabled={!canBid || !effectiveSelectedBid}
+                        onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
+                        className="h-8 rounded-full bg-[#f2c879] px-4 text-[11px] font-semibold text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                      >
+                        Place bid
+                      </Button>
                     </div>
                   )}
                   {isBidding && (
-                    <div className="flex items-center justify-between gap-3 pt-1">
+                    <div className="flex items-center justify-between gap-2 pt-1">
                       <Button
                         onClick={onPassBid}
                         size="sm"
@@ -181,7 +196,7 @@ export function GameSidebar({
                     </div>
                   )}
                   {isChoosingTrump && canChooseTrump && (
-                    <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div className="grid grid-cols-2 gap-2 pt-1.5">
                       {(["clubs", "diamonds", "hearts", "spades"] as const).map((suit) => (
                         <Button
                           key={suit}
@@ -199,11 +214,11 @@ export function GameSidebar({
               </Card>
             )}
 
-            <Card className="gap-3 py-4 bg-black/40 border-white/10">
-              <CardHeader className="pb-1">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-0 gap-1">
                 <CardTitle className="text-sm text-emerald-50">Round Snapshot</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-2 text-sm text-emerald-100/70">
+              <CardContent className="pt-0 space-y-1.5 text-sm text-emerald-100/70">
                 <div className="flex items-center justify-between">
                   <span>Phase</span>
                   <Badge className="border-white/10 bg-white/5 text-emerald-50">{phaseLabel}</Badge>
@@ -212,7 +227,7 @@ export function GameSidebar({
                   <span>Current Player</span>
                   <span className="text-emerald-50">{currentPlayer}</span>
                 </div>
-                <Separator className="bg-white/10 my-2" />
+                <Separator className="bg-white/10 my-1.5" />
                 <div className="flex items-center justify-between">
                   <span>Contract</span>
                   <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -236,11 +251,11 @@ export function GameSidebar({
               </CardContent>
             </Card>
 
-            <Card className="gap-3 py-4 bg-black/40 border-white/10">
-              <CardHeader className="pb-1">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-0 gap-1">
                 <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-2">
+              <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-1.5">
                 <p>• Bidding is based on the first four cards; the winner names trump.</p>
                 <p>• After trump is set, each player receives their final four cards.</p>
                 <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
@@ -248,12 +263,12 @@ export function GameSidebar({
               </CardContent>
             </Card>
 
-            <Card className="gap-3 py-4 bg-black/40 border-white/10">
-              <CardHeader className="pb-1">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-0 gap-1">
                 <CardTitle className="text-sm text-emerald-50">Teams</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-3 text-sm">
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
+              <CardContent className="pt-0 space-y-2 text-sm">
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-emerald-200">{teamA.name}</span>
                     <span className="text-emerald-50">
@@ -261,7 +276,7 @@ export function GameSidebar({
                     </span>
                   </div>
                 </div>
-                <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3">
+                <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-rose-200">{teamB.name}</span>
                     <span className="text-emerald-50">
@@ -273,15 +288,15 @@ export function GameSidebar({
             </Card>
           </TabsContent>
 
-          <TabsContent value="ai" className="mt-4 space-y-4">
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
+          <TabsContent value="ai" className="mt-3 space-y-2">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-1 gap-1">
                 <CardTitle className="text-sm flex items-center gap-2 text-emerald-50">
                   <Sparkles className="h-4 w-4 text-[#f2c879]" />
                   LLM Bots
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-emerald-50">Enable LLM strategy</p>
@@ -289,7 +304,7 @@ export function GameSidebar({
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <p className="text-xs text-emerald-100/60">Difficulty</p>
                   <Select
                     value={botSettings.difficulty}
@@ -305,7 +320,7 @@ export function GameSidebar({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-emerald-100/60 space-y-1">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-emerald-100/60 space-y-1">
                   <p>Model: {botSettings.model}</p>
                   <p>Fallbacks: {botSettings.fallbackModels.join(", ")}</p>
                   <p>Temperature: {botSettings.temperature}</p>
@@ -314,11 +329,11 @@ export function GameSidebar({
               </CardContent>
             </Card>
 
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-1 gap-1">
                 <CardTitle className="text-sm text-emerald-50">AI Coach</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-emerald-50">Explain last move</p>
@@ -326,7 +341,7 @@ export function GameSidebar({
                   </div>
                   <Switch checked={coachEnabled} onCheckedChange={onCoachEnabledChange} />
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-xs text-emerald-100/60 space-y-1">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-emerald-100/60 space-y-1">
                   <p>
                     <span className="font-medium text-emerald-50">Last move:</span> {lastMoveSummary}
                   </p>
@@ -339,7 +354,7 @@ export function GameSidebar({
                 </Button>
                 {coachError && <p className="text-xs text-rose-300">{coachError}</p>}
                 {coachResponse && (
-                  <div className="rounded-lg border border-white/10 bg-white/90 p-3 text-xs text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  <div className="rounded-lg border border-white/10 bg-white/90 p-2.5 text-xs text-slate-900 leading-relaxed whitespace-pre-wrap">
                     {coachResponse}
                   </div>
                 )}
@@ -347,9 +362,9 @@ export function GameSidebar({
             </Card>
           </TabsContent>
 
-          <TabsContent value="log" className="mt-4 space-y-4">
-            <Card className="bg-black/40 border-white/10">
-              <CardHeader className="pb-2">
+          <TabsContent value="log" className="mt-3 space-y-2">
+            <Card className="gap-2 py-3 bg-black/40 border-white/10">
+              <CardHeader className="pb-1 gap-1">
                 <CardTitle className="text-sm text-emerald-50">Trick Log</CardTitle>
               </CardHeader>
               <CardContent>

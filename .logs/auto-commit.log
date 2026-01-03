@@ -779,3 +779,277 @@ Already up to date.
 [01/03/2026, 14:00:20] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2569ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/03/2026, 14:00:25] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/03/2026, 14:00:25] AI-generated commit message: feat: update game sidebar and table components
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 43ms (unchanged)
+.prettierrc.json 30ms (unchanged)
+apps/web/app/api/openrouter/route.ts 109ms (unchanged)
+apps/web/app/game/page.tsx 85ms (unchanged)
+apps/web/app/globals.css 96ms (unchanged)
+apps/web/app/layout.tsx 13ms (unchanged)
+apps/web/app/page.tsx 40ms (unchanged)
+apps/web/components.json 4ms (unchanged)
+apps/web/components/game/hand.tsx 88ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 49ms (unchanged)
+apps/web/components/game/sidebar.tsx 61ms (unchanged)
+apps/web/components/game/table.tsx 111ms (unchanged)
+apps/web/components/game/types.ts 10ms (unchanged)
+apps/web/components/game/use-game-controller.ts 110ms (unchanged)
+apps/web/components/theme-provider.tsx 4ms (unchanged)
+apps/web/components/ui/accordion.tsx 9ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 13ms (unchanged)
+apps/web/components/ui/alert.tsx 8ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 4ms (unchanged)
+apps/web/components/ui/avatar.tsx 8ms (unchanged)
+apps/web/components/ui/badge.tsx 7ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 11ms (unchanged)
+apps/web/components/ui/button-group.tsx 10ms (unchanged)
+apps/web/components/ui/button.tsx 8ms (unchanged)
+apps/web/components/ui/calendar.tsx 27ms (unchanged)
+apps/web/components/ui/card.tsx 8ms (unchanged)
+apps/web/components/ui/carousel.tsx 24ms (unchanged)
+apps/web/components/ui/chart.tsx 55ms (unchanged)
+apps/web/components/ui/checkbox.tsx 5ms (unchanged)
+apps/web/components/ui/collapsible.tsx 4ms (unchanged)
+apps/web/components/ui/command.tsx 13ms (unchanged)
+apps/web/components/ui/context-menu.tsx 18ms (unchanged)
+apps/web/components/ui/dialog.tsx 18ms (unchanged)
+apps/web/components/ui/drawer.tsx 10ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 15ms (unchanged)
+apps/web/components/ui/empty.tsx 6ms (unchanged)
+apps/web/components/ui/field.tsx 14ms (unchanged)
+apps/web/components/ui/form.tsx 19ms (unchanged)
+apps/web/components/ui/hover-card.tsx 5ms (unchanged)
+apps/web/components/ui/input-group.tsx 12ms (unchanged)
+apps/web/components/ui/input-otp.tsx 8ms (unchanged)
+apps/web/components/ui/input.tsx 3ms (unchanged)
+apps/web/components/ui/item.tsx 15ms (unchanged)
+apps/web/components/ui/kbd.tsx 4ms (unchanged)
+apps/web/components/ui/label.tsx 3ms (unchanged)
+apps/web/components/ui/menubar.tsx 19ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 13ms (unchanged)
+apps/web/components/ui/pagination.tsx 11ms (unchanged)
+apps/web/components/ui/popover.tsx 5ms (unchanged)
+apps/web/components/ui/progress.tsx 4ms (unchanged)
+apps/web/components/ui/radio-group.tsx 5ms (unchanged)
+apps/web/components/ui/resizable.tsx 5ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 6ms (unchanged)
+apps/web/components/ui/select.tsx 14ms (unchanged)
+apps/web/components/ui/separator.tsx 4ms (unchanged)
+apps/web/components/ui/sheet.tsx 11ms (unchanged)
+apps/web/components/ui/sidebar.tsx 71ms (unchanged)
+apps/web/components/ui/skeleton.tsx 3ms (unchanged)
+apps/web/components/ui/slider.tsx 6ms (unchanged)
+apps/web/components/ui/sonner.tsx 3ms (unchanged)
+apps/web/components/ui/spinner.tsx 3ms (unchanged)
+apps/web/components/ui/switch.tsx 3ms (unchanged)
+apps/web/components/ui/table.tsx 6ms (unchanged)
+apps/web/components/ui/tabs.tsx 4ms (unchanged)
+apps/web/components/ui/textarea.tsx 3ms (unchanged)
+apps/web/components/ui/toast.tsx 18ms (unchanged)
+apps/web/components/ui/toaster.tsx 10ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 6ms (unchanged)
+apps/web/components/ui/toggle.tsx 6ms (unchanged)
+apps/web/components/ui/tooltip.tsx 7ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 4ms (unchanged)
+apps/web/components/ui/use-toast.ts 23ms (unchanged)
+apps/web/eslint.config.mjs 12ms (unchanged)
+apps/web/hooks/use-mobile.ts 5ms (unchanged)
+apps/web/hooks/use-toast.ts 18ms (unchanged)
+apps/web/lib/engine.ts 2ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 44ms (unchanged)
+apps/web/lib/utils.ts 3ms (unchanged)
+apps/web/next-env.d.ts 5ms (unchanged)
+apps/web/next.config.ts 3ms (unchanged)
+apps/web/package.json 5ms (unchanged)
+apps/web/playwright.config.ts 8ms (unchanged)
+apps/web/pnpm-workspace.yaml 3ms (unchanged)
+apps/web/postcss.config.mjs 3ms (unchanged)
+apps/web/README.md 41ms (unchanged)
+apps/web/scripts/lighthouse.mjs 34ms (unchanged)
+apps/web/scripts/next-dev.mjs 8ms (unchanged)
+apps/web/styles/globals.css 36ms (unchanged)
+apps/web/test/e2e/game.spec.ts 32ms (unchanged)
+apps/web/test/game-page.test.tsx 25ms (unchanged)
+apps/web/test/setup.ts 2ms (unchanged)
+apps/web/test/useGameController.test.tsx 20ms (unchanged)
+apps/web/tsconfig.json 3ms (unchanged)
+apps/web/twentynine.code-workspace 2ms (unchanged)
+apps/web/vitest.config.ts 4ms (unchanged)
+docs/implementation-guide.md 78ms (unchanged)
+docs/qa/baseline.md 17ms (unchanged)
+docs/qa/release-candidate.md 12ms (unchanged)
+docs/ux/ux-changelog.md 13ms (unchanged)
+package.json 3ms (unchanged)
+packages/engine/package.json 2ms (unchanged)
+packages/engine/src/cards.ts 9ms (unchanged)
+packages/engine/src/config.ts 4ms (unchanged)
+packages/engine/src/game.ts 61ms (unchanged)
+packages/engine/src/index.ts 2ms (unchanged)
+packages/engine/src/royals.ts 7ms (unchanged)
+packages/engine/src/trick.ts 13ms (unchanged)
+packages/engine/test/bidding.test.ts 17ms (unchanged)
+packages/engine/test/cards.test.ts 7ms (unchanged)
+packages/engine/test/game.test.ts 8ms (unchanged)
+packages/engine/test/royals.test.ts 9ms (unchanged)
+packages/engine/test/trick.test.ts 9ms (unchanged)
+packages/engine/tsconfig.json 2ms (unchanged)
+packages/engine/vitest.config.ts 4ms (unchanged)
+pnpm-workspace.yaml 2ms (unchanged)
+README.md 17ms (unchanged)
+scripts/auto-commit.js 69ms (unchanged)
+deploy: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/trick.test.ts (4 tests) 12ms
+ ✓ test/game.test.ts (2 tests) 14ms
+ ✓ test/royals.test.ts (6 tests) 12ms
+ ✓ test/bidding.test.ts (6 tests) 18ms
+ ✓ test/cards.test.ts (3 tests) 26ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  22:00:46
+   Duration  810ms (transform 247ms, setup 0ms, collect 754ms, tests 81ms, environment 2ms, prepare 757ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 72ms
+ ✓ test/game-page.test.tsx (2 tests) 604ms
+   ✓ /game UI > disables illegal moves  378ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  22:00:48
+   Duration  3.25s (transform 625ms, setup 242ms, collect 1.57s, tests 676ms, environment 1.45s, prepare 338ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (18.2s)
+
+  1 passed (29.1s)
+deploy: building web app
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.9s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 937.0ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+deploy: restarting twentynine service
+deploy: done
+[main 414b18a] feat: update game sidebar and table components
+ 4 files changed, 608 insertions(+), 10 deletions(-)
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+
+/home/shan/twentynine/apps/web/components/game/sidebar.tsx
+  75:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/shan/twentynine/apps/web/components/game/sidebar.tsx:75:7
+  73 |   useEffect(() => {
+  74 |     if (!bidValues.includes(selectedBid)) {
+> 75 |       setSelectedBid(bidValues[0] ?? "");
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  76 |     }
+  77 |   }, [bidValues, selectedBid]);
+  78 |  react-hooks/set-state-in-effect
+
+✖ 1 problem (1 error, 0 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+error: failed to push some refs to 'https://github.com/shandutta/twenty_nine.git'
+[01/03/2026, 14:02:22] git push failed.
+ ELIFECYCLE  Command failed with exit code 1.
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+[01/03/2026, 14:15:02] Starting auto-commit run
+[01/03/2026, 14:15:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
