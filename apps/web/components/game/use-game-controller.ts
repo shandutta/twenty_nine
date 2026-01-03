@@ -82,11 +82,7 @@ const estimateHandStrength = (hand: Card[]): number => {
   return basePoints + highCards * 0.6;
 };
 
-const chooseBotBidAmount = (
-  hand: Card[],
-  currentBid: number | null,
-  config: EngineState["config"]
-): number | null => {
+const chooseBotBidAmount = (hand: Card[], currentBid: number | null, config: EngineState["config"]): number | null => {
   const strength = estimateHandStrength(hand);
   const minBid = config.minBid;
   const maxBid = config.maxBidTarget;
@@ -304,8 +300,8 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     name: "You & North",
     players: [PLAYER_META[0].id, PLAYER_META[2].id],
     tricksWon: state.tricksWon[0],
-    bid: bidderTeamId === "teamA" ? state.bidTarget ?? undefined : undefined,
-    bidWinner: bidderTeamId === "teamA" ? bidderPlayerId ?? undefined : undefined,
+    bid: bidderTeamId === "teamA" ? (state.bidTarget ?? undefined) : undefined,
+    bidWinner: bidderTeamId === "teamA" ? (bidderPlayerId ?? undefined) : undefined,
     gameScore: 0,
     handPoints: state.points[0],
   };
@@ -315,8 +311,8 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     name: "West & East",
     players: [PLAYER_META[1].id, PLAYER_META[3].id],
     tricksWon: state.tricksWon[1],
-    bid: bidderTeamId === "teamB" ? state.bidTarget ?? undefined : undefined,
-    bidWinner: bidderTeamId === "teamB" ? bidderPlayerId ?? undefined : undefined,
+    bid: bidderTeamId === "teamB" ? (state.bidTarget ?? undefined) : undefined,
+    bidWinner: bidderTeamId === "teamB" ? (bidderPlayerId ?? undefined) : undefined,
     gameScore: 0,
     handPoints: state.points[1],
   };

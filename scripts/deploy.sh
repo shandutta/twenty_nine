@@ -22,6 +22,9 @@ if echo "$CHANGED" | grep -Eq '(^pnpm-lock\.yaml|^package\.json|^apps/web/packag
 fi
 
 if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
+  echo "deploy: running prettier (write)"
+  pnpm format
+
   echo "deploy: running prettier check"
   pnpm format:check
 

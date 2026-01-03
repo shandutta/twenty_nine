@@ -4,6 +4,12 @@
 
 This document is the memory of record for what has been built, what rules are enforced, and what requirements have been provided so far. It is written for fast re-orientation after a break and for planning the next iteration.
 
+## Documentation boundary
+
+- `README.md` is the external, public-facing doc (story-like, highlights AI bots and coaching).
+- `docs/implementation-guide.md` (this file) is the internal memory of record for build status, decisions, and operational details.
+- Keep internal-only details (deployment, infra, runbooks) here, not in the README.
+
 ## Status snapshot (v0.4)
 
 Built:
@@ -94,6 +100,24 @@ Web app highlights:
 - `use-game-controller` bridges engine state to UI state.
 - The UI disables illegal moves and only allows legal cards to be played.
 - `/api/openrouter` handles both bot and coach requests.
+
+## Production & deployment
+
+Prod host (this machine):
+
+- The production service is a systemd unit named `twentynine` (`/etc/systemd/system/twentynine.service`).
+- Check status with `systemctl status twentynine` and logs with `journalctl -u twentynine -n 200`.
+
+Deployment:
+
+- Deploys are manual. Run `pnpm deploy:prod` (or `bash scripts/deploy.sh`) on the `main` branch.
+- The deploy script skips if there are no relevant changes in `apps/web`, `packages/engine`, or root workspace files.
+- When it runs, it installs deps (if needed), runs prettier/lint/tests (and optional e2e), builds the Next.js app, then restarts the systemd service.
+- Restart requires sudo. If sudo is unavailable, the script exits and instructs you to run `sudo systemctl restart twentynine`.
+
+CI/CD:
+
+- There is no repo-defined CI/CD workflow for deployment. If an external pipeline exists, document it here.
 
 ## AI bots and coach
 

@@ -115,14 +115,12 @@ export const createGameState = ({
   const deck = shuffleDeck(createDeck(), seed);
   const hands = dealHands(deck);
   const derivedBidderTeam = bidderTeam ?? (bidderPlayer !== null ? teamForPlayer(bidderPlayer) : null);
-  const resolvedBidTarget =
-    bidTarget ?? (phase === "playing" || phase === "hand-complete" ? config.minBid : null);
-  const chosenTrump =
-    trumpSuit ?? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null);
+  const resolvedBidTarget = bidTarget ?? (phase === "playing" || phase === "hand-complete" ? config.minBid : null);
+  const chosenTrump = trumpSuit ?? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null);
   const leader =
     phase === "playing" || phase === "hand-complete" ? openingLeader(dealer, bidderPlayer, config) : nextPlayer(dealer);
   const currentPlayer =
-    phase === "bidding" ? nextPlayer(dealer) : phase === "choose-trump" ? bidderPlayer ?? nextPlayer(dealer) : leader;
+    phase === "bidding" ? nextPlayer(dealer) : phase === "choose-trump" ? (bidderPlayer ?? nextPlayer(dealer)) : leader;
 
   return {
     hands,

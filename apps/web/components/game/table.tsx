@@ -337,13 +337,9 @@ export function GameTable({
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
   const bidderName = gameState.bidWinner
-    ? gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-"
+    ? (gameState.players.find((p) => p.id === gameState.bidWinner)?.name ?? "-")
     : "--";
-  const bidderTeamId = gameState.bidWinner
-    ? teamA.players.includes(gameState.bidWinner)
-      ? "teamA"
-      : "teamB"
-    : null;
+  const bidderTeamId = gameState.bidWinner ? (teamA.players.includes(gameState.bidWinner) ? "teamA" : "teamB") : null;
   const trumpLabel = gameState.trumpSuit
     ? gameState.trumpRevealed
       ? suitSymbols[gameState.trumpSuit]
