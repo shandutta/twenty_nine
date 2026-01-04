@@ -6,11 +6,27 @@ cd "$ROOT_DIR"
 
 mkdir -p "$ROOT_DIR/.logs"
 LOG_FILE="$ROOT_DIR/.logs/deploy.log"
-AUTO_COMMIT_LOG="$ROOT_DIR/.logs/auto-commit.log"
 export TZ="America/Los_Angeles"
-exec > >(tee -a "$LOG_FILE" "$AUTO_COMMIT_LOG") 2>&1
-echo "----"
-echo "deploy: started $(date +"%Y-%m-%dT%H:%M:%S%z")"
+RUN_TS=$(date +"%Y-%m-%dT%H:%M:%S%z")
+
+exec 3>&1 4>&2
+log_console() { echo "$@" >&3; }
+
+"$ROOT_DIR/scripts/log-rotate.sh" "$LOG_FILE" "${TWENTYNINE_LOG_MAX_BYTES:-5242880}" "${TWENTYNINE_LOG_KEEP:-5}"
+
+{
+  echo "----"
+  echo "deploy: started $RUN_TS"
+} >> "$LOG_FILE"
+log_console "deploy: started $RUN_TS (log: $LOG_FILE)"
+
+if [ "${TWENTYNINE_LOG_STDOUT:-0}" = "1" ]; then
+  exec > >(tee -a "$LOG_FILE") 2>&1
+else
+  exec >> "$LOG_FILE" 2>&1
+fi
+
+trap 'status=$?; if [ $status -eq 0 ]; then log_console "deploy: ok (log: '"$LOG_FILE"')"; else log_console "deploy: failed (exit $status) (log: '"$LOG_FILE"')"; fi' EXIT
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$BRANCH" != "main" ]; then

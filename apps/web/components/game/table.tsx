@@ -702,7 +702,8 @@ export function GameTable({
             <div className="flex-1 flex items-center justify-center">
               <div className="relative w-[17rem] h-[13rem] md:w-[19rem] md:h-[15rem]">
                 <div className="absolute inset-0 rounded-3xl border border-white/20 bg-black/25 shadow-[inset_0_0_22px_rgba(0,0,0,0.35)]" />
-                <div className="absolute top-0 left-1/2 -translate-x-1/2">
+                <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.08),transparent_58%)] opacity-70" />
+                <div className="absolute top-3 left-1/2 -translate-x-1/2">
                   {getPlayedCard(topPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-top-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(topPlayer.id)!} />
@@ -712,7 +713,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute left-0 top-1/2 -translate-y-1/2">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2">
                   {getPlayedCard(leftPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-left-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(leftPlayer.id)!} />
@@ -722,7 +723,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {getPlayedCard(rightPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-right-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(rightPlayer.id)!} />
@@ -732,7 +733,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2">
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
                   {getPlayedCard(bottomPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-bottom-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(bottomPlayer.id)!} />

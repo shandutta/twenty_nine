@@ -11,6 +11,7 @@ test-results
 .env
 .env.local
 .logs/
+docs/ux/screens/
 _v0.zip
 .v0-twenty-nine-game-table/
 v0-twenty-nine-game-table.zip
