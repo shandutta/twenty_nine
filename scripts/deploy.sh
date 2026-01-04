@@ -53,7 +53,18 @@ echo "deploy: restarting twentynine service"
 sudo -n systemctl restart twentynine
 echo "deploy: running health check"
 if command -v curl >/dev/null 2>&1; then
-  curl -fsS "http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game" >/dev/null
+  HEALTH_URL="http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game"
+  for attempt in $(seq 1 10); do
+    if curl -fsS "$HEALTH_URL" >/dev/null; then
+      echo "deploy: health check ok"
+      break
+    fi
+    if [ "$attempt" -eq 10 ]; then
+      echo "deploy: health check failed after 10 attempts" >&2
+      exit 1
+    fi
+    sleep 1
+  done
 else
   echo "deploy: curl not available; skipping health check"
 fi

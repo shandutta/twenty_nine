@@ -38,7 +38,7 @@ if (hostname) {
 }
 if (port && !allowPortOverride && port !== DEFAULT_START_PORT) {
   console.error(
-    `[next-start] Port override blocked (${port}). Expected ${DEFAULT_START_PORT}. Set TWENTYNINE_ALLOW_PORT_OVERRIDE=1 to override.`,
+    `[next-start] Port override blocked (${port}). Expected ${DEFAULT_START_PORT}. Set TWENTYNINE_ALLOW_PORT_OVERRIDE=1 to override.`
   );
   process.exit(1);
 }
@@ -56,7 +56,7 @@ if (!Number.isInteger(resolvedPort) || resolvedPort <= 0) {
 const hostToCheck = hostname ?? "0.0.0.0";
 if (!(await isPortAvailable(resolvedPort, hostToCheck))) {
   console.error(
-    `[next-start] Port ${resolvedPort} is already in use. Stop the existing process or pass --port explicitly.`,
+    `[next-start] Port ${resolvedPort} is already in use. Stop the existing process or pass --port explicitly.`
   );
   process.exit(1);
 }

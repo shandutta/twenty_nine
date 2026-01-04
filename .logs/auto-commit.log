@@ -5086,3 +5086,311 @@ Already up to date.
 [01/03/2026, 22:00:19] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2466ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/03/2026, 22:00:24] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/03/2026, 22:00:24] AI-generated commit message: `update dev and prod scripts and documentation`
+deploy: installing dependencies
+Scope: all 3 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 2.3s using pnpm v10.27.0
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 48ms (unchanged)
+.prettierrc.json 36ms (unchanged)
+apps/web/app/api/openrouter/route.ts 118ms (unchanged)
+apps/web/app/game/page.tsx 98ms (unchanged)
+apps/web/app/globals.css 85ms (unchanged)
+apps/web/app/layout.tsx 15ms (unchanged)
+apps/web/app/page.tsx 48ms (unchanged)
+apps/web/components.json 5ms (unchanged)
+apps/web/components/game/hand.tsx 88ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 40ms (unchanged)
+apps/web/components/game/sidebar.tsx 61ms (unchanged)
+apps/web/components/game/table.tsx 96ms (unchanged)
+apps/web/components/game/types.ts 9ms (unchanged)
+apps/web/components/game/use-game-controller.ts 102ms (unchanged)
+apps/web/components/theme-provider.tsx 3ms (unchanged)
+apps/web/components/ui/accordion.tsx 7ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 10ms (unchanged)
+apps/web/components/ui/alert.tsx 7ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 2ms (unchanged)
+apps/web/components/ui/avatar.tsx 5ms (unchanged)
+apps/web/components/ui/badge.tsx 7ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 13ms (unchanged)
+apps/web/components/ui/button-group.tsx 9ms (unchanged)
+apps/web/components/ui/button.tsx 9ms (unchanged)
+apps/web/components/ui/calendar.tsx 27ms (unchanged)
+apps/web/components/ui/card.tsx 10ms (unchanged)
+apps/web/components/ui/carousel.tsx 27ms (unchanged)
+apps/web/components/ui/chart.tsx 57ms (unchanged)
+apps/web/components/ui/checkbox.tsx 5ms (unchanged)
+apps/web/components/ui/collapsible.tsx 5ms (unchanged)
+apps/web/components/ui/command.tsx 12ms (unchanged)
+apps/web/components/ui/context-menu.tsx 15ms (unchanged)
+apps/web/components/ui/dialog.tsx 11ms (unchanged)
+apps/web/components/ui/drawer.tsx 11ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 21ms (unchanged)
+apps/web/components/ui/empty.tsx 7ms (unchanged)
+apps/web/components/ui/field.tsx 15ms (unchanged)
+apps/web/components/ui/form.tsx 16ms (unchanged)
+apps/web/components/ui/hover-card.tsx 6ms (unchanged)
+apps/web/components/ui/input-group.tsx 18ms (unchanged)
+apps/web/components/ui/input-otp.tsx 10ms (unchanged)
+apps/web/components/ui/input.tsx 5ms (unchanged)
+apps/web/components/ui/item.tsx 17ms (unchanged)
+apps/web/components/ui/kbd.tsx 3ms (unchanged)
+apps/web/components/ui/label.tsx 3ms (unchanged)
+apps/web/components/ui/menubar.tsx 13ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 9ms (unchanged)
+apps/web/components/ui/pagination.tsx 11ms (unchanged)
+apps/web/components/ui/popover.tsx 6ms (unchanged)
+apps/web/components/ui/progress.tsx 5ms (unchanged)
+apps/web/components/ui/radio-group.tsx 5ms (unchanged)
+apps/web/components/ui/resizable.tsx 6ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 6ms (unchanged)
+apps/web/components/ui/select.tsx 13ms (unchanged)
+apps/web/components/ui/separator.tsx 3ms (unchanged)
+apps/web/components/ui/sheet.tsx 11ms (unchanged)
+apps/web/components/ui/sidebar.tsx 58ms (unchanged)
+apps/web/components/ui/skeleton.tsx 4ms (unchanged)
+apps/web/components/ui/slider.tsx 10ms (unchanged)
+apps/web/components/ui/sonner.tsx 5ms (unchanged)
+apps/web/components/ui/spinner.tsx 4ms (unchanged)
+apps/web/components/ui/switch.tsx 5ms (unchanged)
+apps/web/components/ui/table.tsx 10ms (unchanged)
+apps/web/components/ui/tabs.tsx 6ms (unchanged)
+apps/web/components/ui/textarea.tsx 3ms (unchanged)
+apps/web/components/ui/toast.tsx 18ms (unchanged)
+apps/web/components/ui/toaster.tsx 7ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 9ms (unchanged)
+apps/web/components/ui/toggle.tsx 5ms (unchanged)
+apps/web/components/ui/tooltip.tsx 5ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 5ms (unchanged)
+apps/web/components/ui/use-toast.ts 26ms (unchanged)
+apps/web/eslint.config.mjs 14ms (unchanged)
+apps/web/hooks/use-mobile.ts 5ms (unchanged)
+apps/web/hooks/use-toast.ts 19ms (unchanged)
+apps/web/lib/engine.ts 1ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 36ms (unchanged)
+apps/web/lib/utils.ts 3ms (unchanged)
+apps/web/next-env.d.ts 5ms (unchanged)
+apps/web/next.config.ts 3ms (unchanged)
+apps/web/package.json 5ms (unchanged)
+apps/web/playwright.config.ts 7ms (unchanged)
+apps/web/pnpm-workspace.yaml 3ms (unchanged)
+apps/web/postcss.config.mjs 3ms (unchanged)
+apps/web/README.md 47ms (unchanged)
+apps/web/scripts/lighthouse.mjs 35ms (unchanged)
+apps/web/scripts/next-dev.mjs 16ms
+apps/web/scripts/next-start.mjs 14ms
+apps/web/styles/globals.css 30ms (unchanged)
+apps/web/test/e2e/game.spec.ts 40ms (unchanged)
+apps/web/test/game-page.test.tsx 30ms (unchanged)
+apps/web/test/setup.ts 2ms (unchanged)
+apps/web/test/useGameController.test.tsx 25ms (unchanged)
+apps/web/tsconfig.json 3ms (unchanged)
+apps/web/twentynine.code-workspace 2ms (unchanged)
+apps/web/vitest.config.ts 4ms (unchanged)
+docs/implementation-guide.md 77ms (unchanged)
+docs/qa/baseline.md 16ms (unchanged)
+docs/qa/release-candidate.md 8ms (unchanged)
+docs/ux/ux-changelog.md 9ms (unchanged)
+package.json 2ms (unchanged)
+packages/engine/package.json 2ms (unchanged)
+packages/engine/src/cards.ts 9ms (unchanged)
+packages/engine/src/config.ts 4ms (unchanged)
+packages/engine/src/game.ts 60ms (unchanged)
+packages/engine/src/index.ts 2ms (unchanged)
+packages/engine/src/royals.ts 8ms (unchanged)
+packages/engine/src/trick.ts 18ms (unchanged)
+packages/engine/test/bidding.test.ts 30ms (unchanged)
+packages/engine/test/cards.test.ts 7ms (unchanged)
+packages/engine/test/game.test.ts 10ms (unchanged)
+packages/engine/test/royals.test.ts 13ms (unchanged)
+packages/engine/test/trick.test.ts 12ms (unchanged)
+packages/engine/tsconfig.json 2ms (unchanged)
+packages/engine/vitest.config.ts 3ms (unchanged)
+pnpm-workspace.yaml 3ms (unchanged)
+README.md 18ms (unchanged)
+scripts/auto-commit.js 70ms (unchanged)
+scripts/verify-next-build.mjs 13ms (unchanged)
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (2 tests) 6ms
+ ✓ test/royals.test.ts (6 tests) 8ms
+ ✓ test/cards.test.ts (3 tests) 8ms
+ ✓ test/trick.test.ts (4 tests) 7ms
+ ✓ test/bidding.test.ts (6 tests) 11ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  06:00:44
+   Duration  598ms (transform 327ms, setup 0ms, collect 739ms, tests 41ms, environment 1ms, prepare 615ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 67ms
+ ✓ test/game-page.test.tsx (2 tests) 555ms
+   ✓ /game UI > disables illegal moves  337ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  06:00:46
+   Duration  2.98s (transform 564ms, setup 239ms, collect 1.52s, tests 621ms, environment 1.37s, prepare 282ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (19.4s)
+
+  1 passed (30.3s)
+deploy: building web app
+deploy: cleaning previous build
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.8s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 823.9ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+verify-next-build: ok (7 assets checked)
+deploy: restarting twentynine service
+deploy: running health check
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+[main ab80579] `update dev and prod scripts and documentation`
+ 20 files changed, 663 insertions(+), 35 deletions(-)
+ create mode 100644 apps/web/scripts/next-start.mjs
+ create mode 100755 scripts/check-orphan-next.sh
+ create mode 100755 scripts/healthcheck.sh
+ create mode 100755 scripts/install-health-cron.sh
+ create mode 100755 scripts/install-orphan-cron.sh
+ create mode 100755 scripts/verify-next-build.mjs
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (2 tests) 6ms
+ ✓ test/royals.test.ts (6 tests) 9ms
+ ✓ test/cards.test.ts (3 tests) 9ms
+ ✓ test/bidding.test.ts (6 tests) 15ms
+ ✓ test/trick.test.ts (4 tests) 8ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  06:02:31
+   Duration  657ms (transform 243ms, setup 0ms, collect 627ms, tests 47ms, environment 2ms, prepare 664ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 54ms
+ ✓ test/game-page.test.tsx (2 tests) 618ms
+   ✓ /game UI > disables illegal moves  389ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  06:02:34
+   Duration  3.14s (transform 586ms, setup 196ms, collect 1.52s, tests 673ms, environment 1.43s, prepare 322ms)
+
+pre-push: building web app
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+⨯ Unable to acquire lock at /home/shan/twentynine/apps/web/.next/lock, is another instance of next build running?
+  Suggestion: If you intended to restart next build, terminate the other process, and then try again.
+ ELIFECYCLE  Command failed with exit code 1.
+error: failed to push some refs to 'https://github.com/shandutta/twenty_nine.git'
+[01/03/2026, 22:02:40] git push failed.
+ ELIFECYCLE  Command failed with exit code 1.
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[01/03/2026, 22:15:02] Starting auto-commit run
+[01/03/2026, 22:15:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
