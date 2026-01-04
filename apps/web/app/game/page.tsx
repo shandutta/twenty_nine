@@ -90,6 +90,8 @@ function GamePageClient() {
     llmInUse,
     setBotEnabled,
     setBotDifficulty,
+    setBotModel,
+    setBotTemperature,
     controlMode,
     controlModeLocked,
     onControlModeChange,
@@ -278,6 +280,8 @@ function GamePageClient() {
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
+        onBotModelChange={setBotModel}
+        onBotTemperatureChange={setBotTemperature}
         controlMode={controlMode}
         onControlModeChange={onControlModeChange}
         controlModeLocked={controlModeLocked}

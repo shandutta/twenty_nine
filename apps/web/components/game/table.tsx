@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
-import { RotateCcw } from "lucide-react";
+import { Cog, RotateCcw } from "lucide-react";
 
 interface GameTableProps {
   gameState: GameState;
@@ -257,12 +257,19 @@ function StatusChip({
 function LiveAiIndicator({ active }: { active: boolean }) {
   if (!active) return null;
   return (
-    <div className="flex items-center gap-2 rounded-full border border-[#f2c879]/35 bg-[#f2c879]/10 px-3 py-1 text-[10px] uppercase tracking-[0.22em] text-[#f6dca0]">
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#f2c879]/70 opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-[#f2c879]" />
+    <div
+      role="status"
+      aria-live="polite"
+      title="AI is thinking. Reasoning stays private."
+      className="flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70 shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
+    >
+      <Cog className="h-3 w-3 animate-[spin_3s_linear_infinite] text-[#f2c879]" />
+      <span className="text-emerald-100/80">AI thinking</span>
+      <span className="flex items-center gap-0.5">
+        <span className="h-1 w-1 animate-pulse rounded-full bg-[#f2c879]/70" />
+        <span className="h-1 w-1 animate-pulse rounded-full bg-[#f2c879]/50 [animation-delay:150ms]" />
+        <span className="h-1 w-1 animate-pulse rounded-full bg-[#f2c879]/40 [animation-delay:300ms]" />
       </span>
-      Live AI planning
     </div>
   );
 }
@@ -446,6 +453,11 @@ export function GameTable({
   return (
     <TooltipProvider>
       <div className="relative h-full w-full p-4 md:p-8">
+        {llmInUse && (
+          <div className="absolute right-6 top-6 z-30">
+            <LiveAiIndicator active />
+          </div>
+        )}
         {lastTrick && (
           <div
             className={cn(
@@ -542,7 +554,7 @@ export function GameTable({
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-emerald-50">Choose Trump</h2>
                     <Badge className="border-white/10 bg-white/5 text-emerald-100">
-                      Contract {gameState.currentBid ?? "--"}
+                      Bid / Contract {gameState.currentBid ?? "--"}
                     </Badge>
                   </div>
                   <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
@@ -617,10 +629,10 @@ export function GameTable({
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <StatusChip label="Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
+                <StatusChip label="Bid / Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
                 {showRoyalsStatus && (
                   <StatusChip
-                    label="Royals"
+                    label="Royals (K+Q)"
                     value={royalsValue}
                     highlight={canDeclareRoyals}
                     title={royalsTitle}
@@ -638,7 +650,6 @@ export function GameTable({
                   )}
                 />
                 <StatusChip label="Trick" value={`${Math.min(gameState.trickNumber + 1, 8)} / 8`} />
-                <LiveAiIndicator active={llmInUse} />
                 {canRevealTrump && (
                   <Button
                     onClick={onRevealTrump}

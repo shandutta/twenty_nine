@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const quickSteps = [
   {
     title: "Bid the contract",
-    description: "Call 16-29 points. Trump stays hidden until it breaks.",
+    description: "Call 16-29 points. Trump stays hidden until someone can't follow suit.",
     icon: Target,
   },
   {

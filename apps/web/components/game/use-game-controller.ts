@@ -48,13 +48,15 @@ const PRIMARY_HUMAN = 0;
 const PARTNER_HUMAN = 2;
 const BOT_THINK_TIME_MS = 450;
 
-const LLM_MODEL_POOL = [
-  "openai/gpt-5.2-pro",
-  "anthropic/claude-opus-4.5",
-  "google/gemini-3-pro-preview",
+export const LLM_MODEL_OPTIONS = [
+  { value: "openai/gpt-5.2-pro", label: "GPT-5.2 Pro" },
+  { value: "anthropic/claude-opus-4.5", label: "Claude Opus 4.5" },
+  { value: "google/gemini-3-pro-preview", label: "Gemini 3 Pro (Preview)" },
 ] as const;
 
-const DEFAULT_LLM_MODEL = LLM_MODEL_POOL[0];
+const LLM_MODEL_POOL = LLM_MODEL_OPTIONS.map((option) => option.value);
+
+const DEFAULT_LLM_MODEL = LLM_MODEL_OPTIONS[0].value;
 
 const BOT_PRESETS: Record<BotDifficulty, Pick<BotSettings, "difficulty" | "temperature" | "usageHint">> = {
   easy: {
@@ -388,10 +390,7 @@ export const useGameController = () => {
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
 
   const preset = BOT_PRESETS[botDifficulty];
-  const fallbackModels = useMemo(
-    () => LLM_MODEL_POOL.filter((model) => model !== botModel),
-    [botModel]
-  );
+  const fallbackModels = useMemo(() => LLM_MODEL_POOL.filter((model) => model !== botModel), [botModel]);
   const botSettings = useMemo<BotSettings>(
     () => ({
       ...preset,
@@ -523,6 +522,7 @@ export const useGameController = () => {
     );
     setRoundNumber(1);
     setLastMove(null);
+    setControlModeLocked(false);
   }, []);
 
   const canRevealTrump = useMemo(() => {
@@ -662,6 +662,7 @@ export const useGameController = () => {
       if (controlModeLocked) return;
       if (mode === controlMode) return;
       setControlMode(mode);
+      setControlModeLocked(true);
       if (botTimeout.current) {
         clearTimeout(botTimeout.current);
         botTimeout.current = null;

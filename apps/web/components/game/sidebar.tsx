@@ -9,8 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Slider } from "@/components/ui/slider";
 import type { ControlMode, GameState, MatchTrack, Suit } from "@/components/game/types";
-import type { BotDifficulty, BotSettings } from "@/components/game/use-game-controller";
+import { LLM_MODEL_OPTIONS, type BotDifficulty, type BotSettings } from "@/components/game/use-game-controller";
 import { cn } from "@/lib/utils";
 import { Settings, RotateCcw, Sparkles, ScrollText, Trophy } from "lucide-react";
 
@@ -23,6 +25,8 @@ interface GameSidebarProps {
   botSettings: BotSettings;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
+  onBotModelChange: (model: string) => void;
+  onBotTemperatureChange: (temperature: number) => void;
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
   controlModeLocked: boolean;
@@ -78,6 +82,8 @@ export function GameSidebar({
   botSettings,
   onBotEnabledChange,
   onBotDifficultyChange,
+  onBotModelChange,
+  onBotTemperatureChange,
   controlMode,
   onControlModeChange,
   controlModeLocked,
@@ -101,6 +107,10 @@ export function GameSidebar({
   const [selectedBid, setSelectedBid] = useState("");
   const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
   const effectiveSelectedBid = bidValues.includes(selectedBid) ? selectedBid : (bidValues[0] ?? "");
+  const modelLabel = LLM_MODEL_OPTIONS.find((option) => option.value === botSettings.model)?.label ?? botSettings.model;
+  const fallbackLabels = botSettings.fallbackModels
+    .map((model) => LLM_MODEL_OPTIONS.find((option) => option.value === model)?.label ?? model)
+    .join(", ");
 
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
@@ -121,8 +131,10 @@ export function GameSidebar({
   const controlDescription =
     controlMode === "single-hand" ? "You control both Team A hands." : "You control your own hand.";
   const controlModeNote = controlModeLocked
-    ? "Locked for this hand."
-    : "Choose once; locks after the final deal.";
+    ? gameState.phase === "playing" || gameState.phase === "finished"
+      ? "Locked after the 8-card deal."
+      : "Locked for this hand."
+    : "Choose once; locks after the 8-card deal.";
   const phaseLabel = gameState.phase.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase());
   const isBidding = gameState.phase === "bidding";
   const isChoosingTrump = gameState.phase === "choose-trump";
@@ -133,7 +145,7 @@ export function GameSidebar({
     ? "No trump"
     : royalsTeamId
       ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
-      : "Not declared";
+      : "None declared";
   const royalsBadgeClass = isNoTrump
     ? "border-[#f2c879]/40 bg-[#f2c879]/10 text-[#f6d38b]"
     : royalsTeamId === "teamA"
@@ -141,25 +153,50 @@ export function GameSidebar({
       : royalsTeamId === "teamB"
         ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
         : "border-white/10 bg-white/5 text-emerald-50";
-  const teamAScore = matchTrack.teamA.length;
-  const teamBScore = matchTrack.teamB.length;
+  const teamAScore = matchTrack.teamA;
+  const teamBScore = matchTrack.teamB;
+  const playerLabels = useMemo(() => gameState.players.map((player) => player.name), [gameState.players]);
+  const displayLog = useMemo(
+    () =>
+      gameState.log
+        .slice(-10)
+        .map((entry) => entry.replace(/\bP([1-4])\b/g, (_, index) => playerLabels[Number(index) - 1] ?? `P${index}`)),
+    [gameState.log, playerLabels]
+  );
+
+  const formatMatchScore = (score: number) => {
+    if (score === 0) return "0";
+    return `${score > 0 ? "+" : "-"}${Math.abs(score)}`;
+  };
 
   const renderMatchCards = (teamId: "teamA" | "teamB") => {
-    const points = matchTrack[teamId];
+    const score = matchTrack[teamId];
+    const pipTone = score > 0 ? "bid" : score < 0 ? "set" : "empty";
+    const filledCount = Math.abs(score);
     const teamBorder = teamId === "teamA" ? "border-emerald-400/25" : "border-rose-400/25";
 
     return (
       <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label={`Match points for ${teamId}`}>
         {Array.from({ length: targetScore }, (_, index) => {
-          const point = points[index];
-          const pipTone = point?.kind ?? "empty";
+          const active = index < filledCount;
+          const tone = active ? pipTone : "empty";
           const pipClass =
-            pipTone === "bid" ? MATCH_PIP_STYLES.bid : pipTone === "set" ? MATCH_PIP_STYLES.set : MATCH_PIP_STYLES.empty;
-          const title = point ? (point.kind === "bid" ? "Made bid" : "Set opponents") : "Unscored point";
+            tone === "bid"
+              ? MATCH_PIP_STYLES.bid
+              : tone === "set"
+                ? MATCH_PIP_STYLES.set
+                : MATCH_PIP_STYLES.empty;
+          const title =
+            score === 0 ? "No score yet" : pipTone === "bid" ? "Made bid (+1)" : "Missed bid (-1)";
 
           return (
             <div key={`${teamId}-match-${index}`} title={title} className={cn(MATCH_CARD_BASE, teamBorder)}>
-              <span className={cn("absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full", pipClass)} />
+              <span
+                className={cn(
+                  "absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                  pipClass
+                )}
+              />
               <span className="pointer-events-none absolute inset-[3px] rounded-[0.4rem] border border-white/5" />
             </div>
           );
@@ -353,7 +390,7 @@ export function GameSidebar({
                 </div>
                 <Separator className="bg-white/10 my-1.5" />
                 <div className="flex items-center justify-between">
-                  <span>Contract</span>
+                  <span>Bid / Contract</span>
                   <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -369,7 +406,7 @@ export function GameSidebar({
                   <span className="text-emerald-50">{Math.min(gameState.trickNumber + 1, 8)} / 8</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span>Royals</span>
+                  <span>Royals (K+Q)</span>
                   <Badge className={royalsBadgeClass}>{royalsStatus}</Badge>
                 </div>
               </CardContent>
@@ -384,9 +421,9 @@ export function GameSidebar({
                   • Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.
                 </p>
                 <p>• After trump is set, each player receives their final four cards.</p>
-                <p>• Must follow suit if possible; trump stays hidden until a void player reveals it.</p>
-                <p>• Joker means no trump suit (highest card of the led suit wins).</p>
-                <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target ±4.</p>
+                <p>• Must follow suit if possible; trump stays hidden until someone can&apos;t follow suit (then they can reveal it).</p>
+                <p>• Joker = no trump; highest card of the led suit wins.</p>
+                <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target +/-4.</p>
               </CardContent>
             </Card>
 
@@ -405,7 +442,7 @@ export function GameSidebar({
                   <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
                     <span>Match</span>
                     <span className="text-emerald-50">
-                      {teamAScore} / {targetScore}
+                      {formatMatchScore(teamAScore)} / {targetScore}
                     </span>
                   </div>
                   {renderMatchCards("teamA")}
@@ -420,7 +457,7 @@ export function GameSidebar({
                   <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
                     <span>Match</span>
                     <span className="text-emerald-50">
-                      {teamBScore} / {targetScore}
+                      {formatMatchScore(teamBScore)} / {targetScore}
                     </span>
                   </div>
                   {renderMatchCards("teamB")}
@@ -432,7 +469,7 @@ export function GameSidebar({
                   </span>
                   <span className="inline-flex items-center gap-1">
                     <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.set)} />
-                    set opponents
+                    missed bid
                   </span>
                 </div>
               </CardContent>
@@ -450,8 +487,10 @@ export function GameSidebar({
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-emerald-50">Enable LLM strategy</p>
-                    <p className="text-xs text-emerald-100/60">Let bots consult OpenRouter on every move.</p>
+                    <p className="text-sm font-medium text-emerald-50">Play against AI bots</p>
+                    <p className="text-xs text-emerald-100/60">
+                      Let bots consult an advanced model for every move.
+                    </p>
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>
@@ -470,13 +509,54 @@ export function GameSidebar({
                       <SelectItem value="hard">Hard</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-emerald-100/60">{botSettings.usageHint}</p>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-emerald-100/60 space-y-1">
-                  <p>Model: {botSettings.model}</p>
-                  <p>Fallbacks: {botSettings.fallbackModels.join(", ")}</p>
-                  <p>Temperature: {botSettings.temperature}</p>
-                  <p>{botSettings.usageHint}</p>
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-emerald-100/60">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">Model</span>
+                    <span className="text-emerald-50">{modelLabel}</span>
+                  </div>
                 </div>
+                <Accordion type="single" collapsible className="rounded-lg border border-white/10 bg-black/30 px-3">
+                  <AccordionItem value="advanced" className="border-none">
+                    <AccordionTrigger className="py-2 text-[10px] uppercase tracking-[0.32em] text-emerald-100/50 hover:no-underline">
+                      Advanced AI
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-2 text-xs text-emerald-100/70">
+                      <div className="space-y-3">
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-emerald-100/60">Model</p>
+                          <Select value={botSettings.model} onValueChange={onBotModelChange}>
+                            <SelectTrigger className="h-9 border-white/15 bg-white/5 text-emerald-50">
+                              <SelectValue placeholder="Select model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {LLM_MODEL_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-[11px] text-emerald-100/60">
+                            <span>Temperature</span>
+                            <span className="text-emerald-50">{botSettings.temperature.toFixed(2)}</span>
+                          </div>
+                          <Slider
+                            value={[botSettings.temperature]}
+                            onValueChange={(value) => onBotTemperatureChange(value[0] ?? 0)}
+                            max={1}
+                            step={0.05}
+                            className="w-full"
+                          />
+                        </div>
+                        <p className="text-[11px] text-emerald-100/55">Fallbacks: {fallbackLabels}</p>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
               </CardContent>
             </Card>
 
@@ -520,10 +600,10 @@ export function GameSidebar({
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-xs text-emerald-100/70">
-                  {gameState.log.length === 0 ? (
+                  {displayLog.length === 0 ? (
                     <p>No actions yet.</p>
                   ) : (
-                    gameState.log.slice(-10).map((entry, index) => <p key={index}>• {entry}</p>)
+                    displayLog.map((entry, index) => <p key={index}>• {entry}</p>)
                   )}
                 </div>
               </CardContent>
