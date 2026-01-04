@@ -159,7 +159,7 @@ function GamePageClient() {
     setCoachResponse(null);
 
     const message = {
-      trump: engineState.trumpRevealed ? engineState.trumpSuit ?? "joker (no trump)" : "hidden",
+      trump: engineState.trumpRevealed ? (engineState.trumpSuit ?? "joker (no trump)") : "hidden",
       currentTrick: engineState.trick.plays.map((play) => ({
         player: playerLabel(play.player),
         card: formatCard(play.card),

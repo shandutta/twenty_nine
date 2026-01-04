@@ -405,7 +405,14 @@ export const useGameController = () => {
     setEngineState((prev) => {
       if (action.type === "playCard") {
         const hand = prev.hands[action.player] ?? [];
-        setLastMove({ action, legalMoves: getLegalPlays(hand, prev.trick) });
+        setLastMove({
+          action,
+          legalMoves: getLegalPlays(hand, prev.trick, {
+            trumpSuit: prev.trumpSuit,
+            trumpRevealed: prev.trumpRevealed,
+            trumpFromSeventh: prev.trumpFromSeventh,
+          }),
+        });
       }
       return reduceGame(prev, action);
     });
@@ -417,7 +424,11 @@ export const useGameController = () => {
     }
     if (!isHumanTurn) return [];
     const hand = engineState.hands[engineState.currentPlayer] ?? [];
-    return getLegalPlays(hand, engineState.trick).map(cardId);
+    return getLegalPlays(hand, engineState.trick, {
+      trumpSuit: engineState.trumpSuit,
+      trumpRevealed: engineState.trumpRevealed,
+      trumpFromSeventh: engineState.trumpFromSeventh,
+    }).map(cardId);
   }, [engineState, isHumanTurn]);
 
   const handlePlayCard = useCallback(
@@ -485,6 +496,7 @@ export const useGameController = () => {
     if (engineState.phase !== "playing") return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.trumpRevealed) return false;
+    if (engineState.trumpFromSeventh) return false;
     if (!isHumanTurn) return false;
     const hand = engineState.hands[engineState.currentPlayer] ?? [];
     return shouldRevealTrump(hand, engineState.trick);
@@ -569,8 +581,18 @@ export const useGameController = () => {
         }
 
         const hand = snapshot.hands[botPlayer] ?? [];
-        const moves = getLegalPlays(hand, snapshot.trick);
-        let chosen = chooseBotCard({ hand, trick: snapshot.trick });
+        const moves = getLegalPlays(hand, snapshot.trick, {
+          trumpSuit: snapshot.trumpSuit,
+          trumpRevealed: snapshot.trumpRevealed,
+          trumpFromSeventh: snapshot.trumpFromSeventh,
+        });
+        let chosen = chooseBotCard({
+          hand,
+          trick: snapshot.trick,
+          trumpSuit: snapshot.trumpSuit,
+          trumpRevealed: snapshot.trumpRevealed,
+          trumpFromSeventh: snapshot.trumpFromSeventh,
+        });
 
         if (botSettings.enabled && shouldUseLLM()) {
           setLlmInUse(true);

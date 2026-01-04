@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDeck, getLegalPlays, scoreTrick, winningPlay } from "../src/index";
+import { createDeck, getLegalPlays, playCard, scoreTrick, winningPlay } from "../src/index";
 import type { Card, Rank, Suit, TrickState } from "../src/index";
 
 const card = (suit: Suit, rank: Rank): Card => ({ suit, rank });
@@ -58,6 +58,50 @@ describe("follow suit rule", () => {
 
     const legal = getLegalPlays(hand, trickWithLead);
     expect(legal).toEqual([card("hearts", "7")]);
+  });
+});
+
+describe("seventh card trump rules", () => {
+  it("prevents leading trump while hidden when non-trump is available", () => {
+    const hand = [card("spades", "J"), card("hearts", "7")];
+    const trick: TrickState = { plays: [] };
+
+    const legal = getLegalPlays(hand, trick, {
+      trumpSuit: "spades",
+      trumpRevealed: false,
+      trumpFromSeventh: true,
+    });
+
+    expect(legal).toEqual([card("hearts", "7")]);
+  });
+
+  it("reveals trump only when a trump card is played", () => {
+    const hand = [card("spades", "J"), card("clubs", "7")];
+    const trick: TrickState = { plays: [{ player: 0, card: card("hearts", "A") }] };
+
+    const offSuit = playCard({
+      trick,
+      hand,
+      player: 1,
+      card: card("clubs", "7"),
+      trumpRevealed: false,
+      trumpSuit: "spades",
+      trumpFromSeventh: true,
+    });
+
+    expect(offSuit.trumpRevealed).toBe(false);
+
+    const trumpPlay = playCard({
+      trick,
+      hand,
+      player: 1,
+      card: card("spades", "J"),
+      trumpRevealed: false,
+      trumpSuit: "spades",
+      trumpFromSeventh: true,
+    });
+
+    expect(trumpPlay.trumpRevealed).toBe(true);
   });
 });
 

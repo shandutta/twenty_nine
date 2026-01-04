@@ -46,7 +46,8 @@ describe("trump selection", () => {
     const next = reduceGame(base, { type: "chooseTrumpFromSeventh", player: 1 });
 
     expect(next.trumpSuit).toBe(deck[6].suit);
-    expect(next.trumpRevealed).toBe(true);
+    expect(next.trumpRevealed).toBe(false);
+    expect(next.trumpFromSeventh).toBe(true);
     expect(next.phase).toBe("playing");
   });
 });

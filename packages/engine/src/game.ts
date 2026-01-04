@@ -18,6 +18,7 @@ export type GameState = {
   dealer: number;
   trumpSuit: Suit | null;
   trumpRevealed: boolean;
+  trumpFromSeventh: boolean;
   points: [number, number];
   tricksWon: [number, number];
   bidderTeam: TeamId | null;
@@ -104,6 +105,7 @@ export const createGameState = ({
   bidderTeam = null,
   bidTarget = null,
   trumpSuit = null,
+  trumpFromSeventh = false,
   config = DEFAULT_CONFIG,
 }: {
   seed: number;
@@ -113,6 +115,7 @@ export const createGameState = ({
   bidderTeam?: TeamId | null;
   bidTarget?: number | null;
   trumpSuit?: Suit | null;
+  trumpFromSeventh?: boolean;
   config?: EngineConfig;
 }): GameState => {
   const deck = shuffleDeck(createDeck(), seed);
@@ -142,6 +145,7 @@ export const createGameState = ({
     dealer,
     trumpSuit: chosenTrump,
     trumpRevealed,
+    trumpFromSeventh,
     points: [0, 0],
     tricksWon: [0, 0],
     bidderTeam: derivedBidderTeam,
@@ -172,8 +176,20 @@ const rankTieBreaker = (a: Card, b: Card): number => {
   return 0;
 };
 
-export const chooseBotCard = ({ hand, trick }: { hand: Card[]; trick: TrickState }): Card => {
-  const legal = getLegalPlays(hand, trick);
+export const chooseBotCard = ({
+  hand,
+  trick,
+  trumpSuit,
+  trumpRevealed,
+  trumpFromSeventh,
+}: {
+  hand: Card[];
+  trick: TrickState;
+  trumpSuit?: Suit | null;
+  trumpRevealed?: boolean;
+  trumpFromSeventh?: boolean;
+}): Card => {
+  const legal = getLegalPlays(hand, trick, { trumpSuit, trumpRevealed, trumpFromSeventh });
   if (legal.length === 1) return legal[0];
 
   const bySafety = legal.slice().sort((a, b) => {
@@ -199,11 +215,13 @@ const finalizeTrumpChoice = ({
   state,
   trumpSuit,
   trumpRevealed,
+  trumpFromSeventh,
   logLine,
 }: {
   state: GameState;
   trumpSuit: Suit | null;
   trumpRevealed: boolean;
+  trumpFromSeventh: boolean;
   logLine: string;
 }): GameState => {
   const { hands: extraHands, remaining } =
@@ -217,6 +235,7 @@ const finalizeTrumpChoice = ({
     undealt: remaining,
     trumpSuit,
     trumpRevealed,
+    trumpFromSeventh,
     phase: "playing",
     leader,
     currentPlayer: leader,
@@ -305,8 +324,9 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     return finalizeTrumpChoice({
       state,
       trumpSuit: seventhSuit,
-      trumpRevealed: true,
-      logLine: `Trump set by P${action.player + 1} using the 7th card: ${seventhSuit}.`,
+      trumpRevealed: false,
+      trumpFromSeventh: true,
+      logLine: `Trump set by P${action.player + 1} using the 7th card (hidden).`,
     });
   }
 
@@ -319,6 +339,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
       state,
       trumpSuit: action.suit,
       trumpRevealed: action.suit === null ? true : false,
+      trumpFromSeventh: false,
       logLine: `Trump chosen by P${action.player + 1}: ${action.suit ?? "Joker (no trump)"}.`,
     });
   }
@@ -361,6 +382,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     if (state.phase !== "playing") return state;
     if (state.trumpSuit === null) return state;
     if (state.trumpRevealed) return state;
+    if (state.trumpFromSeventh) return state;
     if (action.player !== state.currentPlayer) return state;
 
     const hand = state.hands[action.player] ?? [];
@@ -396,6 +418,8 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     player: action.player,
     card: action.card,
     trumpRevealed: state.trumpRevealed,
+    trumpSuit: state.trumpSuit,
+    trumpFromSeventh: state.trumpFromSeventh,
   });
 
   const nextHands = state.hands.map((cards, index) => {

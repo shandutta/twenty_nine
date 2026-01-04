@@ -104,9 +104,7 @@ export function GameSidebar({
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
   const controlLabel = controlMode === "single-hand" ? "Single hand" : "Standard";
   const controlDescription =
-    controlMode === "single-hand"
-      ? "You control both Team A hands."
-      : "You control your own hand.";
+    controlMode === "single-hand" ? "You control both Team A hands." : "You control your own hand.";
   const phaseLabel = gameState.phase.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase());
   const isBidding = gameState.phase === "bidding";
   const isChoosingTrump = gameState.phase === "choose-trump";
@@ -118,14 +116,13 @@ export function GameSidebar({
     : royalsTeamId
       ? `${royalsTeam?.name ?? "Team"} ${royalsDirection}${gameState.royalsAdjustment}`
       : "Not declared";
-  const royalsBadgeClass =
-    isNoTrump
-      ? "border-[#f2c879]/40 bg-[#f2c879]/10 text-[#f6d38b]"
-      : royalsTeamId === "teamA"
-        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
-        : royalsTeamId === "teamB"
-          ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
-          : "border-white/10 bg-white/5 text-emerald-50";
+  const royalsBadgeClass = isNoTrump
+    ? "border-[#f2c879]/40 bg-[#f2c879]/10 text-[#f6d38b]"
+    : royalsTeamId === "teamA"
+      ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+      : royalsTeamId === "teamB"
+        ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
+        : "border-white/10 bg-white/5 text-emerald-50";
 
   return (
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
@@ -284,7 +281,7 @@ export function GameSidebar({
                         onClick={onChooseTrumpFromSeventh}
                         className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                       >
-                        Use 7th card (random trump)
+                        Use 7th card (hidden trump)
                       </Button>
                     </div>
                   )}
@@ -338,9 +335,11 @@ export function GameSidebar({
                 <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-1.5">
-                <p>• Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.</p>
+                <p>
+                  • Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.
+                </p>
                 <p>• After trump is set, each player receives their final four cards.</p>
-                <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
+                <p>• Must follow suit if possible; trump stays hidden until a void player reveals it.</p>
                 <p>• Joker means no trump suit (highest card of the led suit wins).</p>
                 <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target ±4.</p>
               </CardContent>

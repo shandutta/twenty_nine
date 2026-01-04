@@ -38,7 +38,7 @@ test("game page smoke flow", async ({ page }) => {
     await expect(hydrated).toBeVisible({ timeout: 10_000 });
   }
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
-  await expect(page.getByText("Your hand", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("player-hand-label")).toBeVisible();
 
   const shouldCaptureScreenshots = process.env.E2E_SCREENSHOTS !== "0";
   if (shouldCaptureScreenshots) {

@@ -585,7 +585,7 @@ export function GameTable({
                         size="sm"
                         className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                       >
-                        Use 7th card (random trump)
+                        Use 7th card (hidden trump)
                       </Button>
                     </div>
                   )}
@@ -756,33 +756,21 @@ export function GameTable({
 
           <div className="pt-4 pb-12 md:pb-14 space-y-6">
             {isSingleHand && (
-              <div>
-                <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
-                  <span>Partner hand</span>
-                  <span className="text-emerald-100/40">{topPlayer.name}</span>
-                </div>
-                <Hand
-                  player={topPlayer}
-                  onPlayCard={onPlayCard}
-                  isCurrentTurn={topPlayer.isCurrentPlayer}
-                  legalCardIds={legalCardIds}
-                  animationsEnabled={animationsEnabled}
-                />
-              </div>
-            )}
-            <div>
-              <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
-                <span>Your hand</span>
-                <span className="text-emerald-100/40">{bottomPlayer.cards.length} cards</span>
-              </div>
               <Hand
-                player={bottomPlayer}
+                player={topPlayer}
                 onPlayCard={onPlayCard}
-                isCurrentTurn={bottomPlayer.isCurrentPlayer}
+                isCurrentTurn={topPlayer.isCurrentPlayer}
                 legalCardIds={legalCardIds}
                 animationsEnabled={animationsEnabled}
               />
-            </div>
+            )}
+            <Hand
+              player={bottomPlayer}
+              onPlayCard={onPlayCard}
+              isCurrentTurn={bottomPlayer.isCurrentPlayer}
+              legalCardIds={legalCardIds}
+              animationsEnabled={animationsEnabled}
+            />
           </div>
         </div>
       </div>
@@ -798,13 +786,11 @@ export function GameTable({
                 type="button"
                 onClick={() => onControlModeChange(mode)}
                 className={cn(
-                  "rounded-full px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] transition",
-                  controlMode === mode
-                    ? "bg-[#f2c879] text-[#2b1c07]"
-                    : "text-emerald-100/70 hover:text-emerald-50"
+                  "rounded-full px-3 py-1 text-[9px] uppercase tracking-[0.22em] transition",
+                  controlMode === mode ? "bg-[#f2c879] text-[#2b1c07]" : "text-emerald-100/70 hover:text-emerald-50"
                 )}
               >
-                {mode === "standard" ? "Std" : "2H"}
+                {mode === "standard" ? "Standard" : "Single hand"}
               </button>
             ))}
           </div>
