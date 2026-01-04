@@ -6757,3 +6757,226 @@ From https://github.com/shandutta/twenty_nine
 [01/04/2026, 00:45:03] Pulling latest changes from origin...
 From https://github.com/shandutta/twenty_nine
  * branch            main       -> FETCH_HEAD
+----
+deploy: started 2026-01-04T00:58:07-0800
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 70ms (unchanged)
+.prettierrc.json 30ms (unchanged)
+apps/web/app/api/openrouter/route.ts 106ms (unchanged)
+apps/web/app/game/page.tsx 130ms (unchanged)
+apps/web/app/globals.css 93ms (unchanged)
+apps/web/app/layout.tsx 23ms (unchanged)
+apps/web/app/page.tsx 39ms (unchanged)
+apps/web/components.json 3ms (unchanged)
+apps/web/components/game/hand.tsx 78ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 42ms (unchanged)
+apps/web/components/game/sidebar.tsx 68ms (unchanged)
+apps/web/components/game/table.tsx 136ms (unchanged)
+apps/web/components/game/types.ts 12ms (unchanged)
+apps/web/components/game/use-game-controller.ts 89ms (unchanged)
+apps/web/components/theme-provider.tsx 5ms (unchanged)
+apps/web/components/ui/accordion.tsx 9ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 14ms (unchanged)
+apps/web/components/ui/alert.tsx 11ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 4ms (unchanged)
+apps/web/components/ui/avatar.tsx 9ms (unchanged)
+apps/web/components/ui/badge.tsx 7ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 8ms (unchanged)
+apps/web/components/ui/button-group.tsx 14ms (unchanged)
+apps/web/components/ui/button.tsx 7ms (unchanged)
+apps/web/components/ui/calendar.tsx 24ms (unchanged)
+apps/web/components/ui/card.tsx 8ms (unchanged)
+apps/web/components/ui/carousel.tsx 21ms (unchanged)
+apps/web/components/ui/chart.tsx 49ms (unchanged)
+apps/web/components/ui/checkbox.tsx 5ms (unchanged)
+apps/web/components/ui/collapsible.tsx 4ms (unchanged)
+apps/web/components/ui/command.tsx 16ms (unchanged)
+apps/web/components/ui/context-menu.tsx 16ms (unchanged)
+apps/web/components/ui/dialog.tsx 11ms (unchanged)
+apps/web/components/ui/drawer.tsx 12ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 19ms (unchanged)
+apps/web/components/ui/empty.tsx 9ms (unchanged)
+apps/web/components/ui/field.tsx 20ms (unchanged)
+apps/web/components/ui/form.tsx 22ms (unchanged)
+apps/web/components/ui/hover-card.tsx 5ms (unchanged)
+apps/web/components/ui/input-group.tsx 15ms (unchanged)
+apps/web/components/ui/input-otp.tsx 9ms (unchanged)
+apps/web/components/ui/input.tsx 7ms (unchanged)
+apps/web/components/ui/item.tsx 15ms (unchanged)
+apps/web/components/ui/kbd.tsx 5ms (unchanged)
+apps/web/components/ui/label.tsx 4ms (unchanged)
+apps/web/components/ui/menubar.tsx 15ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 10ms (unchanged)
+apps/web/components/ui/pagination.tsx 9ms (unchanged)
+apps/web/components/ui/popover.tsx 5ms (unchanged)
+apps/web/components/ui/progress.tsx 3ms (unchanged)
+apps/web/components/ui/radio-group.tsx 3ms (unchanged)
+apps/web/components/ui/resizable.tsx 4ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 4ms (unchanged)
+apps/web/components/ui/select.tsx 10ms (unchanged)
+apps/web/components/ui/separator.tsx 4ms (unchanged)
+apps/web/components/ui/sheet.tsx 13ms (unchanged)
+apps/web/components/ui/sidebar.tsx 70ms (unchanged)
+apps/web/components/ui/skeleton.tsx 3ms (unchanged)
+apps/web/components/ui/slider.tsx 5ms (unchanged)
+apps/web/components/ui/sonner.tsx 4ms (unchanged)
+apps/web/components/ui/spinner.tsx 3ms (unchanged)
+apps/web/components/ui/switch.tsx 4ms (unchanged)
+apps/web/components/ui/table.tsx 9ms (unchanged)
+apps/web/components/ui/tabs.tsx 6ms (unchanged)
+apps/web/components/ui/textarea.tsx 4ms (unchanged)
+apps/web/components/ui/toast.tsx 20ms (unchanged)
+apps/web/components/ui/toaster.tsx 6ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 7ms (unchanged)
+apps/web/components/ui/toggle.tsx 5ms (unchanged)
+apps/web/components/ui/tooltip.tsx 5ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 4ms (unchanged)
+apps/web/components/ui/use-toast.ts 27ms (unchanged)
+apps/web/eslint.config.mjs 15ms (unchanged)
+apps/web/hooks/use-mobile.ts 6ms (unchanged)
+apps/web/hooks/use-toast.ts 20ms (unchanged)
+apps/web/lib/engine.ts 1ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 40ms (unchanged)
+apps/web/lib/utils.ts 3ms (unchanged)
+apps/web/next-env.d.ts 5ms (unchanged)
+apps/web/next.config.ts 4ms (unchanged)
+apps/web/package.json 7ms (unchanged)
+apps/web/playwright.config.ts 9ms (unchanged)
+apps/web/pnpm-workspace.yaml 3ms (unchanged)
+apps/web/postcss.config.mjs 4ms (unchanged)
+apps/web/README.md 65ms (unchanged)
+apps/web/scripts/lighthouse.mjs 36ms (unchanged)
+apps/web/scripts/next-dev.mjs 17ms (unchanged)
+apps/web/scripts/next-start.mjs 11ms (unchanged)
+apps/web/styles/globals.css 34ms (unchanged)
+apps/web/test/e2e/game.spec.ts 29ms (unchanged)
+apps/web/test/game-page.test.tsx 33ms (unchanged)
+apps/web/test/setup.ts 2ms (unchanged)
+apps/web/test/useGameController.test.tsx 30ms (unchanged)
+apps/web/tsconfig.json 2ms (unchanged)
+apps/web/twentynine.code-workspace 2ms (unchanged)
+apps/web/vitest.config.ts 3ms (unchanged)
+docs/implementation-guide.md 92ms (unchanged)
+docs/qa/baseline.md 13ms (unchanged)
+docs/qa/release-candidate.md 10ms (unchanged)
+docs/ux/ux-changelog.md 11ms (unchanged)
+package.json 2ms (unchanged)
+packages/engine/package.json 1ms (unchanged)
+packages/engine/src/cards.ts 8ms (unchanged)
+packages/engine/src/config.ts 3ms (unchanged)
+packages/engine/src/game.ts 69ms (unchanged)
+packages/engine/src/index.ts 3ms (unchanged)
+packages/engine/src/royals.ts 8ms (unchanged)
+packages/engine/src/trick.ts 22ms (unchanged)
+packages/engine/test/bidding.test.ts 23ms (unchanged)
+packages/engine/test/cards.test.ts 9ms (unchanged)
+packages/engine/test/game.test.ts 15ms (unchanged)
+packages/engine/test/royals.test.ts 19ms (unchanged)
+packages/engine/test/trick.test.ts 27ms (unchanged)
+packages/engine/tsconfig.json 3ms (unchanged)
+packages/engine/vitest.config.ts 4ms (unchanged)
+pnpm-workspace.yaml 4ms (unchanged)
+README.md 25ms (unchanged)
+scripts/auto-commit.js 75ms (unchanged)
+scripts/verify-next-build.mjs 11ms (unchanged)
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/royals.test.ts (6 tests) 6ms
+ ✓ test/bidding.test.ts (6 tests) 11ms
+ ✓ test/cards.test.ts (3 tests) 11ms
+ ✓ test/trick.test.ts (7 tests) 13ms
+ ✓ test/game.test.ts (3 tests) 8ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  00:58:26
+   Duration  742ms (transform 220ms, setup 0ms, collect 679ms, tests 49ms, environment 2ms, prepare 758ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 55ms
+ ✓ test/game-page.test.tsx (2 tests) 571ms
+   ✓ /game UI > disables illegal moves  364ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  00:58:28
+   Duration  3.46s (transform 700ms, setup 289ms, collect 1.73s, tests 627ms, environment 1.48s, prepare 304ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (19.7s)
+
+  1 passed (31.0s)
+
+To open last HTML report run:
+[36m[39m
+[36m  pnpm exec playwright show-report reports/playwright/html[39m
+[36m[39m
+deploy: building web app
+deploy: cleaning previous build
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 20.6s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 1286.7ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[01/04/2026, 01:00:02] Starting auto-commit run
+[01/04/2026, 01:00:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+[01/04/2026, 01:00:03] Running pre-commit checks (with Codex auto-fix if needed)...
+[01/04/2026, 01:00:03] Running check: pnpm --filter web lint

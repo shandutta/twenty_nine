@@ -4,6 +4,14 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$ROOT_DIR"
 
+mkdir -p "$ROOT_DIR/.logs"
+LOG_FILE="$ROOT_DIR/.logs/deploy.log"
+AUTO_COMMIT_LOG="$ROOT_DIR/.logs/auto-commit.log"
+export TZ="America/Los_Angeles"
+exec > >(tee -a "$LOG_FILE" "$AUTO_COMMIT_LOG") 2>&1
+echo "----"
+echo "deploy: started $(date +"%Y-%m-%dT%H:%M:%S%z")"
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$BRANCH" != "main" ]; then
   echo "deploy: skip (branch $BRANCH)"

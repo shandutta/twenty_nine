@@ -347,10 +347,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
   return (
     <div className="flex flex-col items-center gap-3 pb-2">
       <div className="flex w-full items-center justify-between px-4 md:px-12">
-        <span
-          data-testid={handLabelTestId}
-          className="text-xs uppercase tracking-[0.35em] text-emerald-100/60"
-        >
+        <span data-testid={handLabelTestId} className="text-xs uppercase tracking-[0.35em] text-emerald-100/60">
           {handLabel}
         </span>
         <span
