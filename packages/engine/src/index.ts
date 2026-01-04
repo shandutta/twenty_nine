@@ -1,8 +1,8 @@
 export { SUITS, RANKS, RANK_ORDER, createDeck, compareRanks, rankPoints, cardPoints } from "./cards";
 export type { Card, Rank, Suit } from "./cards";
 export type { EngineConfig } from "./config";
-export { chooseBotCard, createGameState, reduceGame, shuffleDeck, teamForPlayer } from "./game";
-export type { GameAction, GamePhase, GameState } from "./game";
+export { MATCH_PIPS, chooseBotCard, createGameState, reduceGame, shuffleDeck, teamForPlayer } from "./game";
+export type { GameAction, GamePhase, GameState, MatchEndReason } from "./game";
 export {
   createTrick,
   getLegalPlays,

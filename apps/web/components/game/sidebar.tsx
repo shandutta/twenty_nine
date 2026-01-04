@@ -11,7 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
-import type { ControlMode, GameState, MatchTrack, Suit } from "@/components/game/types";
+import { MATCH_PIPS } from "@twentynine/engine";
+import type { ControlMode, GameState, Suit } from "@/components/game/types";
 import {
   LLM_MODEL_OPTIONS,
   REASONING_EFFORT_OPTIONS,
@@ -26,8 +27,6 @@ interface GameSidebarProps {
   gameState: GameState;
   onNewGame: () => void;
   onOpenSettings: () => void;
-  targetScore: number;
-  matchTrack: MatchTrack;
   botSettings: BotSettings;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
@@ -76,8 +75,8 @@ const MATCH_CARD_BASE =
   "relative h-8 w-6 rounded-[0.5rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
 
 const MATCH_PIP_STYLES = {
-  bid: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
-  set: "bg-[#0a0a0a] ring-1 ring-white/30 shadow-[inset_0_0_6px_rgba(255,255,255,0.15)]",
+  red: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
+  black: "bg-[#0a0a0a] ring-1 ring-white/30 shadow-[inset_0_0_6px_rgba(255,255,255,0.15)]",
   empty: "bg-white/10 ring-1 ring-white/10",
 } as const;
 
@@ -85,8 +84,6 @@ export function GameSidebar({
   gameState,
   onNewGame,
   onOpenSettings,
-  targetScore,
-  matchTrack,
   botSettings,
   onBotEnabledChange,
   onBotDifficultyChange,
@@ -166,8 +163,10 @@ export function GameSidebar({
       : royalsTeamId === "teamB"
         ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
         : "border-white/10 bg-white/5 text-emerald-50";
-  const teamAScore = matchTrack.teamA;
-  const teamBScore = matchTrack.teamB;
+  const teamARed = gameState.matchRedPips[0];
+  const teamABlack = gameState.matchBlackPips[0];
+  const teamBRed = gameState.matchRedPips[1];
+  const teamBBlack = gameState.matchBlackPips[1];
   const playerLabels = useMemo(() => gameState.players.map((player) => player.name), [gameState.players]);
   const displayLog = useMemo(
     () =>
@@ -177,32 +176,29 @@ export function GameSidebar({
     [gameState.log, playerLabels]
   );
 
-  const formatMatchScore = (score: number) => {
-    if (score === 0) return "0";
-    return `${score > 0 ? "+" : "-"}${Math.abs(score)}`;
+  const formatMatchScore = (red: number, black: number) => {
+    return `R${red}/${MATCH_PIPS} · B${black}/${MATCH_PIPS}`;
   };
 
-  const renderMatchCards = (teamId: "teamA" | "teamB") => {
-    const score = matchTrack[teamId];
-    const pipTone = score > 0 ? "bid" : score < 0 ? "set" : "empty";
-    const filledCount = Math.abs(score);
+  const renderMatchRow = (teamId: "teamA" | "teamB", tone: "red" | "black") => {
+    const teamIndex = teamId === "teamA" ? 0 : 1;
+    const filledCount = tone === "red" ? gameState.matchRedPips[teamIndex] : gameState.matchBlackPips[teamIndex];
     const teamBorder = teamId === "teamA" ? "border-emerald-400/25" : "border-rose-400/25";
+    const pipClass = tone === "red" ? MATCH_PIP_STYLES.red : MATCH_PIP_STYLES.black;
+    const title = tone === "red" ? "Red pips (made bid)" : "Black pips (missed bid)";
 
     return (
-      <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label={`Match points for ${teamId}`}>
-        {Array.from({ length: targetScore }, (_, index) => {
+      <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label={`${title} for ${teamId}`}>
+        {Array.from({ length: MATCH_PIPS }, (_, index) => {
           const active = index < filledCount;
-          const tone = active ? pipTone : "empty";
-          const pipClass =
-            tone === "bid" ? MATCH_PIP_STYLES.bid : tone === "set" ? MATCH_PIP_STYLES.set : MATCH_PIP_STYLES.empty;
-          const title = score === 0 ? "No score yet" : pipTone === "bid" ? "Made bid (+1)" : "Missed bid (-1)";
+          const pipTone = active ? pipClass : MATCH_PIP_STYLES.empty;
 
           return (
-            <div key={`${teamId}-match-${index}`} title={title} className={cn(MATCH_CARD_BASE, teamBorder)}>
+            <div key={`${teamId}-${tone}-${index}`} title={title} className={cn(MATCH_CARD_BASE, teamBorder)}>
               <span
                 className={cn(
                   "absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                  pipClass
+                  pipTone
                 )}
               />
               <span className="pointer-events-none absolute inset-[3px] rounded-[0.4rem] border border-white/5" />
@@ -451,12 +447,27 @@ export function GameSidebar({
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
-                    <span>Match</span>
-                    <span className="text-emerald-50">
-                      {formatMatchScore(teamAScore)} / {targetScore}
-                    </span>
+                    <span>Match Pips</span>
+                    <span className="text-emerald-50">{formatMatchScore(teamARed, teamABlack)}</span>
                   </div>
-                  {renderMatchCards("teamA")}
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                      <span className="flex items-center gap-2">
+                        <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
+                        Red pips
+                      </span>
+                      <span className="text-emerald-50">{teamARed}/{MATCH_PIPS}</span>
+                    </div>
+                    {renderMatchRow("teamA", "red")}
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                      <span className="flex items-center gap-2">
+                        <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
+                        Black pips
+                      </span>
+                      <span className="text-emerald-50">{teamABlack}/{MATCH_PIPS}</span>
+                    </div>
+                    {renderMatchRow("teamA", "black")}
+                  </div>
                 </div>
                 <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-2.5">
                   <div className="flex items-center justify-between">
@@ -466,20 +477,35 @@ export function GameSidebar({
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
-                    <span>Match</span>
-                    <span className="text-emerald-50">
-                      {formatMatchScore(teamBScore)} / {targetScore}
-                    </span>
+                    <span>Match Pips</span>
+                    <span className="text-emerald-50">{formatMatchScore(teamBRed, teamBBlack)}</span>
                   </div>
-                  {renderMatchCards("teamB")}
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                      <span className="flex items-center gap-2">
+                        <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
+                        Red pips
+                      </span>
+                      <span className="text-emerald-50">{teamBRed}/{MATCH_PIPS}</span>
+                    </div>
+                    {renderMatchRow("teamB", "red")}
+                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                      <span className="flex items-center gap-2">
+                        <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
+                        Black pips
+                      </span>
+                      <span className="text-emerald-50">{teamBBlack}/{MATCH_PIPS}</span>
+                    </div>
+                    {renderMatchRow("teamB", "black")}
+                  </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">
                   <span className="inline-flex items-center gap-1">
-                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.bid)} />
+                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                     made bid
                   </span>
                   <span className="inline-flex items-center gap-1">
-                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.set)} />
+                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
                     missed bid
                   </span>
                 </div>

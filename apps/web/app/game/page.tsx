@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { Card, Suit } from "@twentynine/engine";
 import { GameTable } from "@/components/game/table";
 import { GameSidebar } from "@/components/game/sidebar";
@@ -8,7 +8,6 @@ import { SettingsSheet } from "@/components/game/settings-sheet";
 import { useSoundEffects } from "@/components/game/use-sound-effects";
 import { useGameController } from "@/components/game/use-game-controller";
 import { Spinner } from "@/components/ui/spinner";
-import type { MatchTrack } from "@/components/game/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trophy } from "lucide-react";
 
 const suitSymbols: Record<Suit, string> = {
   hearts: "♥",
@@ -91,6 +89,8 @@ function GamePageClient() {
     onChooseTrump,
     onChooseTrumpFromSeventh,
     onNewGame,
+    onNextHand,
+    canStartNextHand,
     canRevealTrump,
     onRevealTrump,
     canDeclareRoyals,
@@ -115,10 +115,6 @@ function GamePageClient() {
   const [soundVolume, setSoundVolume] = useState(75);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
-  const [targetScore, setTargetScore] = useState(6);
-  const [matchTrack, setMatchTrack] = useState<MatchTrack>({ teamA: 0, teamB: 0 });
-  const lastScoredHandRef = useRef<number | null>(null);
-  const [matchDialogOpen, setMatchDialogOpen] = useState(false);
   const [coachEnabled, setCoachEnabled] = useState(false);
   const [coachLoading, setCoachLoading] = useState(false);
   const [coachError, setCoachError] = useState<string | null>(null);
@@ -130,15 +126,12 @@ function GamePageClient() {
     enabled: soundEnabled,
     volume: soundVolume,
     log: gameState.log,
-    roundNumber: gameState.roundNumber,
+    roundNumber: gameState.matchRound,
   });
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
   }, [gameState.players]);
-
-  const teamAName = gameState.teams.teamA.name;
-  const teamBName = gameState.teams.teamB.name;
 
   const lastMoveSummary = lastMove
     ? `${playerLabel(lastMove.action.player)} played ${formatCard(lastMove.action.card)}`
@@ -152,49 +145,6 @@ function GamePageClient() {
   const confirmNewGame = () => {
     onNewGame();
     setConfirmNewGameOpen(false);
-  };
-
-  const startNewMatch = () => {
-    setMatchTrack({ teamA: 0, teamB: 0 });
-    lastScoredHandRef.current = null;
-    setMatchDialogOpen(false);
-    setConfirmNewGameOpen(false);
-    onNewGame();
-  };
-
-  const formatMatchScore = (score: number) => {
-    if (score === 0) return "0";
-    return `${score > 0 ? "+" : "-"}${Math.abs(score)}`;
-  };
-
-  const renderMatchCards = (score: number, teamTone: "teamA" | "teamB") => {
-    const pipTone = score > 0 ? "bid" : score < 0 ? "set" : "empty";
-    const filledCount = Math.abs(score);
-    const teamBorder = teamTone === "teamA" ? "border-emerald-400/30" : "border-rose-400/30";
-
-    return (
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        {Array.from({ length: targetScore }, (_, index) => {
-          const active = index < filledCount;
-          const tone = active ? pipTone : "empty";
-          const pipClass =
-            tone === "bid"
-              ? MATCH_PIP_STYLES.bid
-              : tone === "set"
-                ? MATCH_PIP_STYLES.set
-                : MATCH_PIP_STYLES.empty;
-
-          return (
-            <div key={`match-${teamTone}-${index}`} className={`${MATCH_CARD_BASE} ${teamBorder}`}>
-              <span
-                className={`absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full ${pipClass}`}
-              />
-              <span className="pointer-events-none absolute inset-[3px] rounded-[0.45rem] border border-white/5" />
-            </div>
-          );
-        })}
-      </div>
-    );
   };
 
   useEffect(() => {
@@ -222,66 +172,6 @@ function GamePageClient() {
     setCoachResponse(null);
     setCoachError(null);
   }, [lastMove?.action, coachEnabled]);
-
-  const matchWinner = useMemo(() => {
-    if (matchTrack.teamA >= targetScore) {
-      return { winner: "teamA" as const, reason: `Reached +${targetScore}` };
-    }
-    if (matchTrack.teamA <= -targetScore) {
-      return { winner: "teamB" as const, reason: `${teamAName} fell to -${targetScore}` };
-    }
-    if (matchTrack.teamB >= targetScore) {
-      return { winner: "teamB" as const, reason: `Reached +${targetScore}` };
-    }
-    if (matchTrack.teamB <= -targetScore) {
-      return { winner: "teamA" as const, reason: `${teamBName} fell to -${targetScore}` };
-    }
-    return null;
-  }, [matchTrack.teamA, matchTrack.teamB, targetScore, teamAName, teamBName]);
-
-  useEffect(() => {
-    if (!matchWinner) {
-      setMatchDialogOpen(false);
-      return;
-    }
-    setMatchDialogOpen(true);
-  }, [matchWinner]);
-
-  useEffect(() => {
-    setMatchTrack((prev) => ({
-      teamA: Math.max(-targetScore, Math.min(targetScore, prev.teamA)),
-      teamB: Math.max(-targetScore, Math.min(targetScore, prev.teamB)),
-    }));
-  }, [targetScore]);
-
-  useEffect(() => {
-    setMatchTrack({ teamA: 0, teamB: 0 });
-    lastScoredHandRef.current = null;
-  }, [controlMode]);
-
-  useEffect(() => {
-    if (engineState.phase !== "hand-complete") return;
-    if (lastScoredHandRef.current === engineState.seed) return;
-    lastScoredHandRef.current = engineState.seed;
-
-    const bidderTeam = engineState.bidderTeam;
-    const bidTarget = engineState.bidTarget;
-    if (bidderTeam === null || bidTarget === null) return;
-
-    const bidderPoints = engineState.points[bidderTeam];
-    const bidderMade = bidderPoints >= bidTarget;
-    const biddingKey = bidderTeam === 0 ? "teamA" : "teamB";
-    const delta = bidderMade ? 1 : -1;
-
-    setMatchTrack((prev) => {
-      const nextValue = Math.max(-targetScore, Math.min(targetScore, prev[biddingKey] + delta));
-      if (nextValue === prev[biddingKey]) return prev;
-      return {
-        ...prev,
-        [biddingKey]: nextValue,
-      };
-    });
-  }, [engineState, targetScore]);
 
   const requestCoach = async () => {
     if (!coachEnabled || !lastMove) {
@@ -360,8 +250,6 @@ function GamePageClient() {
         gameState={gameState}
         onNewGame={requestNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
-        targetScore={targetScore}
-        matchTrack={matchTrack}
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
@@ -406,6 +294,8 @@ function GamePageClient() {
           onChooseTrump={onChooseTrump}
           onChooseTrumpFromSeventh={onChooseTrumpFromSeventh}
           onNewGame={requestNewGame}
+          onNextHand={onNextHand}
+          canStartNextHand={canStartNextHand}
           canRevealTrump={canRevealTrump}
           onRevealTrump={onRevealTrump}
           canDeclareRoyals={canDeclareRoyals}
@@ -427,8 +317,6 @@ function GamePageClient() {
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
-        targetScore={targetScore}
-        onTargetScoreChange={setTargetScore}
         onNewGame={requestNewGame}
       />
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>
@@ -436,7 +324,7 @@ function GamePageClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Start a new game?</AlertDialogTitle>
             <AlertDialogDescription className="text-emerald-100/70">
-              This will shuffle a fresh deck, reset the current round, and clear the trick log.
+              This resets the match, clears all pips, and starts the round count back at 0.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -445,63 +333,6 @@ function GamePageClient() {
             </AlertDialogCancel>
             <AlertDialogAction onClick={confirmNewGame} className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
               Start New Game
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
-        <AlertDialogContent className="border-white/10 bg-[#0c1813] text-emerald-50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-emerald-50">
-              <span className="flex size-9 items-center justify-center rounded-full border border-[#f2c879]/40 bg-[#231708] text-[#f6d38b]">
-                <Trophy className="size-4" />
-              </span>
-              Match Complete
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-emerald-100/70">
-              {matchWinner
-                ? `${matchWinner.winner === "teamA" ? teamAName : teamBName} win the match · ${matchWinner.reason}`
-                : "Match results are ready."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-            <div className="flex items-center justify-between text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-              <span>Match Score</span>
-              <span className="text-emerald-50">Target ±{targetScore}</span>
-            </div>
-            <div className="mt-4 space-y-4">
-              <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-emerald-200">{teamAName}</span>
-                  <span className="text-emerald-50">{formatMatchScore(matchTrack.teamA)}</span>
-                </div>
-                {renderMatchCards(matchTrack.teamA, "teamA")}
-              </div>
-              <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-rose-200">{teamBName}</span>
-                  <span className="text-emerald-50">{formatMatchScore(matchTrack.teamB)}</span>
-                </div>
-                {renderMatchCards(matchTrack.teamB, "teamB")}
-              </div>
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">
-              <span className="inline-flex items-center gap-1">
-                <span className={`size-1.5 rounded-full ${MATCH_PIP_STYLES.bid}`} />
-                made bid
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className={`size-1.5 rounded-full ${MATCH_PIP_STYLES.set}`} />
-                missed bid
-              </span>
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10">
-              Keep Table
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={startNewMatch} className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
-              Start New Match
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

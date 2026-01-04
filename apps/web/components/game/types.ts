@@ -23,6 +23,8 @@ export interface MatchTrack {
   teamB: number;
 }
 
+export type MatchEndReason = "red" | "black";
+
 export interface Player {
   id: string;
   name: string;
@@ -57,6 +59,11 @@ export interface GameState {
   royalsMinTarget: number;
   royalsMaxTarget: number;
   roundNumber: number;
+  matchRound: number;
+  matchRedPips: [number, number];
+  matchBlackPips: [number, number];
+  matchWinner: "teamA" | "teamB" | null;
+  matchEndReason: MatchEndReason | null;
   trickNumber: number;
   currentPlayerId: string;
   log: string[];

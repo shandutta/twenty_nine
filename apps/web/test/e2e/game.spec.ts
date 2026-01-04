@@ -45,7 +45,8 @@ test("game page smoke flow", async ({ page }) => {
   await expect(aiTab).toHaveAttribute("aria-selected", "true");
   const llmHeading = page.getByRole("heading", { name: "LLM Bots" });
   await expect(llmHeading).toBeVisible();
-  const aiSwitch = llmHeading.locator("..").getByRole("switch");
+  const llmCard = llmHeading.locator("..").locator("..");
+  const aiSwitch = llmCard.getByRole("switch").first();
   if ((await aiSwitch.getAttribute("aria-checked")) === "true") {
     await aiSwitch.click();
   }

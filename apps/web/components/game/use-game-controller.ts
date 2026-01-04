@@ -371,7 +371,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   return { card: null, reasoning: null, model: null, hasTrace: false };
 };
 
-const createUiState = (state: EngineState, roundNumber: number, controlMode: ControlMode): GameState => {
+const createUiState = (state: EngineState, controlMode: ControlMode): GameState => {
   const resolvedMeta = PLAYER_META.map((meta, index) => {
     if (controlMode === "single-hand" && index === PARTNER_HUMAN) {
       return { ...meta, name: "Partner" };
@@ -438,7 +438,12 @@ const createUiState = (state: EngineState, roundNumber: number, controlMode: Con
     royalsAdjustment: state.config.royalsAdjustment,
     royalsMinTarget: state.config.minBid,
     royalsMaxTarget: state.config.maxBidTarget,
-    roundNumber,
+    roundNumber: state.matchRound,
+    matchRound: state.matchRound,
+    matchRedPips: state.matchRedPips,
+    matchBlackPips: state.matchBlackPips,
+    matchWinner: state.matchWinner === null ? null : state.matchWinner === 0 ? "teamA" : "teamB",
+    matchEndReason: state.matchEndReason,
     trickNumber: state.trickNumber,
     currentPlayerId: resolvedMeta[state.currentPlayer].id,
     log: state.log,
@@ -447,7 +452,6 @@ const createUiState = (state: EngineState, roundNumber: number, controlMode: Con
 };
 
 export const useGameController = () => {
-  const [roundNumber, setRoundNumber] = useState(1);
   const [engineState, setEngineState] = useState<EngineState>(() => createGameState({ seed: Date.now() }));
   const [lastMove, setLastMove] = useState<LastMoveInfo>(null);
   const [botEnabled, setBotEnabled] = useState(true);
@@ -606,12 +610,24 @@ export const useGameController = () => {
         config: prev.config,
       })
     );
-    setRoundNumber(1);
     setLastMove(null);
     setLlmReasoning(null);
     setLlmReasoningMeta(null);
     setControlModeLocked(false);
   }, []);
+  const canStartNextHand = engineState.phase === "hand-complete" && engineState.matchWinner === null;
+  const handleNextHand = useCallback(() => {
+    if (!canStartNextHand) return;
+    if (botTimeout.current) {
+      clearTimeout(botTimeout.current);
+      botTimeout.current = null;
+    }
+    setLlmInUse(false);
+    setLastMove(null);
+    setLlmReasoning(null);
+    setLlmReasoningMeta(null);
+    dispatch({ type: "startNextHand" });
+  }, [canStartNextHand, dispatch]);
 
   const canRevealTrump = useMemo(() => {
     if (engineState.phase !== "playing") return false;
@@ -772,7 +788,6 @@ export const useGameController = () => {
           config: prev.config,
         })
       );
-      setRoundNumber(1);
       setLastMove(null);
       setLlmReasoning(null);
       setLlmReasoningMeta(null);
@@ -780,10 +795,7 @@ export const useGameController = () => {
     [controlMode, controlModeLocked]
   );
 
-  const gameState = useMemo(
-    () => createUiState(engineState, roundNumber, controlMode),
-    [engineState, roundNumber, controlMode]
-  );
+  const gameState = useMemo(() => createUiState(engineState, controlMode), [engineState, controlMode]);
 
   return {
     gameState,
@@ -798,6 +810,8 @@ export const useGameController = () => {
     onChooseTrump: handleChooseTrump,
     onChooseTrumpFromSeventh: handleChooseTrumpFromSeventh,
     onNewGame: handleNewGame,
+    onNextHand: handleNextHand,
+    canStartNextHand,
     canRevealTrump,
     onRevealTrump: handleRevealTrump,
     canDeclareRoyals: canDeclareRoyalsForHuman,

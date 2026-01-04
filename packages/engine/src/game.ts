@@ -7,6 +7,7 @@ import type { TeamId } from "./royals";
 import type { EngineConfig } from "./config";
 
 export type GamePhase = "bidding" | "choose-trump" | "playing" | "hand-complete";
+export type MatchEndReason = "red" | "black";
 
 export type GameState = {
   hands: Card[][];
@@ -39,6 +40,11 @@ export type GameState = {
   log: string[];
   seed: number;
   config: EngineConfig;
+  matchRound: number;
+  matchRedPips: [number, number];
+  matchBlackPips: [number, number];
+  matchWinner: TeamId | null;
+  matchEndReason: MatchEndReason | null;
 };
 
 export type GameAction =
@@ -48,7 +54,8 @@ export type GameAction =
   | { type: "chooseTrump"; player: number; suit: Suit | null }
   | { type: "chooseTrumpFromSeventh"; player: number }
   | { type: "declareRoyals"; player: number }
-  | { type: "revealTrump"; player: number };
+  | { type: "revealTrump"; player: number }
+  | { type: "startNextHand" };
 
 const DEFAULT_CONFIG: EngineConfig = {
   minBid: 16,
@@ -56,6 +63,8 @@ const DEFAULT_CONFIG: EngineConfig = {
   royalsAdjustment: 4,
   openingLead: "left-of-dealer",
 };
+
+export const MATCH_PIPS = 6;
 
 const nextPlayer = (player: number): number => (player + 1) % 4;
 
@@ -107,6 +116,11 @@ export const createGameState = ({
   trumpSuit = null,
   trumpFromSeventh = false,
   config = DEFAULT_CONFIG,
+  matchRound = 0,
+  matchRedPips = [0, 0],
+  matchBlackPips = [0, 0],
+  matchWinner = null,
+  matchEndReason = null,
 }: {
   seed: number;
   dealer?: number;
@@ -117,6 +131,11 @@ export const createGameState = ({
   trumpSuit?: Suit | null;
   trumpFromSeventh?: boolean;
   config?: EngineConfig;
+  matchRound?: number;
+  matchRedPips?: [number, number];
+  matchBlackPips?: [number, number];
+  matchWinner?: TeamId | null;
+  matchEndReason?: MatchEndReason | null;
 }): GameState => {
   const deck = shuffleDeck(createDeck(), seed);
   const initialCardsPerPlayer = phase === "playing" || phase === "hand-complete" ? 8 : 4;
@@ -167,6 +186,11 @@ export const createGameState = ({
         : [`Hand start. Dealer: P${dealer + 1}.`],
     seed,
     config,
+    matchRound,
+    matchRedPips,
+    matchBlackPips,
+    matchWinner,
+    matchEndReason,
   };
 };
 
@@ -204,7 +228,16 @@ export const chooseBotCard = ({
 const redealGame = (state: GameState, log: string[]): GameState => {
   const nextDealer = nextPlayer(state.dealer);
   const nextSeed = state.seed + 1;
-  const fresh = createGameState({ seed: nextSeed, dealer: nextDealer, config: state.config });
+  const fresh = createGameState({
+    seed: nextSeed,
+    dealer: nextDealer,
+    config: state.config,
+    matchRound: state.matchRound,
+    matchRedPips: state.matchRedPips,
+    matchBlackPips: state.matchBlackPips,
+    matchWinner: state.matchWinner,
+    matchEndReason: state.matchEndReason,
+  });
   return {
     ...fresh,
     log: [...log, ...fresh.log],
@@ -244,6 +277,28 @@ const finalizeTrumpChoice = ({
 };
 
 export const reduceGame = (state: GameState, action: GameAction): GameState => {
+  if (state.matchWinner !== null) {
+    return state;
+  }
+  if (action.type === "startNextHand") {
+    if (state.phase !== "hand-complete") return state;
+    const nextDealer = nextPlayer(state.dealer);
+    const nextSeed = state.seed + 1;
+    const fresh = createGameState({
+      seed: nextSeed,
+      dealer: nextDealer,
+      config: state.config,
+      matchRound: state.matchRound,
+      matchRedPips: state.matchRedPips,
+      matchBlackPips: state.matchBlackPips,
+      matchWinner: state.matchWinner,
+      matchEndReason: state.matchEndReason,
+    });
+    return {
+      ...fresh,
+      log: [...state.log, ...fresh.log],
+    };
+  }
   if (action.type === "placeBid") {
     if (state.phase !== "bidding") return state;
     if (action.player !== state.currentPlayer) return state;
@@ -460,6 +515,40 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
 
   const nextTrickNumber = state.trickNumber + 1;
   const phase: GamePhase = nextTrickNumber >= 8 ? "hand-complete" : "playing";
+  let matchRound = state.matchRound;
+  let matchRedPips: [number, number] = [...state.matchRedPips] as [number, number];
+  let matchBlackPips: [number, number] = [...state.matchBlackPips] as [number, number];
+  let matchWinner: TeamId | null = state.matchWinner;
+  let matchEndReason: MatchEndReason | null = state.matchEndReason;
+
+  if (phase === "hand-complete") {
+    matchRound += 1;
+    if (state.bidderTeam !== null && state.bidTarget !== null) {
+      const bidderTeam = state.bidderTeam;
+      const bidderPoints = points[bidderTeam];
+      const madeBid = bidderPoints >= state.bidTarget;
+      if (madeBid) {
+        matchRedPips[bidderTeam] = Math.min(MATCH_PIPS, matchRedPips[bidderTeam] + 1);
+        log.push(`Match: Team ${bidderTeam + 1} made the bid (+1 red pip).`);
+        if (matchRedPips[bidderTeam] >= MATCH_PIPS) {
+          matchWinner = bidderTeam;
+          matchEndReason = "red";
+          log.push(`Match over: Team ${bidderTeam + 1} wins with ${MATCH_PIPS} red pips.`);
+        }
+      } else {
+        matchBlackPips[bidderTeam] = Math.min(MATCH_PIPS, matchBlackPips[bidderTeam] + 1);
+        const winner = bidderTeam === 0 ? 1 : 0;
+        log.push(`Match: Team ${bidderTeam + 1} missed the bid (+1 black pip).`);
+        if (matchBlackPips[bidderTeam] >= MATCH_PIPS) {
+          matchWinner = winner;
+          matchEndReason = "black";
+          log.push(
+            `Match over: Team ${winner + 1} wins as Team ${bidderTeam + 1} hit ${MATCH_PIPS} black pips.`
+          );
+        }
+      }
+    }
+  }
 
   return {
     ...state,
@@ -480,6 +569,11 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
       team: winnerTeam,
     },
     phase,
+    matchRound,
+    matchRedPips,
+    matchBlackPips,
+    matchWinner,
+    matchEndReason,
     log,
   };
 };
