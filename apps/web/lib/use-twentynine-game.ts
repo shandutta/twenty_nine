@@ -20,12 +20,15 @@ export type GameState = {
   scores: [number, number];
   log: string[];
   status: "playing" | "hand-complete";
+  mode: "standard" | "single-hand";
+  humanSeats: number[];
 };
 
 type GameAction =
   | { type: "playCard"; player: number; card: Card }
   | { type: "botPlay" }
-  | { type: "reset" };
+  | { type: "reset" }
+  | { type: "setMode"; mode: GameState["mode"] };
 
 const PLAYER_COUNT = 4;
 const TRICKS_PER_HAND = 8;
@@ -100,7 +103,12 @@ const removeCard = (hand: Card[], card: Card): Card[] => {
   return next;
 };
 
-const createInitialState = (): GameState => {
+const resolveHumanSeats = (mode: GameState["mode"]): number[] => {
+  if (mode === "single-hand") return [0, 2];
+  return [0];
+};
+
+const createInitialState = (mode: GameState["mode"] = "standard"): GameState => {
   const deck = shuffle(createDeck());
   const hands = deal(deck);
   const suits: Suit[] = ["clubs", "diamonds", "hearts", "spades"];
@@ -115,6 +123,8 @@ const createInitialState = (): GameState => {
     scores: [0, 0],
     log: ["New hand started."],
     status: "playing",
+    mode,
+    humanSeats: resolveHumanSeats(mode),
   };
 };
 
@@ -197,14 +207,16 @@ const reducer = (state: GameState, action: GameAction): GameState => {
       return applyPlay(state, action.player, action.card);
     case "botPlay": {
       const player = state.currentPlayer;
-      if (player === 0 || state.status !== "playing") return state;
+      if (state.humanSeats.includes(player) || state.status !== "playing") return state;
       const hand = state.hands[player];
       if (!hand || hand.length === 0) return state;
       const card = pickBotCard(hand, state.trick, state.trumpSuit, state.trumpRevealed);
       return applyPlay(state, player, card);
     }
     case "reset":
-      return createInitialState();
+      return createInitialState(state.mode);
+    case "setMode":
+      return createInitialState(action.mode);
     default:
       return state;
   }
@@ -216,7 +228,7 @@ export const useTwentyNineGame = () => {
 
   useEffect(() => {
     if (state.status !== "playing") return undefined;
-    if (state.currentPlayer === 0) return undefined;
+    if (state.humanSeats.includes(state.currentPlayer)) return undefined;
     if (botTimeout.current !== null) return undefined;
 
     botTimeout.current = window.setTimeout(() => {
@@ -232,15 +244,20 @@ export const useTwentyNineGame = () => {
     };
   }, [state.currentPlayer, state.status, state.trick.plays.length]);
 
-  const legalPlays = useMemo(() => {
-    return getLegalPlays(state.hands[0] ?? [], state.trick);
-  }, [state.hands, state.trick]);
+  const legalPlaysByPlayer = useMemo(() => {
+    const mapping: Record<number, Card[]> = {};
+    state.humanSeats.forEach((player) => {
+      mapping[player] = getLegalPlays(state.hands[player] ?? [], state.trick);
+    });
+    return mapping;
+  }, [state.hands, state.trick, state.humanSeats]);
 
-  const playCardForHuman = (card: Card) => {
-    dispatch({ type: "playCard", player: 0, card });
+  const playCardForPlayer = (player: number, card: Card) => {
+    dispatch({ type: "playCard", player, card });
   };
 
   const reset = () => dispatch({ type: "reset" });
+  const setMode = (mode: GameState["mode"]) => dispatch({ type: "setMode", mode });
 
-  return { state, legalPlays, playCardForHuman, reset };
+  return { state, legalPlaysByPlayer, playCardForPlayer, reset, setMode };
 };

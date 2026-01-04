@@ -14,8 +14,6 @@ const suitLabel: Record<Suit, string> = {
 
 const cardId = (card: Card) => `${card.rank}-${card.suit}`;
 
-const seatLabels = ["You", "Right Bot", "Top Bot", "Left Bot"];
-
 const seatPositions: Record<number, string> = {
   0: "bottom-4 left-1/2 -translate-x-1/2",
   1: "right-6 top-1/2 -translate-y-1/2",
@@ -74,16 +72,39 @@ const CardButton = ({
 };
 
 export default function Home() {
-  const { state, legalPlays, playCardForHuman, reset } = useTwentyNineGame();
+  const { state, legalPlaysByPlayer, playCardForPlayer, reset, setMode } =
+    useTwentyNineGame();
 
   const trickNumber = Math.min(state.trickIndex + 1, 8);
 
-  const legalSet = useMemo(() => {
-    return new Set(legalPlays.map(cardId));
-  }, [legalPlays]);
+  const isSingleHand = state.mode === "single-hand";
+  const seatLabels = isSingleHand
+    ? ["You", "Right Bot", "Partner", "Left Bot"]
+    : ["You", "Right Bot", "Top Bot", "Left Bot"];
 
-  const canPlay = state.currentPlayer === 0 && state.status === "playing";
-  const hand = state.hands[0] ?? [];
+  const humanHands = useMemo(() => {
+    return state.humanSeats.map((player) => {
+      const hand = state.hands[player] ?? [];
+      const legalSet = new Set(
+        (legalPlaysByPlayer[player] ?? []).map(cardId),
+      );
+      const isActive =
+        state.currentPlayer === player && state.status === "playing";
+      return {
+        player,
+        hand,
+        legalSet,
+        isActive,
+        label: player === 0 ? "Your hand" : "Partner hand",
+      };
+    });
+  }, [
+    legalPlaysByPlayer,
+    state.currentPlayer,
+    state.hands,
+    state.humanSeats,
+    state.status,
+  ]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(254,240,138,0.35),_transparent_60%),radial-gradient(circle_at_15%_80%,_rgba(56,189,248,0.12),_transparent_55%),linear-gradient(140deg,_rgba(255,251,235,0.98),_rgba(240,253,244,0.96))] px-4 py-6 text-slate-900">
@@ -139,29 +160,79 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
-                  Your hand
+                  Player controls
                 </p>
                 <p className="text-sm text-slate-600">
-                  {canPlay ? "Your turn. Play a legal card." : "Waiting on bots..."}
+                  {isSingleHand
+                    ? "Single hand mode: you control both team hands."
+                    : "Standard mode: you control your own hand."}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={reset}
-                className="rounded-full border border-slate-300 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-700 transition hover:border-amber-400 hover:text-amber-800"
-              >
-                New hand
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMode(isSingleHand ? "standard" : "single-hand")
+                  }
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs uppercase tracking-[0.2em] transition",
+                    isSingleHand
+                      ? "border-amber-400 text-amber-800"
+                      : "border-slate-300 text-slate-700 hover:border-amber-400 hover:text-amber-800",
+                  )}
+                >
+                  {isSingleHand ? "Single hand" : "Standard hand"}
+                </button>
+                <button
+                  type="button"
+                  onClick={reset}
+                  className="rounded-full border border-slate-300 px-3 py-1 text-xs uppercase tracking-[0.2em] text-slate-700 transition hover:border-amber-400 hover:text-amber-800"
+                >
+                  New hand
+                </button>
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {hand.map((card) => (
-                <CardButton
-                  key={cardId(card)}
-                  card={card}
-                  isLegal={legalSet.has(cardId(card))}
-                  isActive={canPlay}
-                  onPlay={playCardForHuman}
-                />
+            <div
+              className={cn(
+                "mt-4 grid gap-4",
+                humanHands.length > 1 && "sm:grid-cols-2",
+              )}
+            >
+              {humanHands.map((hand) => (
+                <div
+                  key={hand.player}
+                  className={cn(
+                    "rounded-2xl border border-slate-200/70 bg-white/70 p-4",
+                    hand.isActive && "border-amber-300/80 bg-amber-50/80",
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-[0.2em] text-amber-700/80">
+                      {hand.label}
+                    </p>
+                    <span className="text-xs text-slate-500">
+                      Player {hand.player + 1}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {hand.isActive
+                      ? "Your turn. Play a legal card."
+                      : "Waiting on bots..."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    {hand.hand.map((card) => (
+                      <CardButton
+                        key={`${hand.player}-${cardId(card)}`}
+                        card={card}
+                        isLegal={hand.legalSet.has(cardId(card))}
+                        isActive={hand.isActive}
+                        onPlay={(selected) =>
+                          playCardForPlayer(hand.player, selected)
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             {state.status === "hand-complete" && (
