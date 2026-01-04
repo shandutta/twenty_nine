@@ -61,6 +61,11 @@ const timestamp = () =>
     hour12: false,
   });
 const log = (message) => console.log(`[${timestamp()}] ${message}`);
+const runStats = {
+  startMs: Date.now(),
+  committed: false,
+  pushStatus: "skipped",
+};
 
 const AUTO_COMMIT_MODEL = process.env.AUTO_COMMIT_MODEL || "google/gemini-2.0-flash-exp:free";
 const AUTO_COMMIT_FALLBACK_MODELS = (
@@ -72,6 +77,30 @@ const AUTO_COMMIT_FALLBACK_MODELS = (
 const OPENROUTER_RETRY_ATTEMPTS = Number(process.env.AUTO_COMMIT_RETRY_ATTEMPTS || 2);
 const OPENROUTER_RETRY_BASE_DELAY_MS = Number(process.env.AUTO_COMMIT_RETRY_BASE_DELAY_MS || 1200);
 const AUTO_COMMIT_MAX_TOKENS = Number(process.env.AUTO_COMMIT_MAX_TOKENS || 80);
+
+const rotateAutoCommitLog = () => {
+  const logFile = path.join(repoRoot, ".logs", "auto-commit.log");
+  const maxBytes = Number(process.env.TWENTYNINE_LOG_MAX_BYTES || 5 * 1024 * 1024);
+  const keepCount = Math.max(1, Number(process.env.TWENTYNINE_LOG_KEEP || 5));
+
+  try {
+    if (!fs.existsSync(logFile)) return;
+    const size = fs.statSync(logFile).size;
+    if (size < maxBytes) return;
+
+    for (let i = keepCount; i >= 2; i -= 1) {
+      const prev = `${logFile}.${i - 1}`;
+      const next = `${logFile}.${i}`;
+      if (fs.existsSync(prev)) {
+        fs.renameSync(prev, next);
+      }
+    }
+    fs.renameSync(logFile, `${logFile}.1`);
+    fs.writeFileSync(logFile, "");
+  } catch (error) {
+    console.warn(`[${timestamp()}] Failed to rotate auto-commit log:`, error.message);
+  }
+};
 
 const resolveOpenRouterApiKey = () => {
   if (process.env.OPENROUTER_API_KEY) {
@@ -433,7 +462,7 @@ const gitCommit = (message) => {
 
 const gitPush = () => {
   if (process.env.AUTO_COMMIT_PUSH === "false") {
-    return;
+    return "skipped";
   }
 
   const push = spawnSync("git", ["push"], { stdio: "inherit" });
@@ -441,6 +470,19 @@ const gitPush = () => {
     console.error(`[${timestamp()}] git push failed.`);
     process.exit(push.status ?? 1);
   }
+  return "ok";
+};
+
+const logRunSummary = (status, extra = "") => {
+  const durationMs = Date.now() - runStats.startMs;
+  const parts = [
+    `summary status=${status}`,
+    `committed=${runStats.committed ? 1 : 0}`,
+    `push=${runStats.pushStatus}`,
+    `duration_ms=${durationMs}`,
+  ];
+  if (extra) parts.push(extra);
+  log(parts.join(" "));
 };
 
 const resolveCodexBin = () => {
@@ -578,6 +620,7 @@ const gitPullRebase = () => {
 };
 
 const main = async () => {
+  rotateAutoCommitLog();
   log("Starting auto-commit run");
   ensureSafeGitState();
 
@@ -607,15 +650,19 @@ const main = async () => {
   log(`AI-generated commit message: ${commitMessage}`);
   const committed = gitCommit(commitMessage);
   if (!committed) {
+    logRunSummary("success", "note=no_changes_to_commit");
     return;
   }
-  gitPush();
+  runStats.committed = true;
+  runStats.pushStatus = gitPush();
 
   log("Auto-commit completed and pushed successfully");
   log("exit_code=0 status=success");
+  logRunSummary("success");
 };
 
 main().catch((error) => {
   console.error(`[${timestamp()}] Unexpected auto-commit error:`, error);
+  logRunSummary("error");
   process.exit(1);
 });
