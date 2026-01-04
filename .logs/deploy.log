@@ -362,3 +362,94 @@ curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect 
 curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
 deploy: health check ok
 deploy: done
+----
+deploy: started 2026-01-04T01:00:36-0800
+deploy: no relevant changes; skipping
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (3 tests) 9ms
+ ✓ test/royals.test.ts (6 tests) 8ms
+ ✓ test/bidding.test.ts (6 tests) 11ms
+ ✓ test/trick.test.ts (7 tests) 9ms
+ ✓ test/cards.test.ts (3 tests) 12ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:00:39
+   Duration  1.00s (transform 366ms, setup 0ms, collect 855ms, tests 50ms, environment 2ms, prepare 1.25s)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 59ms
+ ✓ test/game-page.test.tsx (2 tests) 644ms
+   ✓ /game UI > disables illegal moves  402ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  01:00:42
+   Duration  4.32s (transform 624ms, setup 283ms, collect 2.14s, tests 702ms, environment 2.31s, prepare 524ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (20.6s)
+
+  1 passed (39.1s)
+deploy: building web app
+deploy: cleaning previous build
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.6s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 870.5ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+verify-next-build: ok (7 assets checked)
+deploy: restarting twentynine service
+deploy: running health check
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+deploy: health check ok
+deploy: done

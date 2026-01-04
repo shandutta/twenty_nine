@@ -7163,3 +7163,430 @@ deploy: done
 [01/04/2026, 01:00:31] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2407ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/04/2026, 01:00:36] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/04/2026, 01:00:36] AI-generated commit message: `update logs with prettier and lint results`
+----
+----
+deploy: started 2026-01-04T01:00:36-0800
+deploy: started 2026-01-04T01:00:36-0800
+deploy: no relevant changes; skipping
+deploy: no relevant changes; skipping
+[main 4c736e7] `update logs with prettier and lint results`
+ 2 files changed, 346 insertions(+)
+----
+----
+pre-push: started 2026-01-04T01:00:37-0800
+pre-push: started 2026-01-04T01:00:37-0800
+pre-push: running prettier check
+pre-push: running prettier check
+deploy: running unit tests
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+Checking formatting...
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (3 tests) 9ms
+ ✓ test/royals.test.ts (6 tests) 8ms
+ ✓ test/bidding.test.ts (6 tests) 11ms
+ ✓ test/trick.test.ts (7 tests) 9ms
+ ✓ test/cards.test.ts (3 tests) 12ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:00:39
+   Duration  1.00s (transform 366ms, setup 0ms, collect 855ms, tests 50ms, environment 2ms, prepare 1.25s)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+All matched files use Prettier code style!
+All matched files use Prettier code style!
+pre-push: running lint
+pre-push: running lint
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+ ✓ test/useGameController.test.tsx (2 tests) 59ms
+ ✓ test/game-page.test.tsx (2 tests) 644ms
+   ✓ /game UI > disables illegal moves  402ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  01:00:42
+   Duration  4.32s (transform 624ms, setup 283ms, collect 2.14s, tests 702ms, environment 2.31s, prepare 524ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+pre-push: running unit tests
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (3 tests) 9ms
+ ✓ test/game.test.ts (3 tests) 9ms
+ ✓ test/bidding.test.ts (6 tests) 10ms
+ ✓ test/bidding.test.ts (6 tests) 10ms
+ ✓ test/cards.test.ts (3 tests) 20ms
+ ✓ test/royals.test.ts (6 tests) 10ms
+ ✓ test/trick.test.ts (7 tests) 10ms
+ ✓ test/cards.test.ts (3 tests) 20ms
+ ✓ test/royals.test.ts (6 tests) 10ms
+ ✓ test/trick.test.ts (7 tests) 10ms
+
+
+ Test Files  5 passed (5)
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:00:56
+   Duration  822ms (transform 382ms, setup 0ms, collect 1.07s, tests 60ms, environment 2ms, prepare 800ms)
+
+      Tests  25 passed (25)
+   Start at  01:00:56
+   Duration  822ms (transform 382ms, setup 0ms, collect 1.07s, tests 60ms, environment 2ms, prepare 800ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 88ms
+ ✓ test/useGameController.test.tsx (2 tests) 88ms
+ ✓ test/game-page.test.tsx (2 tests) 679ms
+   ✓ /game UI > disables illegal moves  438ms
+ ✓ test/game-page.test.tsx (2 tests) 679ms
+   ✓ /game UI > disables illegal moves  438ms
+
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  01:00:59
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  01:00:59
+   Duration  4.18s (transform 999ms, setup 265ms, collect 2.41s, tests 767ms, environment 1.58s, prepare 572ms)
+   Duration  4.18s (transform 999ms, setup 265ms, collect 2.41s, tests 767ms, environment 1.58s, prepare 572ms)
+
+
+----
+healthcheck: started 2026-01-04T01:01:03-0800
+pre-push: building web app
+pre-push: building web app
+verify-next-build: ok (7 assets checked)
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+
+Running 1 test using 1 worker
+
+▲ Next.js 16.1.1 (webpack)
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+- Environments: .env.local
+
+
+  Creating an optimized production build ...
+  Creating an optimized production build ...
+✓ Compiled successfully in 5.4s
+✓ Compiled successfully in 5.4s
+  Running TypeScript ...
+  Running TypeScript ...
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (20.6s)
+  Collecting page data using 7 workers ...
+  Collecting page data using 7 workers ...
+
+  1 passed (39.1s)
+deploy: building web app
+deploy: cleaning previous build
+Error: ENOENT: no such file or directory, open '/home/shan/twentynine/apps/web/.next/build-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/shan/twentynine/apps/web/.next/build-manifest.json'
+}
+Error: ENOENT: no such file or directory, open '/home/shan/twentynine/apps/web/.next/build-manifest.json'
+    at ignore-listed frames {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/home/shan/twentynine/apps/web/.next/build-manifest.json'
+}
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+
+
+> Build error occurred
+> Build error occurred
+Error: Failed to collect page data for /favicon.ico
+    at ignore-listed frames {
+  type: 'Error'
+}
+Error: Failed to collect page data for /favicon.ico
+    at ignore-listed frames {
+  type: 'Error'
+}
+ ELIFECYCLE  Command failed with exit code 1.
+ ELIFECYCLE  Command failed with exit code 1.
+error: failed to push some refs to 'https://github.com/shandutta/twenty_nine.git'
+[01/04/2026, 01:01:29] git push failed.
+ ELIFECYCLE  Command failed with exit code 1.
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 15.6s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 870.5ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+verify-next-build: ok (7 assets checked)
+deploy: restarting twentynine service
+deploy: running health check
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+deploy: health check ok
+deploy: done
+----
+pre-push: started 2026-01-04T01:02:22-0800
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/cards.test.ts (3 tests) 8ms
+ ✓ test/royals.test.ts (6 tests) 6ms
+ ✓ test/trick.test.ts (7 tests) 10ms
+ ✓ test/game.test.ts (3 tests) 12ms
+ ✓ test/bidding.test.ts (6 tests) 15ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  01:02:39
+   Duration  663ms (transform 292ms, setup 0ms, collect 749ms, tests 51ms, environment 2ms, prepare 663ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 53ms
+ ✓ test/game-page.test.tsx (2 tests) 573ms
+   ✓ /game UI > disables illegal moves  376ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  01:02:41
+   Duration  3.21s (transform 642ms, setup 227ms, collect 1.63s, tests 626ms, environment 1.45s, prepare 280ms)
+
+pre-push: building web app
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.7s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 829.7ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+pre-push: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+[2m[WebServer] [22m(node:1066741) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m(node:1066778) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m(node:1066789) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+[2m[WebServer] [22m(node:1066822) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[2m[WebServer] [22m(Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 1 test using 1 worker
+
+(node:1066990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:1066990) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (1.1m)
+
+
+  1) [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ─────────────────────────────────
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.count: Target page, context or browser has been closed
+
+      91 |       .filter({ hasText: /Clubs|Diamonds|Hearts|Spades/ })
+      92 |       .first();
+    > 93 |     if ((await enabledTrump.count()) > 0) {
+         |                             ^
+      94 |       await enabledTrump.scrollIntoViewIfNeeded();
+      95 |       await enabledTrump.click({ force: true });
+      96 |       await page.waitForTimeout(300);
+        at /home/shan/twentynine/apps/web/test/e2e/game.spec.ts:93:29
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/playwright/test-results/game-game-page-smoke-flow-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ──────────────────────────────────
+ ELIFECYCLE  Command failed with exit code 1.
+----
+healthcheck: started 2026-01-04T01:11:15-0800
+verify-next-build: ok (7 assets checked)
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[01/04/2026, 01:15:02] Starting auto-commit run
+[01/04/2026, 01:15:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
