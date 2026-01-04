@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
-import type { GameState, PlayingCard, Player, Suit } from "@/components/game/types";
+import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
 import { RotateCcw } from "lucide-react";
 
 interface GameTableProps {
@@ -15,12 +15,14 @@ interface GameTableProps {
   onPlayCard: (card: PlayingCard) => void;
   legalCardIds: string[];
   animationsEnabled: boolean;
+  controlMode: ControlMode;
   bidOptions: number[];
   canBid: boolean;
   onPlaceBid: (amount: number) => void;
   onPassBid: () => void;
   canChooseTrump: boolean;
   onChooseTrump: (suit: Suit) => void;
+  onChooseTrumpFromSeventh: () => void;
   onNewGame: () => void;
   canRevealTrump: boolean;
   onRevealTrump: () => void;
@@ -189,7 +191,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
 }
 
 function CardBack({ size = "small" }: { size?: "small" | "medium" }) {
-  const sizeClasses = size === "small" ? "h-14 w-10 md:h-16 md:w-11" : "h-16 w-11 md:h-20 md:w-14";
+  const sizeClasses = size === "small" ? "h-18 w-13 md:h-20 md:w-15" : "h-20 w-14 md:h-24 md:w-18";
 
   return (
     <div className={cn(sizeClasses, "rounded-lg bg-[#13261d] shadow-lg border border-white/15 overflow-hidden")}>
@@ -269,9 +271,10 @@ function OpponentArea({
 }) {
   const cardCount = player.cards.length;
   const stackClass = cn(
-    "flex items-center -space-x-4",
+    "flex items-center -space-x-6 md:-space-x-8 md:scale-[1.05]",
     isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
   );
+  const topStackClass = cn(stackClass, "md:scale-[1.08]");
 
   if (position === "top") {
     return (
@@ -291,9 +294,9 @@ function OpponentArea({
             </Badge>
           )}
         </div>
-        <div className={stackClass}>
+        <div className={topStackClass}>
           {Array.from({ length: cardCount }).map((_, i) => (
-            <CardBack key={i} size="small" />
+            <CardBack key={i} size="medium" />
           ))}
         </div>
       </div>
@@ -307,7 +310,7 @@ function OpponentArea({
       </span>
       <div className={stackClass}>
         {Array.from({ length: cardCount }).map((_, i) => (
-          <CardBack key={i} size="small" />
+          <CardBack key={i} size="medium" />
         ))}
       </div>
     </div>
@@ -319,12 +322,14 @@ export function GameTable({
   onPlayCard,
   legalCardIds,
   animationsEnabled,
+  controlMode,
   bidOptions,
   canBid,
   onPlaceBid,
   onPassBid,
   canChooseTrump,
   onChooseTrump,
+  onChooseTrumpFromSeventh,
   onNewGame,
   canRevealTrump,
   onRevealTrump,
@@ -336,6 +341,7 @@ export function GameTable({
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
   const topPlayer = gameState.players.find((p) => p.position === "top")!;
   const rightPlayer = gameState.players.find((p) => p.position === "right")!;
+  const isSingleHand = controlMode === "single-hand";
 
   const getPlayedCard = (playerId: string) => gameState.currentTrick.find((t) => t.playerId === playerId)?.card;
 
@@ -361,6 +367,7 @@ export function GameTable({
     : canDeclareRoyals
       ? `Available (${royalsDirection}${gameState.royalsAdjustment})`
       : "Not available";
+  const showRoyalsStatus = gameState.trumpRevealed || Boolean(gameState.royalsDeclaredBy) || canDeclareRoyals;
   const royalsTitle = royalsTeamId
     ? `Royals declared by ${royalsTeam?.name ?? "Team"}. Target ${royalsDirection}${gameState.royalsAdjustment} (min ${gameState.royalsMinTarget}, max ${gameState.royalsMaxTarget}).`
     : `Declare with K+Q of trump after your team wins a trick post-reveal. Adjusts target by ${gameState.royalsAdjustment} (min ${gameState.royalsMinTarget}, max ${gameState.royalsMaxTarget}).`;
@@ -465,7 +472,8 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-xs text-emerald-100/70">
-                    Bidding is based on the first four cards. The winner names trump before the final deal.
+                    Bidding is based on the first four cards. The winner names trump or uses the 7th card before the
+                    final deal.
                   </p>
                   <div className="text-sm text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -519,27 +527,36 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-                    Bidding is based on the first four cards · Winner names trump before the final deal
+                    Bidding is based on the first four cards · Winner names trump or uses the 7th card
                   </p>
                   <div className="text-sm text-emerald-100/70">
                     Bid winner: <span className="text-emerald-50">{bidderName}</span>
                   </div>
                   <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
-                    {canChooseTrump ? "Pick the trump suit" : `Waiting for ${currentPlayerName}`}
+                    {canChooseTrump ? "Pick the trump suit or use the 7th card" : `Waiting for ${currentPlayerName}`}
                   </div>
                   {canChooseTrump && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {TRUMP_OPTIONS.map((suit) => (
-                        <Button
-                          key={suit}
-                          onClick={() => onChooseTrump(suit)}
-                          size="sm"
-                          className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
-                        >
-                          <span className="mr-2 text-base">{suitSymbols[suit]}</span>
-                          {suit[0].toUpperCase() + suit.slice(1)}
-                        </Button>
-                      ))}
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        {TRUMP_OPTIONS.map((suit) => (
+                          <Button
+                            key={suit}
+                            onClick={() => onChooseTrump(suit)}
+                            size="sm"
+                            className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                          >
+                            <span className="mr-2 text-base">{suitSymbols[suit]}</span>
+                            {suit[0].toUpperCase() + suit.slice(1)}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        onClick={onChooseTrumpFromSeventh}
+                        size="sm"
+                        className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                      >
+                        Use 7th card (random trump)
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -555,7 +572,6 @@ export function GameTable({
 
         <div className="relative h-full flex flex-col px-4 md:px-6 py-4">
           <div className="relative px-3 py-2">
-            <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-white/12" />
             <div className="pointer-events-none absolute inset-x-12 bottom-0 h-px bg-black/50" />
             <div className="relative flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
@@ -570,13 +586,15 @@ export function GameTable({
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <StatusChip label="Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
-                <StatusChip
-                  label="Royals"
-                  value={royalsValue}
-                  highlight={canDeclareRoyals}
-                  title={royalsTitle}
-                  className={royalsClassName}
-                />
+                {showRoyalsStatus && (
+                  <StatusChip
+                    label="Royals"
+                    value={royalsValue}
+                    highlight={canDeclareRoyals}
+                    title={royalsTitle}
+                    className={royalsClassName}
+                  />
+                )}
                 <StatusChip
                   label="Trump"
                   value={trumpLabel}
@@ -637,7 +655,7 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="flex justify-center pt-6">
+          <div className="flex justify-center pt-6 pb-8">
             <OpponentArea player={topPlayer} position="top" isTeammate={true} isActive={topPlayer.isCurrentPlayer} />
           </div>
 
@@ -706,14 +724,35 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="pt-4 pb-8 md:pb-10">
-            <Hand
-              player={bottomPlayer}
-              onPlayCard={onPlayCard}
-              isCurrentTurn={bottomPlayer.isCurrentPlayer}
-              legalCardIds={legalCardIds}
-              animationsEnabled={animationsEnabled}
-            />
+          <div className="pt-4 pb-12 md:pb-14 space-y-6">
+            {isSingleHand && (
+              <div>
+                <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
+                  <span>Partner hand</span>
+                  <span className="text-emerald-100/40">{topPlayer.name}</span>
+                </div>
+                <Hand
+                  player={topPlayer}
+                  onPlayCard={onPlayCard}
+                  isCurrentTurn={topPlayer.isCurrentPlayer}
+                  legalCardIds={legalCardIds}
+                  animationsEnabled={animationsEnabled}
+                />
+              </div>
+            )}
+            <div>
+              <div className="mb-2 flex items-center justify-between text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
+                <span>Your hand</span>
+                <span className="text-emerald-100/40">{bottomPlayer.cards.length} cards</span>
+              </div>
+              <Hand
+                player={bottomPlayer}
+                onPlayCard={onPlayCard}
+                isCurrentTurn={bottomPlayer.isCurrentPlayer}
+                legalCardIds={legalCardIds}
+                animationsEnabled={animationsEnabled}
+              />
+            </div>
           </div>
         </div>
       </div>

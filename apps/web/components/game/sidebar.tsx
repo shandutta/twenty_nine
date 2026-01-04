@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { GameState, Suit } from "@/components/game/types";
+import type { ControlMode, GameState, Suit } from "@/components/game/types";
 import type { BotDifficulty, BotSettings } from "@/components/game/use-game-controller";
 import { Settings, RotateCcw, Sparkles, ScrollText, Trophy } from "lucide-react";
 
@@ -20,6 +20,7 @@ interface GameSidebarProps {
   botSettings: BotSettings;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
+  controlMode: ControlMode;
   coachEnabled: boolean;
   onCoachEnabledChange: (enabled: boolean) => void;
   coachLoading: boolean;
@@ -35,6 +36,7 @@ interface GameSidebarProps {
   onPassBid: () => void;
   canChooseTrump: boolean;
   onChooseTrump: (suit: Suit) => void;
+  onChooseTrumpFromSeventh: () => void;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -51,6 +53,7 @@ export function GameSidebar({
   botSettings,
   onBotEnabledChange,
   onBotDifficultyChange,
+  controlMode,
   coachEnabled,
   onCoachEnabledChange,
   coachLoading,
@@ -66,6 +69,7 @@ export function GameSidebar({
   onPassBid,
   canChooseTrump,
   onChooseTrump,
+  onChooseTrumpFromSeventh,
 }: GameSidebarProps) {
   const [selectedBid, setSelectedBid] = useState("");
   const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
@@ -83,6 +87,7 @@ export function GameSidebar({
       : "Hidden"
     : "Pending";
   const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId)?.name ?? "-";
+  const controlLabel = controlMode === "single-hand" ? "Single hand" : "Standard";
   const phaseLabel = gameState.phase.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase());
   const isBidding = gameState.phase === "bidding";
   const isChoosingTrump = gameState.phase === "choose-trump";
@@ -139,7 +144,8 @@ export function GameSidebar({
                 <CardContent className="pt-0 space-y-1.5 text-xs text-emerald-100/70">
                   {isBidding && (
                     <p className="text-[11px] text-emerald-100/65">
-                      Bidding is based on the first four cards. The winner names trump before the final deal.
+                      Bidding is based on the first four cards. The winner names trump or uses the 7th card before the
+                      final deal.
                     </p>
                   )}
                   <div className="flex items-center justify-between text-xs">
@@ -155,7 +161,7 @@ export function GameSidebar({
                         ? "Your turn to bid"
                         : `Waiting for ${currentPlayer}`
                       : canChooseTrump
-                        ? "Pick the trump suit"
+                        ? "Pick the trump suit or use the 7th card"
                         : `Waiting for ${currentPlayer}`}
                   </div>
                   {isBidding && bidOptions.length > 0 && (
@@ -196,18 +202,27 @@ export function GameSidebar({
                     </div>
                   )}
                   {isChoosingTrump && canChooseTrump && (
-                    <div className="grid grid-cols-2 gap-2 pt-1.5">
-                      {(["clubs", "diamonds", "hearts", "spades"] as const).map((suit) => (
-                        <Button
-                          key={suit}
-                          size="sm"
-                          onClick={() => onChooseTrump(suit)}
-                          className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
-                        >
-                          <span className="mr-2 text-base">{suitSymbols[suit]}</span>
-                          {suit[0].toUpperCase() + suit.slice(1)}
-                        </Button>
-                      ))}
+                    <div className="space-y-2 pt-1.5">
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["clubs", "diamonds", "hearts", "spades"] as const).map((suit) => (
+                          <Button
+                            key={suit}
+                            size="sm"
+                            onClick={() => onChooseTrump(suit)}
+                            className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                          >
+                            <span className="mr-2 text-base">{suitSymbols[suit]}</span>
+                            {suit[0].toUpperCase() + suit.slice(1)}
+                          </Button>
+                        ))}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={onChooseTrumpFromSeventh}
+                        className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                      >
+                        Use 7th card (random trump)
+                      </Button>
                     </div>
                   )}
                 </CardContent>
@@ -222,6 +237,10 @@ export function GameSidebar({
                 <div className="flex items-center justify-between">
                   <span>Phase</span>
                   <Badge className="border-white/10 bg-white/5 text-emerald-50">{phaseLabel}</Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Controls</span>
+                  <span className="text-emerald-50">{controlLabel}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Current Player</span>
@@ -256,7 +275,7 @@ export function GameSidebar({
                 <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-1.5">
-                <p>• Bidding is based on the first four cards; the winner names trump.</p>
+                <p>• Bidding is based on the first four cards; the winner names trump or uses the 7th card.</p>
                 <p>• After trump is set, each player receives their final four cards.</p>
                 <p>• Must follow suit if possible; trump reveals when a player can’t follow suit.</p>
                 <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target ±4.</p>

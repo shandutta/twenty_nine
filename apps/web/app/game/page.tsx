@@ -77,6 +77,7 @@ function GamePageClient() {
     onPassBid,
     canChooseTrump,
     onChooseTrump,
+    onChooseTrumpFromSeventh,
     onNewGame,
     canRevealTrump,
     onRevealTrump,
@@ -87,6 +88,8 @@ function GamePageClient() {
     llmInUse,
     setBotEnabled,
     setBotDifficulty,
+    controlMode,
+    onControlModeChange,
   } = useGameController();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -223,6 +226,7 @@ function GamePageClient() {
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
+        controlMode={controlMode}
         coachEnabled={coachEnabled}
         onCoachEnabledChange={setCoachEnabled}
         coachLoading={coachLoading}
@@ -238,6 +242,7 @@ function GamePageClient() {
         onPassBid={onPassBid}
         canChooseTrump={canChooseTrump}
         onChooseTrump={onChooseTrump}
+        onChooseTrumpFromSeventh={onChooseTrumpFromSeventh}
       />
       <main className="relative flex-1 overflow-hidden">
         <GameTable
@@ -245,12 +250,14 @@ function GamePageClient() {
           onPlayCard={onPlayCard}
           legalCardIds={legalCardIds}
           animationsEnabled={animationsEnabled}
+          controlMode={controlMode}
           bidOptions={bidOptions}
           canBid={canBid}
           onPlaceBid={onPlaceBid}
           onPassBid={onPassBid}
           canChooseTrump={canChooseTrump}
           onChooseTrump={onChooseTrump}
+          onChooseTrumpFromSeventh={onChooseTrumpFromSeventh}
           onNewGame={requestNewGame}
           canRevealTrump={canRevealTrump}
           onRevealTrump={onRevealTrump}
@@ -268,6 +275,8 @@ function GamePageClient() {
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
+        controlMode={controlMode}
+        onControlModeChange={onControlModeChange}
         onNewGame={requestNewGame}
       />
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>

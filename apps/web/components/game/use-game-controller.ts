@@ -12,7 +12,7 @@ import {
   teamForPlayer,
 } from "@twentynine/engine";
 import type { Card, GameAction, GameState as EngineState, Suit } from "@twentynine/engine";
-import type { GameState, LastTrickSummary, PlayingCard, Player, Team } from "./types";
+import type { ControlMode, GameState, LastTrickSummary, PlayingCard, Player, Team } from "./types";
 
 type PlayerMeta = {
   id: string;
@@ -44,7 +44,8 @@ const PLAYER_META: PlayerMeta[] = [
   { id: "player4", name: "East", position: "right", teamId: "teamB" },
 ];
 
-const HUMAN_PLAYER = 0;
+const PRIMARY_HUMAN = 0;
+const PARTNER_HUMAN = 2;
 const BOT_THINK_TIME_MS = 450;
 
 const BOT_PRESETS: Record<BotDifficulty, Omit<BotSettings, "enabled">> = {
@@ -75,6 +76,11 @@ const cardId = (card: Card) => `${card.suit}-${card.rank}`;
 const cardLabel = (card: Card) => `${card.rank} of ${card.suit}`;
 
 const TEAM_LABELS = ["Team A (You & North)", "Team B (West & East)"] as const;
+
+const HUMAN_PLAYERS: Record<ControlMode, number[]> = {
+  standard: [PRIMARY_HUMAN],
+  "single-hand": [PRIMARY_HUMAN, PARTNER_HUMAN],
+};
 
 const estimateHandStrength = (hand: Card[]): number => {
   const basePoints = hand.reduce((sum, card) => sum + cardPoints(card), 0);
@@ -285,20 +291,27 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   return null;
 };
 
-const createUiState = (state: EngineState, roundNumber: number): GameState => {
-  const players: Player[] = PLAYER_META.map((meta, index) => ({
+const createUiState = (state: EngineState, roundNumber: number, controlMode: ControlMode): GameState => {
+  const resolvedMeta = PLAYER_META.map((meta, index) => {
+    if (controlMode === "single-hand" && index === PARTNER_HUMAN) {
+      return { ...meta, name: "Partner" };
+    }
+    return meta;
+  });
+
+  const players: Player[] = resolvedMeta.map((meta, index) => ({
     ...meta,
     cards: state.hands[index].map(toPlayingCard),
     isCurrentPlayer: state.currentPlayer === index,
   }));
 
-  const bidderPlayerId = state.bidderPlayer !== null ? PLAYER_META[state.bidderPlayer].id : null;
+  const bidderPlayerId = state.bidderPlayer !== null ? resolvedMeta[state.bidderPlayer].id : null;
   const bidderTeamId = state.bidderPlayer !== null ? (state.bidderPlayer % 2 === 0 ? "teamA" : "teamB") : null;
 
   const teamA: Team = {
     id: "teamA",
-    name: "You & North",
-    players: [PLAYER_META[0].id, PLAYER_META[2].id],
+    name: controlMode === "single-hand" ? "You & Partner" : "You & North",
+    players: [resolvedMeta[0].id, resolvedMeta[2].id],
     tricksWon: state.tricksWon[0],
     bid: bidderTeamId === "teamA" ? (state.bidTarget ?? undefined) : undefined,
     bidWinner: bidderTeamId === "teamA" ? (bidderPlayerId ?? undefined) : undefined,
@@ -309,7 +322,7 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
   const teamB: Team = {
     id: "teamB",
     name: "West & East",
-    players: [PLAYER_META[1].id, PLAYER_META[3].id],
+    players: [resolvedMeta[1].id, resolvedMeta[3].id],
     tricksWon: state.tricksWon[1],
     bid: bidderTeamId === "teamB" ? (state.bidTarget ?? undefined) : undefined,
     bidWinner: bidderTeamId === "teamB" ? (bidderPlayerId ?? undefined) : undefined,
@@ -318,14 +331,14 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
   };
 
   const currentTrick = state.trick.plays.map((play) => ({
-    playerId: PLAYER_META[play.player].id,
+    playerId: resolvedMeta[play.player].id,
     card: toPlayingCard(play.card),
   }));
 
   const lastTrick: LastTrickSummary | null = state.lastTrick
     ? {
         trickNumber: state.lastTrick.number,
-        winnerPlayerId: PLAYER_META[state.lastTrick.winner].id,
+        winnerPlayerId: resolvedMeta[state.lastTrick.winner].id,
         winnerTeamId: state.lastTrick.team === 0 ? "teamA" : "teamB",
         winningCard: toPlayingCard(state.lastTrick.card),
         points: state.lastTrick.points,
@@ -347,7 +360,7 @@ const createUiState = (state: EngineState, roundNumber: number): GameState => {
     royalsMaxTarget: state.config.maxBidTarget,
     roundNumber,
     trickNumber: state.trickNumber,
-    currentPlayerId: PLAYER_META[state.currentPlayer].id,
+    currentPlayerId: resolvedMeta[state.currentPlayer].id,
     log: state.log,
     lastTrick,
   };
@@ -360,9 +373,13 @@ export const useGameController = () => {
   const [botEnabled, setBotEnabled] = useState(false);
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("easy");
   const [llmInUse, setLlmInUse] = useState(false);
+  const [controlMode, setControlMode] = useState<ControlMode>("standard");
 
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(engineState);
+
+  const humanPlayers = useMemo(() => HUMAN_PLAYERS[controlMode], [controlMode]);
+  const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
 
   const preset = BOT_PRESETS[botDifficulty];
   const botSettings = useMemo<BotSettings>(
@@ -378,10 +395,10 @@ export const useGameController = () => {
   }, [engineState]);
 
   useEffect(() => {
-    if (!botSettings.enabled || engineState.currentPlayer === HUMAN_PLAYER) {
+    if (!botSettings.enabled || isHumanTurn) {
       setLlmInUse(false);
     }
-  }, [botSettings.enabled, engineState.currentPlayer]);
+  }, [botSettings.enabled, engineState.currentPlayer, isHumanTurn]);
 
   const dispatch = useCallback((action: GameAction) => {
     setEngineState((prev) => {
@@ -397,28 +414,29 @@ export const useGameController = () => {
     if (engineState.phase !== "playing") {
       return [];
     }
-    const hand = engineState.hands[HUMAN_PLAYER];
+    if (!isHumanTurn) return [];
+    const hand = engineState.hands[engineState.currentPlayer] ?? [];
     return getLegalPlays(hand, engineState.trick).map(cardId);
-  }, [engineState]);
+  }, [engineState, isHumanTurn]);
 
   const handlePlayCard = useCallback(
     (card: PlayingCard) => {
       if (engineState.phase !== "playing") return;
-      if (engineState.currentPlayer !== HUMAN_PLAYER) return;
+      if (!isHumanTurn) return;
       if (!legalCards.includes(card.id)) return;
 
       dispatch({
         type: "playCard",
-        player: HUMAN_PLAYER,
+        player: engineState.currentPlayer,
         card: { suit: card.suit, rank: card.rank },
       });
     },
-    [dispatch, engineState, legalCards]
+    [dispatch, engineState, isHumanTurn, legalCards]
   );
 
   const canBid = useMemo(
-    () => engineState.phase === "bidding" && engineState.currentPlayer === HUMAN_PLAYER,
-    [engineState]
+    () => engineState.phase === "bidding" && isHumanTurn,
+    [engineState, isHumanTurn]
   );
 
   const bidOptions = useMemo(() => {
@@ -434,28 +452,33 @@ export const useGameController = () => {
   const handlePlaceBid = useCallback(
     (amount: number) => {
       if (!canBid) return;
-      dispatch({ type: "placeBid", player: HUMAN_PLAYER, amount });
+      dispatch({ type: "placeBid", player: engineState.currentPlayer, amount });
     },
-    [canBid, dispatch]
+    [canBid, dispatch, engineState.currentPlayer]
   );
 
   const handlePassBid = useCallback(() => {
     if (!canBid) return;
-    dispatch({ type: "passBid", player: HUMAN_PLAYER });
-  }, [canBid, dispatch]);
+    dispatch({ type: "passBid", player: engineState.currentPlayer });
+  }, [canBid, dispatch, engineState.currentPlayer]);
 
   const canChooseTrump = useMemo(
-    () => engineState.phase === "choose-trump" && engineState.currentPlayer === HUMAN_PLAYER,
-    [engineState]
+    () => engineState.phase === "choose-trump" && isHumanTurn,
+    [engineState, isHumanTurn]
   );
 
   const handleChooseTrump = useCallback(
     (suit: Suit) => {
       if (!canChooseTrump) return;
-      dispatch({ type: "chooseTrump", player: HUMAN_PLAYER, suit });
+      dispatch({ type: "chooseTrump", player: engineState.currentPlayer, suit });
     },
-    [canChooseTrump, dispatch]
+    [canChooseTrump, dispatch, engineState.currentPlayer]
   );
+
+  const handleChooseTrumpFromSeventh = useCallback(() => {
+    if (!canChooseTrump) return;
+    dispatch({ type: "chooseTrumpFromSeventh", player: engineState.currentPlayer });
+  }, [canChooseTrump, dispatch, engineState.currentPlayer]);
 
   const handleNewGame = useCallback(() => {
     setEngineState(createGameState({ seed: Date.now() }));
@@ -467,23 +490,24 @@ export const useGameController = () => {
     if (engineState.phase !== "playing") return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.trumpRevealed) return false;
-    if (engineState.currentPlayer !== HUMAN_PLAYER) return false;
-    const hand = engineState.hands[HUMAN_PLAYER] ?? [];
+    if (!isHumanTurn) return false;
+    const hand = engineState.hands[engineState.currentPlayer] ?? [];
     return shouldRevealTrump(hand, engineState.trick);
-  }, [engineState]);
+  }, [engineState, isHumanTurn]);
 
   const handleRevealTrump = useCallback(() => {
     if (!canRevealTrump) return;
-    dispatch({ type: "revealTrump", player: HUMAN_PLAYER });
-  }, [canRevealTrump, dispatch]);
+    dispatch({ type: "revealTrump", player: engineState.currentPlayer });
+  }, [canRevealTrump, dispatch, engineState.currentPlayer]);
 
   const canDeclareRoyalsForHuman = useMemo(() => {
     if (engineState.phase !== "playing") return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.royalsDeclaredBy !== null) return false;
     if (engineState.lastTrickWinnerTeam === null) return false;
-    const hand = engineState.hands[HUMAN_PLAYER] ?? [];
-    const declarerTeam = teamForPlayer(HUMAN_PLAYER);
+    if (!isHumanTurn) return false;
+    const hand = engineState.hands[engineState.currentPlayer] ?? [];
+    const declarerTeam = teamForPlayer(engineState.currentPlayer);
     return canDeclareRoyals({
       hand,
       trumpSuit: engineState.trumpSuit,
@@ -491,19 +515,19 @@ export const useGameController = () => {
       lastTrickWinnerTeam: engineState.lastTrickWinnerTeam,
       declarerTeam,
     });
-  }, [engineState]);
+  }, [engineState, isHumanTurn]);
 
   const handleDeclareRoyals = useCallback(() => {
     if (!canDeclareRoyalsForHuman) return;
-    dispatch({ type: "declareRoyals", player: HUMAN_PLAYER });
-  }, [canDeclareRoyalsForHuman, dispatch]);
+    dispatch({ type: "declareRoyals", player: engineState.currentPlayer });
+  }, [canDeclareRoyalsForHuman, dispatch, engineState.currentPlayer]);
 
   useEffect(() => {
     if (engineState.phase !== "playing") {
       setLlmInUse(false);
     }
     if (engineState.phase === "hand-complete") return;
-    if (engineState.currentPlayer === HUMAN_PLAYER) return;
+    if (isHumanTurn) return;
 
     if (botTimeout.current) {
       clearTimeout(botTimeout.current);
@@ -581,9 +605,28 @@ export const useGameController = () => {
       }
       botTimeout.current = null;
     };
-  }, [botSettings, dispatch, engineState]);
+  }, [botSettings, dispatch, engineState, isHumanTurn]);
 
-  const gameState = useMemo(() => createUiState(engineState, roundNumber), [engineState, roundNumber]);
+  const handleControlModeChange = useCallback(
+    (mode: ControlMode) => {
+      if (mode === controlMode) return;
+      setControlMode(mode);
+      if (botTimeout.current) {
+        clearTimeout(botTimeout.current);
+        botTimeout.current = null;
+      }
+      setLlmInUse(false);
+      setEngineState(createGameState({ seed: Date.now() }));
+      setRoundNumber((prev) => prev + 1);
+      setLastMove(null);
+    },
+    [controlMode]
+  );
+
+  const gameState = useMemo(
+    () => createUiState(engineState, roundNumber, controlMode),
+    [engineState, roundNumber, controlMode]
+  );
 
   return {
     gameState,
@@ -596,6 +639,7 @@ export const useGameController = () => {
     onPassBid: handlePassBid,
     canChooseTrump,
     onChooseTrump: handleChooseTrump,
+    onChooseTrumpFromSeventh: handleChooseTrumpFromSeventh,
     onNewGame: handleNewGame,
     canRevealTrump,
     onRevealTrump: handleRevealTrump,
@@ -606,5 +650,7 @@ export const useGameController = () => {
     llmInUse,
     setBotEnabled,
     setBotDifficulty,
+    controlMode,
+    onControlModeChange: handleControlModeChange,
   };
 };

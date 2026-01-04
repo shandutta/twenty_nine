@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createGameState, reduceGame } from "../src/index";
+import { createDeck, createGameState, reduceGame, shuffleDeck } from "../src/index";
 import type { Card, Suit } from "../src/index";
 
 const card = (suit: Suit, rank: Card["rank"]): Card => ({ suit, rank });
@@ -34,5 +34,19 @@ describe("trump reveal action", () => {
     const next = reduceGame(state, { type: "revealTrump", player: 0 });
 
     expect(next.trumpRevealed).toBe(false);
+  });
+});
+
+describe("trump selection", () => {
+  it("lets the bidder set trump from the 7th card", () => {
+    const seed = 12345;
+    const deck = shuffleDeck(createDeck(), seed);
+    const base = createGameState({ seed, phase: "choose-trump", bidderPlayer: 1, bidTarget: 16 });
+
+    const next = reduceGame(base, { type: "chooseTrumpFromSeventh", player: 1 });
+
+    expect(next.trumpSuit).toBe(deck[6].suit);
+    expect(next.trumpRevealed).toBe(true);
+    expect(next.phase).toBe("playing");
   });
 });

@@ -44,7 +44,8 @@ export type GameAction =
   | { type: "playCard"; player: number; card: Card }
   | { type: "placeBid"; player: number; amount: number }
   | { type: "passBid"; player: number }
-  | { type: "chooseTrump"; player: number; suit: Suit }
+  | { type: "chooseTrump"; player: number; suit: Suit | null }
+  | { type: "chooseTrumpFromSeventh"; player: number }
   | { type: "declareRoyals"; player: number }
   | { type: "revealTrump"; player: number };
 
@@ -119,11 +120,14 @@ export const createGameState = ({
   const { hands, remaining } = dealHands(deck, initialCardsPerPlayer);
   const derivedBidderTeam = bidderTeam ?? (bidderPlayer !== null ? teamForPlayer(bidderPlayer) : null);
   const resolvedBidTarget = bidTarget ?? (phase === "playing" || phase === "hand-complete" ? config.minBid : null);
-  const chosenTrump = trumpSuit ?? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null);
+  const chosenTrump =
+    typeof trumpSuit === "undefined" ? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null) : trumpSuit;
   const leader =
     phase === "playing" || phase === "hand-complete" ? openingLeader(dealer, bidderPlayer, config) : nextPlayer(dealer);
   const currentPlayer =
     phase === "bidding" ? nextPlayer(dealer) : phase === "choose-trump" ? (bidderPlayer ?? nextPlayer(dealer)) : leader;
+  const trumpRevealed =
+    (phase === "playing" || phase === "hand-complete") && chosenTrump === null ? true : false;
 
   return {
     hands,
@@ -134,7 +138,7 @@ export const createGameState = ({
     currentPlayer,
     dealer,
     trumpSuit: chosenTrump,
-    trumpRevealed: false,
+    trumpRevealed,
     points: [0, 0],
     tricksWon: [0, 0],
     bidderTeam: derivedBidderTeam,
@@ -185,6 +189,39 @@ const redealGame = (state: GameState, log: string[]): GameState => {
   return {
     ...fresh,
     log: [...log, ...fresh.log],
+  };
+};
+
+const finalizeTrumpChoice = ({
+  state,
+  trumpSuit,
+  trumpRevealed,
+  logLine,
+}: {
+  state: GameState;
+  trumpSuit: Suit | null;
+  trumpRevealed: boolean;
+  logLine: string;
+}): GameState => {
+  const { hands: extraHands, remaining } =
+    state.undealt.length > 0 ? dealHands(state.undealt, 4) : { hands: [[], [], [], []], remaining: [] };
+  const nextHands = state.hands.map((hand, index) => hand.concat(extraHands[index]));
+  const leader = openingLeader(state.dealer, state.bidderPlayer, state.config);
+
+  return {
+    ...state,
+    hands: nextHands,
+    undealt: remaining,
+    trumpSuit,
+    trumpRevealed,
+    phase: "playing",
+    leader,
+    currentPlayer: leader,
+    log: [
+      ...state.log,
+      logLine,
+      state.undealt.length > 0 ? "Remaining cards dealt." : "Hand complete.",
+    ],
   };
 };
 
@@ -258,31 +295,33 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     };
   }
 
+  if (action.type === "chooseTrumpFromSeventh") {
+    if (state.phase !== "choose-trump") return state;
+    if (action.player !== state.currentPlayer) return state;
+    if (state.bidTarget === null || state.bidderPlayer === null || state.bidderTeam === null) return state;
+
+    const deck = shuffleDeck(createDeck(), state.seed);
+    const seventhSuit = deck[6].suit;
+
+    return finalizeTrumpChoice({
+      state,
+      trumpSuit: seventhSuit,
+      trumpRevealed: true,
+      logLine: `Trump set by P${action.player + 1} using the 7th card: ${seventhSuit}.`,
+    });
+  }
+
   if (action.type === "chooseTrump") {
     if (state.phase !== "choose-trump") return state;
     if (action.player !== state.currentPlayer) return state;
     if (state.bidTarget === null || state.bidderPlayer === null || state.bidderTeam === null) return state;
 
-    const { hands: extraHands, remaining } =
-      state.undealt.length > 0 ? dealHands(state.undealt, 4) : { hands: [[], [], [], []], remaining: [] };
-    const nextHands = state.hands.map((hand, index) => hand.concat(extraHands[index]));
-    const leader = openingLeader(state.dealer, state.bidderPlayer, state.config);
-
-    return {
-      ...state,
-      hands: nextHands,
-      undealt: remaining,
+    return finalizeTrumpChoice({
+      state,
       trumpSuit: action.suit,
       trumpRevealed: false,
-      phase: "playing",
-      leader,
-      currentPlayer: leader,
-      log: [
-        ...state.log,
-        `Trump chosen by P${action.player + 1}: ${action.suit}.`,
-        state.undealt.length > 0 ? "Remaining cards dealt." : "Hand complete.",
-      ],
-    };
+      logLine: `Trump chosen by P${action.player + 1}: ${action.suit}.`,
+    });
   }
 
   if (action.type === "declareRoyals") {

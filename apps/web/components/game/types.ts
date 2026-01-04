@@ -57,3 +57,5 @@ export interface GameState {
   log: string[];
   lastTrick: LastTrickSummary | null;
 }
+
+export type ControlMode = "standard" | "single-hand";
