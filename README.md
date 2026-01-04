@@ -1,6 +1,6 @@
 # TwentyNine
 
-TwentyNine is a solo-first, modern take on the classic Bengali trick-taking game 29. It is a felt table you can open in seconds, with AI tablemates that think in real time and a coach that explains your last move while the hand is still warm.
+TwentyNine is a solo-first, modern take on the classic trick-taking game 29. It is a felt table you can open in seconds, with AI tablemates that think in real time and a coach that explains your last move while the hand is still warm.
 
 ![TwentyNine game table](docs/ux/screens/game-1280.png)
 

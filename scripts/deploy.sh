@@ -38,7 +38,10 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
 fi
 
 echo "deploy: building web app"
+echo "deploy: cleaning previous build"
+rm -rf apps/web/.next
 pnpm -C apps/web build
+node scripts/verify-next-build.mjs
 
 if ! sudo -n true 2>/dev/null; then
   echo "deploy: sudo is required to restart the service." >&2
@@ -48,4 +51,10 @@ fi
 
 echo "deploy: restarting twentynine service"
 sudo -n systemctl restart twentynine
+echo "deploy: running health check"
+if command -v curl >/dev/null 2>&1; then
+  curl -fsS "http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game" >/dev/null
+else
+  echo "deploy: curl not available; skipping health check"
+fi
 echo "deploy: done"

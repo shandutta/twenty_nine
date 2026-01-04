@@ -49,7 +49,7 @@ export default function Home() {
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.45em] text-emerald-100/70">TwentyNine</p>
-            <p className="text-sm text-emerald-100/60">Bengali trick-taking table</p>
+            <p className="text-sm text-emerald-100/60">Classic trick-taking table</p>
           </div>
         </div>
         <nav className="hidden items-center gap-6 text-sm text-emerald-100/60 md:flex">

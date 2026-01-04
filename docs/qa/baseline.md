@@ -52,5 +52,5 @@ Date: 2025-12-31
 
 ## Automation notes
 
-- Playwright uses port 3100 with webServer command `pnpm -C apps/web dev -- --port 3100`.
+- Playwright uses port 3101 with webServer command `pnpm -C apps/web dev -- --port 3101`.
 - Lighthouse run emits `RootCauses` gatherer warnings (frame_sequence) but completes and writes reports.

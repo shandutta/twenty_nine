@@ -18,8 +18,8 @@ const displayFont = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "TwentyNine | Bengali 29 Card Game",
-  description: "Play the classic South Asian/Bengali trick-taking game 29 with a modern solo table.",
+  title: "TwentyNine | 29 Card Game",
+  description: "Play the classic trick-taking card game 29 with a modern solo table.",
   generator: "v0.app",
   icons: {
     icon: [

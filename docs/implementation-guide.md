@@ -108,12 +108,25 @@ Prod host (this machine):
 - The production service is a systemd unit named `twentynine` (`/etc/systemd/system/twentynine.service`).
 - Check status with `systemctl status twentynine` and logs with `journalctl -u twentynine -n 200`.
 
+Ports (enforced by wrappers):
+
+- Dev server defaults to port 3101 (`pnpm dev` -> `apps/web/scripts/next-dev.mjs`).
+- Prod server defaults to port 3100 (`pnpm start` -> `apps/web/scripts/next-start.mjs`).
+- Overrides are blocked unless `TWENTYNINE_ALLOW_PORT_OVERRIDE=1` (expected port comes from `NEXT_DEV_PORT` / `NEXT_START_PORT`).
+
+Orphan process check (user cron):
+
+- Script: `scripts/check-orphan-next.sh` (use `--fix` to terminate mismatched Next dev/start processes).
+- Install daily cron: `scripts/install-orphan-cron.sh` (defaults to `15 4 * * *`, override with `TWENTYNINE_ORPHAN_CRON`).
+
 Deployment:
 
 - Deploys are manual. Run `pnpm deploy:prod` (or `bash scripts/deploy.sh`) on the `main` branch.
 - The deploy script skips if there are no relevant changes in `apps/web`, `packages/engine`, or root workspace files.
-- When it runs, it installs deps (if needed), runs prettier/lint/tests (and optional e2e), builds the Next.js app, then restarts the systemd service.
+- When it runs, it installs deps (if needed), runs prettier/lint/tests (and optional e2e), cleans `.next`, builds the Next.js app, verifies build assets, then restarts the systemd service and hits a local `/game` health check.
 - Restart requires sudo. If sudo is unavailable, the script exits and instructs you to run `sudo systemctl restart twentynine`.
+- Build integrity guard: `scripts/verify-next-build.mjs` ensures all assets listed in the Next.js build manifests exist (prevents missing `/_next/static/...` files).
+- Optional health cron (idempotent): `scripts/install-health-cron.sh` adds a `scripts/healthcheck.sh` entry to the user crontab (default every 10 minutes). The installer exits early if the marker is already present.
 
 CI/CD:
 

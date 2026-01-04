@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$ROOT_DIR"
+
+node scripts/verify-next-build.mjs
+
+if command -v curl >/dev/null 2>&1; then
+  curl -fsS "http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game" >/dev/null
+else
+  echo "healthcheck: curl not available" >&2
+  exit 1
+fi
