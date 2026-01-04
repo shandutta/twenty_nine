@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { Card, Suit } from "@twentynine/engine";
 import { GameTable } from "@/components/game/table";
 import { GameSidebar } from "@/components/game/sidebar";
 import { SettingsSheet } from "@/components/game/settings-sheet";
+import { useSoundEffects } from "@/components/game/use-sound-effects";
 import { useGameController } from "@/components/game/use-game-controller";
 import { Spinner } from "@/components/ui/spinner";
+import type { MatchTrack } from "@/components/game/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,18 +91,30 @@ function GamePageClient() {
     setBotEnabled,
     setBotDifficulty,
     controlMode,
+    controlModeLocked,
     onControlModeChange,
   } = useGameController();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundVolume, setSoundVolume] = useState(75);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
+  const [targetScore, setTargetScore] = useState(6);
+  const [matchTrack, setMatchTrack] = useState<MatchTrack>({ teamA: 0, teamB: 0 });
+  const lastScoredHandRef = useRef<number | null>(null);
   const [coachEnabled, setCoachEnabled] = useState(false);
   const [coachLoading, setCoachLoading] = useState(false);
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
   const [confirmNewGameOpen, setConfirmNewGameOpen] = useState(false);
+
+  useSoundEffects({
+    enabled: soundEnabled,
+    volume: soundVolume,
+    log: gameState.log,
+    roundNumber: gameState.roundNumber,
+  });
 
   const playerLabel = useMemo(() => {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
@@ -145,6 +159,42 @@ function GamePageClient() {
     setCoachResponse(null);
     setCoachError(null);
   }, [lastMove?.action, coachEnabled]);
+
+  useEffect(() => {
+    setMatchTrack((prev) => ({
+      teamA: Math.max(-targetScore, Math.min(targetScore, prev.teamA)),
+      teamB: Math.max(-targetScore, Math.min(targetScore, prev.teamB)),
+    }));
+  }, [targetScore]);
+
+  useEffect(() => {
+    setMatchTrack({ teamA: 0, teamB: 0 });
+    lastScoredHandRef.current = null;
+  }, [controlMode]);
+
+  useEffect(() => {
+    if (engineState.phase !== "hand-complete") return;
+    if (lastScoredHandRef.current === engineState.seed) return;
+    lastScoredHandRef.current = engineState.seed;
+
+    const bidderTeam = engineState.bidderTeam;
+    const bidTarget = engineState.bidTarget;
+    if (bidderTeam === null || bidTarget === null) return;
+
+    const bidderPoints = engineState.points[bidderTeam];
+    const bidderMade = bidderPoints >= bidTarget;
+    const biddingKey = bidderTeam === 0 ? "teamA" : "teamB";
+    const delta = bidderMade ? 1 : -1;
+
+    setMatchTrack((prev) => {
+      const nextValue = Math.max(-targetScore, Math.min(targetScore, prev[biddingKey] + delta));
+      if (nextValue === prev[biddingKey]) return prev;
+      return {
+        ...prev,
+        [biddingKey]: nextValue,
+      };
+    });
+  }, [engineState, targetScore]);
 
   const requestCoach = async () => {
     if (!coachEnabled || !lastMove) {
@@ -223,11 +273,14 @@ function GamePageClient() {
         gameState={gameState}
         onNewGame={requestNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
+        targetScore={targetScore}
+        matchTrack={matchTrack}
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
         controlMode={controlMode}
         onControlModeChange={onControlModeChange}
+        controlModeLocked={controlModeLocked}
         coachEnabled={coachEnabled}
         onCoachEnabledChange={setCoachEnabled}
         coachLoading={coachLoading}
@@ -253,6 +306,7 @@ function GamePageClient() {
           animationsEnabled={animationsEnabled}
           controlMode={controlMode}
           onControlModeChange={onControlModeChange}
+          controlModeLocked={controlModeLocked}
           bidOptions={bidOptions}
           canBid={canBid}
           onPlaceBid={onPlaceBid}
@@ -273,10 +327,14 @@ function GamePageClient() {
         onOpenChange={setSettingsOpen}
         soundEnabled={soundEnabled}
         onSoundChange={setSoundEnabled}
+        soundVolume={soundVolume}
+        onSoundVolumeChange={setSoundVolume}
         animationsEnabled={animationsEnabled}
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
+        targetScore={targetScore}
+        onTargetScoreChange={setTargetScore}
         onNewGame={requestNewGame}
       />
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>

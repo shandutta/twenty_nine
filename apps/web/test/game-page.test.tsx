@@ -112,6 +112,7 @@ describe("/game UI", () => {
       setBotEnabled: vi.fn(),
       setBotDifficulty: vi.fn(),
       controlMode: "standard",
+      controlModeLocked: false,
       onControlModeChange: vi.fn(),
     });
   });

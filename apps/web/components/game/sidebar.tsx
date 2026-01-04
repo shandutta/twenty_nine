@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { ControlMode, GameState, Suit } from "@/components/game/types";
+import type { ControlMode, GameState, MatchTrack, Suit } from "@/components/game/types";
 import type { BotDifficulty, BotSettings } from "@/components/game/use-game-controller";
 import { cn } from "@/lib/utils";
 import { Settings, RotateCcw, Sparkles, ScrollText, Trophy } from "lucide-react";
@@ -18,11 +18,14 @@ interface GameSidebarProps {
   gameState: GameState;
   onNewGame: () => void;
   onOpenSettings: () => void;
+  targetScore: number;
+  matchTrack: MatchTrack;
   botSettings: BotSettings;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
+  controlModeLocked: boolean;
   coachEnabled: boolean;
   onCoachEnabledChange: (enabled: boolean) => void;
   coachLoading: boolean;
@@ -57,15 +60,27 @@ const TRUMP_CHOICES: Array<{ suit: Suit; label: string; symbol: string }> = [
   { suit: "spades", label: "Spades", symbol: suitSymbols.spades },
 ];
 
+const MATCH_CARD_BASE =
+  "relative h-8 w-6 rounded-[0.5rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
+
+const MATCH_PIP_STYLES = {
+  bid: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
+  set: "bg-[#0a0a0a] ring-1 ring-white/30 shadow-[inset_0_0_6px_rgba(255,255,255,0.15)]",
+  empty: "bg-white/10 ring-1 ring-white/10",
+} as const;
+
 export function GameSidebar({
   gameState,
   onNewGame,
   onOpenSettings,
+  targetScore,
+  matchTrack,
   botSettings,
   onBotEnabledChange,
   onBotDifficultyChange,
   controlMode,
   onControlModeChange,
+  controlModeLocked,
   coachEnabled,
   onCoachEnabledChange,
   coachLoading,
@@ -105,6 +120,9 @@ export function GameSidebar({
   const controlLabel = controlMode === "single-hand" ? "Single hand" : "Standard";
   const controlDescription =
     controlMode === "single-hand" ? "You control both Team A hands." : "You control your own hand.";
+  const controlModeNote = controlModeLocked
+    ? "Locked for this hand."
+    : "Choose once; locks after the final deal.";
   const phaseLabel = gameState.phase.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase());
   const isBidding = gameState.phase === "bidding";
   const isChoosingTrump = gameState.phase === "choose-trump";
@@ -123,6 +141,32 @@ export function GameSidebar({
       : royalsTeamId === "teamB"
         ? "border-rose-400/40 bg-rose-500/10 text-emerald-100"
         : "border-white/10 bg-white/5 text-emerald-50";
+  const teamAScore = matchTrack.teamA.length;
+  const teamBScore = matchTrack.teamB.length;
+
+  const renderMatchCards = (teamId: "teamA" | "teamB") => {
+    const points = matchTrack[teamId];
+    const teamBorder = teamId === "teamA" ? "border-emerald-400/25" : "border-rose-400/25";
+
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5" aria-label={`Match points for ${teamId}`}>
+        {Array.from({ length: targetScore }, (_, index) => {
+          const point = points[index];
+          const pipTone = point?.kind ?? "empty";
+          const pipClass =
+            pipTone === "bid" ? MATCH_PIP_STYLES.bid : pipTone === "set" ? MATCH_PIP_STYLES.set : MATCH_PIP_STYLES.empty;
+          const title = point ? (point.kind === "bid" ? "Made bid" : "Set opponents") : "Unscored point";
+
+          return (
+            <div key={`${teamId}-match-${index}`} title={title} className={cn(MATCH_CARD_BASE, teamBorder)}>
+              <span className={cn("absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full", pipClass)} />
+              <span className="pointer-events-none absolute inset-[3px] rounded-[0.4rem] border border-white/5" />
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
@@ -169,19 +213,20 @@ export function GameSidebar({
                       size="sm"
                       onClick={() => onControlModeChange(mode)}
                       className={cn(
-                        "h-9 rounded-full border text-[11px] uppercase tracking-[0.2em]",
+                        "h-9 rounded-full border px-4 text-[11px] uppercase tracking-[0.2em]",
                         controlMode === mode
                           ? "border-[#f2c879] bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
-                          : "border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10"
+                          : "border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10",
+                        controlModeLocked && "cursor-not-allowed",
+                        controlModeLocked && (controlMode === mode ? "opacity-100" : "opacity-40")
                       )}
+                      disabled={controlModeLocked}
                     >
                       {mode === "standard" ? "Standard" : "Single hand"}
                     </Button>
                   ))}
                 </div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-100/50">
-                  Switching deals a fresh round
-                </p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-100/50">{controlModeNote}</p>
               </CardContent>
             </Card>
 
@@ -357,6 +402,13 @@ export function GameSidebar({
                       {teamA.tricksWon} tricks · {teamA.handPoints} pts
                     </span>
                   </div>
+                  <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                    <span>Match</span>
+                    <span className="text-emerald-50">
+                      {teamAScore} / {targetScore}
+                    </span>
+                  </div>
+                  {renderMatchCards("teamA")}
                 </div>
                 <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-2.5">
                   <div className="flex items-center justify-between">
@@ -365,6 +417,23 @@ export function GameSidebar({
                       {teamB.tricksWon} tricks · {teamB.handPoints} pts
                     </span>
                   </div>
+                  <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                    <span>Match</span>
+                    <span className="text-emerald-50">
+                      {teamBScore} / {targetScore}
+                    </span>
+                  </div>
+                  {renderMatchCards("teamB")}
+                </div>
+                <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">
+                  <span className="inline-flex items-center gap-1">
+                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.bid)} />
+                    made bid
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.set)} />
+                    set opponents
+                  </span>
                 </div>
               </CardContent>
             </Card>

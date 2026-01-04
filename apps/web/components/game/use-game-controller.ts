@@ -48,27 +48,29 @@ const PRIMARY_HUMAN = 0;
 const PARTNER_HUMAN = 2;
 const BOT_THINK_TIME_MS = 450;
 
-const BOT_PRESETS: Record<BotDifficulty, Omit<BotSettings, "enabled">> = {
+const LLM_MODEL_POOL = [
+  "openai/gpt-5.2-pro",
+  "anthropic/claude-opus-4.5",
+  "google/gemini-3-pro-preview",
+] as const;
+
+const DEFAULT_LLM_MODEL = LLM_MODEL_POOL[0];
+
+const BOT_PRESETS: Record<BotDifficulty, Pick<BotSettings, "difficulty" | "temperature" | "usageHint">> = {
   easy: {
     difficulty: "easy",
-    model: "openai/gpt-5.2-pro",
-    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.2,
-    usageHint: "Uses LLM on every bot move (conservative style).",
+    usageHint: "Conservative: protects high-value points and plays safely.",
   },
   medium: {
     difficulty: "medium",
-    model: "openai/gpt-5.2-pro",
-    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.3,
-    usageHint: "Uses LLM on every bot move (balanced style).",
+    usageHint: "Balanced: contests key tricks without overcommitting.",
   },
   hard: {
     difficulty: "hard",
-    model: "openai/gpt-5.2-pro",
-    fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
     temperature: 0.4,
-    usageHint: "Uses LLM on every bot move (maximizes expected points).",
+    usageHint: "Aggressive: maximizes expected points and contract success.",
   },
 };
 
@@ -371,10 +373,13 @@ export const useGameController = () => {
   const [roundNumber, setRoundNumber] = useState(1);
   const [engineState, setEngineState] = useState<EngineState>(() => createGameState({ seed: Date.now() }));
   const [lastMove, setLastMove] = useState<LastMoveInfo>(null);
-  const [botEnabled, setBotEnabled] = useState(false);
+  const [botEnabled, setBotEnabled] = useState(true);
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("easy");
+  const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
+  const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
+  const [controlModeLocked, setControlModeLocked] = useState(false);
 
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(engineState);
@@ -383,17 +388,34 @@ export const useGameController = () => {
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
 
   const preset = BOT_PRESETS[botDifficulty];
+  const fallbackModels = useMemo(
+    () => LLM_MODEL_POOL.filter((model) => model !== botModel),
+    [botModel]
+  );
   const botSettings = useMemo<BotSettings>(
     () => ({
       ...preset,
       enabled: botEnabled,
+      model: botModel,
+      fallbackModels,
+      temperature: botTemperature,
     }),
-    [botEnabled, preset]
+    [botEnabled, preset, botModel, fallbackModels, botTemperature]
   );
+
+  useEffect(() => {
+    setBotTemperature(BOT_PRESETS[botDifficulty].temperature);
+  }, [botDifficulty]);
 
   useEffect(() => {
     stateRef.current = engineState;
   }, [engineState]);
+
+  useEffect(() => {
+    if (engineState.phase === "playing" || engineState.phase === "hand-complete") {
+      setControlModeLocked(true);
+    }
+  }, [engineState.phase]);
 
   useEffect(() => {
     if (!botSettings.enabled || isHumanTurn) {
@@ -487,8 +509,19 @@ export const useGameController = () => {
   }, [canChooseTrump, dispatch, engineState.currentPlayer]);
 
   const handleNewGame = useCallback(() => {
-    setEngineState(createGameState({ seed: Date.now() }));
-    setRoundNumber((prev) => prev + 1);
+    if (botTimeout.current) {
+      clearTimeout(botTimeout.current);
+      botTimeout.current = null;
+    }
+    setLlmInUse(false);
+    setEngineState((prev) =>
+      createGameState({
+        seed: prev.seed + 1,
+        dealer: (prev.dealer + 1) % 4,
+        config: prev.config,
+      })
+    );
+    setRoundNumber(1);
     setLastMove(null);
   }, []);
 
@@ -626,6 +659,7 @@ export const useGameController = () => {
 
   const handleControlModeChange = useCallback(
     (mode: ControlMode) => {
+      if (controlModeLocked) return;
       if (mode === controlMode) return;
       setControlMode(mode);
       if (botTimeout.current) {
@@ -633,11 +667,17 @@ export const useGameController = () => {
         botTimeout.current = null;
       }
       setLlmInUse(false);
-      setEngineState(createGameState({ seed: Date.now() }));
-      setRoundNumber((prev) => prev + 1);
+      setEngineState((prev) =>
+        createGameState({
+          seed: prev.seed + 1,
+          dealer: (prev.dealer + 1) % 4,
+          config: prev.config,
+        })
+      );
+      setRoundNumber(1);
       setLastMove(null);
     },
-    [controlMode]
+    [controlMode, controlModeLocked]
   );
 
   const gameState = useMemo(
@@ -667,7 +707,10 @@ export const useGameController = () => {
     llmInUse,
     setBotEnabled,
     setBotDifficulty,
+    setBotModel,
+    setBotTemperature,
     controlMode,
+    controlModeLocked,
     onControlModeChange: handleControlModeChange,
   };
 };

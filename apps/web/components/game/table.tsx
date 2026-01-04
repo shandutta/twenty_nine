@@ -17,6 +17,7 @@ interface GameTableProps {
   animationsEnabled: boolean;
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
+  controlModeLocked: boolean;
   bidOptions: number[];
   canBid: boolean;
   onPlaceBid: (amount: number) => void;
@@ -332,6 +333,7 @@ export function GameTable({
   animationsEnabled,
   controlMode,
   onControlModeChange,
+  controlModeLocked,
   bidOptions,
   canBid,
   onPlaceBid,
@@ -787,9 +789,12 @@ export function GameTable({
                 type="button"
                 onClick={() => onControlModeChange(mode)}
                 className={cn(
-                  "rounded-full px-3 py-1 text-[9px] uppercase tracking-[0.22em] transition",
-                  controlMode === mode ? "bg-[#f2c879] text-[#2b1c07]" : "text-emerald-100/70 hover:text-emerald-50"
+                  "rounded-full px-3.5 py-1.5 text-[9px] uppercase tracking-[0.22em] transition",
+                  controlMode === mode ? "bg-[#f2c879] text-[#2b1c07]" : "text-emerald-100/70 hover:text-emerald-50",
+                  controlModeLocked && "cursor-not-allowed",
+                  controlModeLocked && (controlMode === mode ? "opacity-100" : "opacity-40")
                 )}
+                disabled={controlModeLocked}
               >
                 {mode === "standard" ? "Standard" : "Single hand"}
               </button>

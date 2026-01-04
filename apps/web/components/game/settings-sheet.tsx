@@ -14,10 +14,14 @@ interface SettingsSheetProps {
   onOpenChange: (open: boolean) => void;
   soundEnabled: boolean;
   onSoundChange: (enabled: boolean) => void;
+  soundVolume: number;
+  onSoundVolumeChange: (volume: number) => void;
   animationsEnabled: boolean;
   onAnimationsChange: (enabled: boolean) => void;
   autoPlay: boolean;
   onAutoPlayChange: (enabled: boolean) => void;
+  targetScore: number;
+  onTargetScoreChange: (score: number) => void;
   onNewGame: () => void;
 }
 
@@ -26,15 +30,21 @@ export function SettingsSheet({
   onOpenChange,
   soundEnabled,
   onSoundChange,
+  soundVolume,
+  onSoundVolumeChange,
   animationsEnabled,
   onAnimationsChange,
   autoPlay,
   onAutoPlayChange,
+  targetScore,
+  onTargetScoreChange,
   onNewGame,
 }: SettingsSheetProps) {
-  const [volume, setVolume] = useState([75]);
-  const [cardSpeed, setCardSpeed] = useState("normal");
-  const [targetScore, setTargetScore] = useState("6");
+    const [cardSpeed, setCardSpeed] = useState("normal");
+  const volume = [soundVolume];
+  const handleVolumeChange = (value: number[]) => {
+    onSoundVolumeChange(value[0] ?? 0);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -75,9 +85,9 @@ export function SettingsSheet({
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <Label className="text-muted-foreground">Volume</Label>
-                      <span className="text-muted-foreground">{volume[0]}%</span>
+                      <span className="text-muted-foreground">{soundVolume}%</span>
                     </div>
-                    <Slider value={volume} onValueChange={setVolume} max={100} step={1} className="w-full" />
+                    <Slider value={volume} onValueChange={handleVolumeChange} max={100} step={1} className="w-full" />
                   </div>
                 )}
               </div>
@@ -147,7 +157,7 @@ export function SettingsSheet({
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs text-muted-foreground">Target Score</Label>
-                  <Select value={targetScore} onValueChange={setTargetScore}>
+                  <Select value={String(targetScore)} onValueChange={(value) => onTargetScoreChange(Number(value))}>
                     <SelectTrigger className="border-sidebar-border/70 bg-sidebar/60 w-full hover:bg-sidebar-accent/30">
                       <SelectValue placeholder="Select target" />
                     </SelectTrigger>
