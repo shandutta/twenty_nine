@@ -28,6 +28,8 @@ export type LastMoveInfo = {
 
 export type BotDifficulty = "easy" | "medium" | "hard";
 
+export type ReasoningEffort = "xhigh" | "high" | "medium" | "low" | "minimal" | "none";
+
 export type BotSettings = {
   enabled: boolean;
   difficulty: BotDifficulty;
@@ -35,6 +37,8 @@ export type BotSettings = {
   fallbackModels: string[];
   temperature: number;
   usageHint: string;
+  reasoningEffort: ReasoningEffort;
+  showReasoningTrace: boolean;
 };
 
 const PLAYER_META: PlayerMeta[] = [
@@ -53,6 +57,15 @@ export const LLM_MODEL_OPTIONS = [
   { value: "anthropic/claude-opus-4.5", label: "Claude Opus 4.5" },
   { value: "google/gemini-3-pro-preview", label: "Gemini 3 Pro (Preview)" },
 ] as const;
+
+export const REASONING_EFFORT_OPTIONS: Array<{ value: ReasoningEffort; label: string; note: string }> = [
+  { value: "xhigh", label: "X-High", note: "Maximum depth" },
+  { value: "high", label: "High", note: "Deeper thinking" },
+  { value: "medium", label: "Medium", note: "Balanced" },
+  { value: "low", label: "Low", note: "Faster" },
+  { value: "minimal", label: "Minimal", note: "Very light" },
+  { value: "none", label: "None", note: "Disable reasoning" },
+];
 
 const LLM_MODEL_POOL = LLM_MODEL_OPTIONS.map((option) => option.value);
 
@@ -210,9 +223,62 @@ const parseCardFromText = (text: string, legalMoves: Card[]): Card | null => {
   return legalMoves.find((card) => card.rank === rank && card.suit === suit) ?? null;
 };
 
+const extractReasoningTrace = (
+  message: { reasoning?: unknown; reasoning_details?: unknown } | null
+): { text: string | null; hasTrace: boolean } => {
+  if (!message) return { text: null, hasTrace: false };
+  if (typeof message.reasoning === "string" && message.reasoning.trim()) {
+    return { text: message.reasoning.trim(), hasTrace: true };
+  }
+  if (!Array.isArray(message.reasoning_details)) {
+    return { text: null, hasTrace: Boolean(message.reasoning_details) };
+  }
+
+  const parts: string[] = [];
+  for (const detail of message.reasoning_details) {
+    if (!detail || typeof detail !== "object") continue;
+    const entry = detail as { type?: string; summary?: string; text?: string };
+    if (entry.type === "reasoning.summary" && entry.summary) {
+      parts.push(`Summary: ${entry.summary}`);
+      continue;
+    }
+    if (entry.type === "reasoning.text" && entry.text) {
+      parts.push(entry.text);
+      continue;
+    }
+    if (entry.type === "reasoning.encrypted") {
+      parts.push("[Encrypted reasoning]");
+      continue;
+    }
+    if (entry.summary) {
+      parts.push(`Summary: ${entry.summary}`);
+      continue;
+    }
+    if (entry.text) {
+      parts.push(entry.text);
+    }
+  }
+
+  if (parts.length === 0) {
+    return { text: null, hasTrace: true };
+  }
+  return { text: parts.join("\n\n"), hasTrace: true };
+};
+
 const shouldUseLLM = () => true;
 
-const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: BotSettings): Promise<Card | null> => {
+type LlmDecision = {
+  card: Card | null;
+  reasoning: string | null;
+  model: string | null;
+  hasTrace: boolean;
+};
+
+const requestLLMMove = async (
+  state: EngineState,
+  legalMoves: Card[],
+  settings: BotSettings
+): Promise<LlmDecision> => {
   const player = state.currentPlayer;
   const hand = state.hands[player] ?? [];
   const lead = leadSuit(state.trick) ?? "none";
@@ -265,6 +331,10 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
         body: JSON.stringify({
           model,
           temperature: settings.temperature,
+          reasoning: {
+            effort: settings.reasoningEffort,
+            exclude: !settings.showReasoningTrace,
+          },
           messages: [
             {
               role: "system",
@@ -279,21 +349,30 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
         continue;
       }
 
-      const data = (await response.json().catch(() => null)) as { message?: { content?: string } } | null;
-      const content = data?.message?.content;
+      const data = (await response.json().catch(() => null)) as {
+        message?: { content?: string; reasoning?: unknown; reasoning_details?: unknown };
+      } | null;
+      const message = data?.message ?? null;
+      const content = message?.content;
       if (!content) {
         continue;
       }
       const parsed = parseCardFromText(content, legalMoves);
       if (parsed) {
-        return parsed;
+        const reasoning = extractReasoningTrace(message);
+        return {
+          card: parsed,
+          reasoning: reasoning.text,
+          model,
+          hasTrace: reasoning.hasTrace,
+        };
       }
     } catch {
       continue;
     }
   }
 
-  return null;
+  return { card: null, reasoning: null, model: null, hasTrace: false };
 };
 
 const createUiState = (state: EngineState, roundNumber: number, controlMode: ControlMode): GameState => {
@@ -379,6 +458,15 @@ export const useGameController = () => {
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("easy");
   const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [showReasoningTrace, setShowReasoningTrace] = useState(false);
+  const [llmReasoning, setLlmReasoning] = useState<string | null>(null);
+  const [llmReasoningMeta, setLlmReasoningMeta] = useState<{
+    model: string;
+    effort: ReasoningEffort;
+    ts: number;
+    hasTrace: boolean;
+  } | null>(null);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
@@ -398,8 +486,10 @@ export const useGameController = () => {
       model: botModel,
       fallbackModels,
       temperature: botTemperature,
+      reasoningEffort,
+      showReasoningTrace,
     }),
-    [botEnabled, preset, botModel, fallbackModels, botTemperature]
+    [botEnabled, preset, botModel, fallbackModels, botTemperature, reasoningEffort, showReasoningTrace]
   );
 
   useEffect(() => {
@@ -522,6 +612,8 @@ export const useGameController = () => {
     );
     setRoundNumber(1);
     setLastMove(null);
+    setLlmReasoning(null);
+    setLlmReasoningMeta(null);
     setControlModeLocked(false);
   }, []);
 
@@ -630,9 +722,18 @@ export const useGameController = () => {
         if (botSettings.enabled && shouldUseLLM()) {
           setLlmInUse(true);
           try {
-            const llmCard = await requestLLMMove(snapshot, moves, botSettings);
-            if (llmCard) {
-              chosen = llmCard;
+            const llmDecision = await requestLLMMove(snapshot, moves, botSettings);
+            if (llmDecision.card) {
+              chosen = llmDecision.card;
+            }
+            if (llmDecision.model) {
+              setLlmReasoning(llmDecision.reasoning);
+              setLlmReasoningMeta({
+                model: llmDecision.model,
+                effort: botSettings.reasoningEffort,
+                ts: Date.now(),
+                hasTrace: llmDecision.hasTrace,
+              });
             }
           } finally {
             setLlmInUse(false);
@@ -677,6 +778,8 @@ export const useGameController = () => {
       );
       setRoundNumber(1);
       setLastMove(null);
+      setLlmReasoning(null);
+      setLlmReasoningMeta(null);
     },
     [controlMode, controlModeLocked]
   );
@@ -706,10 +809,14 @@ export const useGameController = () => {
     lastMove,
     botSettings,
     llmInUse,
+    llmReasoning,
+    llmReasoningMeta,
     setBotEnabled,
     setBotDifficulty,
     setBotModel,
     setBotTemperature,
+    setReasoningEffort,
+    setShowReasoningTrace,
     controlMode,
     controlModeLocked,
     onControlModeChange: handleControlModeChange,

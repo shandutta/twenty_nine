@@ -40,7 +40,7 @@ export function SettingsSheet({
   onTargetScoreChange,
   onNewGame,
 }: SettingsSheetProps) {
-    const [cardSpeed, setCardSpeed] = useState("normal");
+  const [cardSpeed, setCardSpeed] = useState("normal");
   const volume = [soundVolume];
   const handleVolumeChange = (value: number[]) => {
     onSoundVolumeChange(value[0] ?? 0);

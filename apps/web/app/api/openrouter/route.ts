@@ -5,10 +5,19 @@ type OpenRouterMessage = {
   content: string;
 };
 
+type OpenRouterReasoning = {
+  effort?: "xhigh" | "high" | "medium" | "low" | "minimal" | "none";
+  max_tokens?: number;
+  exclude?: boolean;
+  enabled?: boolean;
+};
+
 type OpenRouterRequest = {
   messages: OpenRouterMessage[];
   model?: string;
   temperature?: number;
+  reasoning?: OpenRouterReasoning;
+  include_reasoning?: boolean;
 };
 
 const isMessage = (value: unknown): value is OpenRouterMessage => {
@@ -40,10 +49,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Request must include a messages array." }, { status: 400 });
   }
 
+  const reasoning =
+    payload.reasoning ??
+    (payload.include_reasoning === undefined ? undefined : { exclude: !payload.include_reasoning });
+
   const body = {
     model: payload.model,
     messages: payload.messages,
     temperature: payload.temperature,
+    reasoning,
   };
 
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {

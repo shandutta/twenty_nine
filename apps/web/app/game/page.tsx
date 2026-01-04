@@ -88,10 +88,14 @@ function GamePageClient() {
     lastMove,
     botSettings,
     llmInUse,
+    llmReasoning,
+    llmReasoningMeta,
     setBotEnabled,
     setBotDifficulty,
     setBotModel,
     setBotTemperature,
+    setReasoningEffort,
+    setShowReasoningTrace,
     controlMode,
     controlModeLocked,
     onControlModeChange,
@@ -282,6 +286,8 @@ function GamePageClient() {
         onBotDifficultyChange={setBotDifficulty}
         onBotModelChange={setBotModel}
         onBotTemperatureChange={setBotTemperature}
+        onReasoningEffortChange={setReasoningEffort}
+        onShowReasoningTraceChange={setShowReasoningTrace}
         controlMode={controlMode}
         onControlModeChange={onControlModeChange}
         controlModeLocked={controlModeLocked}
@@ -324,6 +330,9 @@ function GamePageClient() {
           canDeclareRoyals={canDeclareRoyals}
           onDeclareRoyals={onDeclareRoyals}
           llmInUse={llmInUse}
+          llmReasoning={llmReasoning}
+          llmReasoningMeta={llmReasoningMeta}
+          showReasoningTrace={botSettings.showReasoningTrace}
         />
       </main>
       <SettingsSheet

@@ -2,16 +2,7 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-type SoundEffect =
-  | "card"
-  | "shuffle"
-  | "deal"
-  | "bid"
-  | "pass"
-  | "trump"
-  | "trumpReveal"
-  | "trickWin"
-  | "royals";
+type SoundEffect = "card" | "shuffle" | "deal" | "bid" | "pass" | "trump" | "trumpReveal" | "trickWin" | "royals";
 
 const EFFECT_LEVELS: Record<SoundEffect, number> = {
   card: 0.28,

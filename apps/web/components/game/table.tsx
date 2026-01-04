@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
+import { LLM_MODEL_OPTIONS, REASONING_EFFORT_OPTIONS, type ReasoningEffort } from "@/components/game/use-game-controller";
 import { Cog, RotateCcw } from "lucide-react";
 
 interface GameTableProps {
@@ -31,6 +32,14 @@ interface GameTableProps {
   canDeclareRoyals: boolean;
   onDeclareRoyals: () => void;
   llmInUse: boolean;
+  llmReasoning: string | null;
+  llmReasoningMeta: {
+    model: string;
+    effort: ReasoningEffort;
+    ts: number;
+    hasTrace: boolean;
+  } | null;
+  showReasoningTrace: boolean;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -274,6 +283,47 @@ function LiveAiIndicator({ active }: { active: boolean }) {
   );
 }
 
+const formatModelLabel = (value: string) =>
+  LLM_MODEL_OPTIONS.find((option) => option.value === value)?.label ?? value;
+
+const formatEffortLabel = (value: ReasoningEffort) =>
+  REASONING_EFFORT_OPTIONS.find((option) => option.value === value)?.label ?? value;
+
+function ReasoningTracePanel({
+  trace,
+  meta,
+  show,
+}: {
+  trace: string | null;
+  meta: { model: string; effort: ReasoningEffort; ts: number; hasTrace: boolean } | null;
+  show: boolean;
+}) {
+  if (!show) return null;
+  const modelLabel = meta ? formatModelLabel(meta.model) : "—";
+  const effortLabel = meta ? formatEffortLabel(meta.effort) : "—";
+  const body = trace?.trim()
+    ? trace
+    : meta?.hasTrace
+      ? "Trace unavailable for this model."
+      : "No trace yet.";
+
+  return (
+    <div className="pointer-events-auto w-[min(22rem,78vw)] rounded-2xl border border-white/10 bg-black/70 p-3 text-[11px] text-emerald-100/70 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
+      <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.3em] text-emerald-100/50">
+        <span>Reasoning Trace</span>
+        <span className="text-emerald-50">{effortLabel}</span>
+      </div>
+      <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-emerald-100/60">
+        <span className="uppercase tracking-[0.24em]">Model</span>
+        <span className="text-emerald-50">{modelLabel}</span>
+      </div>
+      <div className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/40 p-2 text-emerald-100/70">
+        {body}
+      </div>
+    </div>
+  );
+}
+
 function OpponentArea({
   player,
   position,
@@ -354,6 +404,9 @@ export function GameTable({
   canDeclareRoyals,
   onDeclareRoyals,
   llmInUse,
+  llmReasoning,
+  llmReasoningMeta,
+  showReasoningTrace,
 }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
@@ -453,9 +506,10 @@ export function GameTable({
   return (
     <TooltipProvider>
       <div className="relative h-full w-full p-4 md:p-8">
-        {llmInUse && (
-          <div className="absolute right-6 top-6 z-30">
-            <LiveAiIndicator active />
+        {(llmInUse || showReasoningTrace) && (
+          <div className="absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
+            <LiveAiIndicator active={llmInUse} />
+            <ReasoningTracePanel trace={llmReasoning} meta={llmReasoningMeta} show={showReasoningTrace} />
           </div>
         )}
         {lastTrick && (

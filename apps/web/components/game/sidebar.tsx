@@ -12,7 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import type { ControlMode, GameState, MatchTrack, Suit } from "@/components/game/types";
-import { LLM_MODEL_OPTIONS, type BotDifficulty, type BotSettings } from "@/components/game/use-game-controller";
+import {
+  LLM_MODEL_OPTIONS,
+  REASONING_EFFORT_OPTIONS,
+  type BotDifficulty,
+  type BotSettings,
+  type ReasoningEffort,
+} from "@/components/game/use-game-controller";
 import { cn } from "@/lib/utils";
 import { Settings, RotateCcw, Sparkles, ScrollText, Trophy } from "lucide-react";
 
@@ -27,6 +33,8 @@ interface GameSidebarProps {
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
   onBotModelChange: (model: string) => void;
   onBotTemperatureChange: (temperature: number) => void;
+  onReasoningEffortChange: (effort: ReasoningEffort) => void;
+  onShowReasoningTraceChange: (enabled: boolean) => void;
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
   controlModeLocked: boolean;
@@ -84,6 +92,8 @@ export function GameSidebar({
   onBotDifficultyChange,
   onBotModelChange,
   onBotTemperatureChange,
+  onReasoningEffortChange,
+  onShowReasoningTraceChange,
   controlMode,
   onControlModeChange,
   controlModeLocked,
@@ -108,6 +118,9 @@ export function GameSidebar({
   const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
   const effectiveSelectedBid = bidValues.includes(selectedBid) ? selectedBid : (bidValues[0] ?? "");
   const modelLabel = LLM_MODEL_OPTIONS.find((option) => option.value === botSettings.model)?.label ?? botSettings.model;
+  const effortLabel =
+    REASONING_EFFORT_OPTIONS.find((option) => option.value === botSettings.reasoningEffort)?.label ??
+    botSettings.reasoningEffort;
   const fallbackLabels = botSettings.fallbackModels
     .map((model) => LLM_MODEL_OPTIONS.find((option) => option.value === model)?.label ?? model)
     .join(", ");
@@ -181,13 +194,8 @@ export function GameSidebar({
           const active = index < filledCount;
           const tone = active ? pipTone : "empty";
           const pipClass =
-            tone === "bid"
-              ? MATCH_PIP_STYLES.bid
-              : tone === "set"
-                ? MATCH_PIP_STYLES.set
-                : MATCH_PIP_STYLES.empty;
-          const title =
-            score === 0 ? "No score yet" : pipTone === "bid" ? "Made bid (+1)" : "Missed bid (-1)";
+            tone === "bid" ? MATCH_PIP_STYLES.bid : tone === "set" ? MATCH_PIP_STYLES.set : MATCH_PIP_STYLES.empty;
+          const title = score === 0 ? "No score yet" : pipTone === "bid" ? "Made bid (+1)" : "Missed bid (-1)";
 
           return (
             <div key={`${teamId}-match-${index}`} title={title} className={cn(MATCH_CARD_BASE, teamBorder)}>
@@ -421,7 +429,10 @@ export function GameSidebar({
                   • Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.
                 </p>
                 <p>• After trump is set, each player receives their final four cards.</p>
-                <p>• Must follow suit if possible; trump stays hidden until someone can&apos;t follow suit (then they can reveal it).</p>
+                <p>
+                  • Must follow suit if possible; trump stays hidden until someone can&apos;t follow suit (then they can
+                  reveal it).
+                </p>
                 <p>• Joker = no trump; highest card of the led suit wins.</p>
                 <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target +/-4.</p>
               </CardContent>
@@ -488,9 +499,7 @@ export function GameSidebar({
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-emerald-50">Play against AI bots</p>
-                    <p className="text-xs text-emerald-100/60">
-                      Let bots consult an advanced model for every move.
-                    </p>
+                    <p className="text-xs text-emerald-100/60">Let bots consult an advanced model for every move.</p>
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>
@@ -516,6 +525,14 @@ export function GameSidebar({
                     <span className="text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">Model</span>
                     <span className="text-emerald-50">{modelLabel}</span>
                   </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-emerald-100/70">
+                    <span>Reasoning</span>
+                    <span className="text-emerald-50">{effortLabel}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-emerald-100/70">
+                    <span>Trace</span>
+                    <span className="text-emerald-50">{botSettings.showReasoningTrace ? "Visible" : "Hidden"}</span>
+                  </div>
                 </div>
                 <Accordion type="single" collapsible className="rounded-lg border border-white/10 bg-black/30 px-3">
                   <AccordionItem value="advanced" className="border-none">
@@ -539,6 +556,27 @@ export function GameSidebar({
                             </SelectContent>
                           </Select>
                         </div>
+                        <div className="space-y-1.5">
+                          <p className="text-xs text-emerald-100/60">Reasoning effort</p>
+                          <Select
+                            value={botSettings.reasoningEffort}
+                            onValueChange={(value) => onReasoningEffortChange(value as ReasoningEffort)}
+                          >
+                            <SelectTrigger className="h-9 border-white/15 bg-white/5 text-emerald-50">
+                              <SelectValue placeholder="Select effort" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {REASONING_EFFORT_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-[11px] text-emerald-100/55">
+                            Higher effort spends more tokens to evaluate lines of play.
+                          </p>
+                        </div>
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-[11px] text-emerald-100/60">
                             <span>Temperature</span>
@@ -550,6 +588,16 @@ export function GameSidebar({
                             max={1}
                             step={0.05}
                             className="w-full"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
+                          <div>
+                            <p className="text-[11px] font-semibold text-emerald-50">Show reasoning trace</p>
+                            <p className="text-[11px] text-emerald-100/55">Displays the latest trace on the table.</p>
+                          </div>
+                          <Switch
+                            checked={botSettings.showReasoningTrace}
+                            onCheckedChange={onShowReasoningTraceChange}
                           />
                         </div>
                         <p className="text-[11px] text-emerald-100/55">Fallbacks: {fallbackLabels}</p>
