@@ -2922,3 +2922,152 @@ Already up to date.
 [01/03/2026, 18:30:18] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2493ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/03/2026, 18:30:24] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/03/2026, 18:30:24] AI-generated commit message: `update auto-commit log with build and test results`
+deploy: no relevant changes; skipping
+[main 6d415c3] `update auto-commit log with build and test results`
+ 1 file changed, 150 insertions(+)
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/royals.test.ts (6 tests) 6ms
+ ✓ test/game.test.ts (2 tests) 8ms
+ ✓ test/cards.test.ts (3 tests) 10ms
+ ✓ test/trick.test.ts (4 tests) 10ms
+ ✓ test/bidding.test.ts (6 tests) 8ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  02:30:41
+   Duration  637ms (transform 289ms, setup 0ms, collect 715ms, tests 42ms, environment 2ms, prepare 693ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 60ms
+ ✓ test/game-page.test.tsx (2 tests) 606ms
+   ✓ /game UI > disables illegal moves  404ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  02:30:43
+   Duration  3.10s (transform 596ms, setup 255ms, collect 1.49s, tests 667ms, environment 1.41s, prepare 283ms)
+
+pre-push: building web app
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.8s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 813.0ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+pre-push: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✓  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (15.4s)
+
+  1 passed (24.4s)
+remote: 
+remote: GitHub found 1 vulnerability on shandutta/twenty_nine's default branch (1 low). To find out more, visit:        
+remote:      https://github.com/shandutta/twenty_nine/security/dependabot/1        
+remote: 
+To https://github.com/shandutta/twenty_nine.git
+   181225e..6d415c3  main -> main
+[01/03/2026, 18:31:55] Auto-commit completed and pushed successfully
+[01/03/2026, 18:31:55] exit_code=0 status=success
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: ⚙️  write to custom object with { processEnv: myObject }
+[01/03/2026, 18:45:01] Starting auto-commit run
+[01/03/2026, 18:45:01] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+[01/03/2026, 18:45:02] Running pre-commit checks (with Codex auto-fix if needed)...
+[01/03/2026, 18:45:02] Running check: pnpm --filter web lint
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+[01/03/2026, 18:45:13] Running check: pnpm --filter @twentynine/engine test
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/royals.test.ts (6 tests) 8ms
+ ✓ test/game.test.ts (2 tests) 7ms
+ ✓ test/cards.test.ts (3 tests) 10ms
+ ✓ test/trick.test.ts (4 tests) 9ms
+ ✓ test/bidding.test.ts (6 tests) 11ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  02:45:14
+   Duration  621ms (transform 293ms, setup 0ms, collect 743ms, tests 45ms, environment 1ms, prepare 631ms)
+
+[01/03/2026, 18:45:15] Generating commit message via OpenRouter...
+[01/03/2026, 18:45:15] Loaded OPENROUTER_API_KEY from /home/shan/.config/openrouter.key
+[01/03/2026, 18:45:16] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 1254ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
+[01/03/2026, 18:45:17] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2440ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
+[01/03/2026, 18:45:22] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
+[01/03/2026, 18:45:22] AI-generated commit message: update auto-commit log with build and test results
