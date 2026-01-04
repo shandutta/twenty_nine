@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -186,22 +186,22 @@ function PlayedCard({ card }: { card: PlayingCard }) {
   const isAce = card.rank === "A";
 
   return (
-    <div className="relative h-[98px] w-[68px] md:h-[120px] md:w-[84px] rounded-xl bg-white/95 shadow-xl border border-slate-200/70 overflow-hidden">
+    <div className="relative h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-xl border border-white/40 bg-white/95 bg-gradient-to-br from-white/98 via-white/94 to-white/86 shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[2px] overflow-hidden">
       <div className="absolute top-1 left-1.5 flex flex-col items-center leading-none">
-        <span className={cn("text-[10px] md:text-xs font-semibold", suitColor)}>{card.rank}</span>
-        <span className={cn("text-xs md:text-sm -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+        <span className={cn("text-[clamp(10px,0.8vw,13px)] font-semibold", suitColor)}>{card.rank}</span>
+        <span className={cn("text-[clamp(11px,0.9vw,14px)] -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       <div className="absolute bottom-1 right-1.5 flex flex-col items-center leading-none rotate-180">
-        <span className={cn("text-[10px] md:text-xs font-semibold", suitColor)}>{card.rank}</span>
-        <span className={cn("text-xs md:text-sm -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+        <span className={cn("text-[clamp(10px,0.8vw,13px)] font-semibold", suitColor)}>{card.rank}</span>
+        <span className={cn("text-[clamp(11px,0.9vw,14px)] -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="relative w-[42px] h-[68px] md:w-[52px] md:h-[86px]">
+        <div className="relative w-[calc(var(--trick-card-w)*0.62)] h-[calc(var(--trick-card-h)*0.7)]">
           {isAce ? (
             <div className="h-full flex items-center justify-center">
-              <span className={cn("text-4xl md:text-5xl", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-[clamp(30px,3vw,50px)]", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
           ) : isFace ? (
             <div
@@ -211,8 +211,8 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 suitColorBg
               )}
             >
-              <span className={cn("text-xl md:text-2xl font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-lg md:text-xl", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-[clamp(18px,1.8vw,26px)] font-semibold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-[clamp(16px,1.6vw,22px)]", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
           ) : (
             <div className="relative h-full w-full">
@@ -220,7 +220,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 <span
                   key={i}
                   className={cn(
-                    "absolute text-sm md:text-base transform -translate-x-1/2 -translate-y-1/2",
+                    "absolute text-[clamp(13px,1.2vw,18px)] transform -translate-x-1/2 -translate-y-1/2",
                     suitColor,
                     pos.inverted && "rotate-180"
                   )}
@@ -238,10 +238,24 @@ function PlayedCard({ card }: { card: PlayingCard }) {
 }
 
 function CardBack({ size = "small" }: { size?: "small" | "medium" }) {
-  const sizeClasses = size === "small" ? "h-18 w-13 md:h-20 md:w-15" : "h-20 w-14 md:h-24 md:w-18";
+  const sizeStyles: CSSProperties =
+    size === "small"
+      ? {
+          "--back-card-w": "clamp(52px,4.6vw,78px)",
+          "--back-card-h": "clamp(74px,6.8vw,112px)",
+        }
+      : {
+          "--back-card-w": "clamp(56px,5vw,86px)",
+          "--back-card-h": "clamp(80px,7.4vw,124px)",
+        };
 
   return (
-    <div className={cn(sizeClasses, "rounded-lg bg-[#13261d] shadow-lg border border-white/15 overflow-hidden")}>
+    <div
+      style={sizeStyles}
+      className={cn(
+        "h-[var(--back-card-h)] w-[var(--back-card-w)] rounded-lg bg-[#13261d] shadow-lg border border-white/15 overflow-hidden"
+      )}
+    >
       <div className="w-full h-full p-1">
         <div
           className="w-full h-full rounded-md border border-white/15 bg-gradient-to-br from-white/10 via-transparent to-black/20"
@@ -272,7 +286,7 @@ function StatusChip({
     <div
       title={title}
       className={cn(
-        "rounded-2xl border px-3 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+        "rounded-2xl border px-3 py-1.5 xl:px-4 xl:py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
         highlight
           ? "border-[#f2c879]/70 bg-gradient-to-br from-[#f2c879] to-[#d9a74e] text-[#2b1c07]"
           : "border-white/12 bg-black/30 text-emerald-50",
@@ -281,13 +295,13 @@ function StatusChip({
     >
       <div
         className={cn(
-          "text-[10px] uppercase tracking-[0.28em]",
+          "text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.26em]",
           highlight ? "text-[#2b1c07]/70" : "text-emerald-100/60"
         )}
       >
         {label}
       </div>
-      <div className="text-sm font-semibold">{value}</div>
+      <div className="text-[clamp(12px,0.95vw,14px)] font-semibold">{value}</div>
     </div>
   );
 }
@@ -361,25 +375,33 @@ function OpponentArea({
 }) {
   const cardCount = player.cards.length;
   const stackClass = cn(
-    "flex items-center -space-x-6 md:-space-x-8 md:scale-[1.05]",
+    "flex items-center -space-x-6 md:-space-x-8 xl:-space-x-10 md:scale-[1.05] xl:scale-[1.1]",
     isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
   );
-  const topStackClass = cn(stackClass, "md:scale-[1.08]");
+  const topStackClass = cn(stackClass, "md:scale-[1.08] xl:scale-[1.12]");
 
   if (position === "top") {
     return (
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}>
+          <span
+            className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
+          >
             {player.name}
           </span>
           {isTeammate && (
-            <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-200 border-emerald-400/40">
+            <Badge
+              variant="outline"
+              className="text-[clamp(10px,0.75vw,12px)] bg-emerald-500/10 text-emerald-200 border-emerald-400/40"
+            >
               Partner
             </Badge>
           )}
           {isActive && (
-            <Badge variant="outline" className="text-[10px] bg-[#f2c879]/10 text-[#f2c879] border-[#f2c879]/40">
+            <Badge
+              variant="outline"
+              className="text-[clamp(10px,0.75vw,12px)] bg-[#f2c879]/10 text-[#f2c879] border-[#f2c879]/40"
+            >
               Turn
             </Badge>
           )}
@@ -395,7 +417,7 @@ function OpponentArea({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className={cn("text-sm font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}>
+      <span className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}>
         {player.name}
       </span>
       <div className={stackClass}>
@@ -726,9 +748,22 @@ export function GameTable({
     return () => clearTimeout(timer);
   }, [actionMessage]);
 
+  const cardSizing: CSSProperties = {
+    "--hand-card-w": "clamp(76px,7.5vw,132px)",
+    "--hand-card-h": "clamp(110px,10.5vw,196px)",
+    "--trick-card-w": "clamp(68px,5.6vw,112px)",
+    "--trick-card-h": "clamp(98px,8.2vw,162px)",
+  };
+
   return (
     <TooltipProvider>
-      <div className="relative h-full w-full p-4 md:p-8">
+      <div
+        style={cardSizing}
+        className={cn(
+          "relative h-full w-full p-4 md:p-8 xl:p-10 2xl:p-12",
+          matchFinished && "pointer-events-none opacity-40"
+        )}
+      >
         {(llmInUse || showReasoningTrace) && (
           <div className="pointer-events-none absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
             <LiveAiIndicator active={llmInUse} />
@@ -885,22 +920,22 @@ export function GameTable({
             </div>
           </div>
         )}
-        <div className="absolute inset-4 md:inset-8 rounded-[28px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
+        <div className="absolute inset-4 md:inset-8 xl:inset-10 2xl:inset-12 rounded-[28px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,0,0,0.5),_transparent_70%)]" />
-          <div className="absolute inset-6 rounded-[22px] border border-white/10" />
-          <div className="absolute inset-6 rounded-[22px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
+          <div className="absolute inset-6 xl:inset-8 rounded-[22px] border border-white/10" />
+          <div className="absolute inset-6 xl:inset-8 rounded-[22px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
         </div>
 
-        <div className="relative h-full flex flex-col px-4 md:px-6 py-4">
+        <div className="relative h-full flex flex-col px-4 md:px-6 xl:px-10 py-4 xl:py-6">
           <div className="relative mt-2 px-3 py-2">
             <div className="pointer-events-none absolute inset-x-12 bottom-0 h-px bg-black/50" />
             <div className="relative flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Badge className="gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-emerald-50 shadow-[inset_0_0_12px_rgba(34,197,94,0.15)]">
                   <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.65)]" />
-                  <span className="text-[10px] uppercase tracking-[0.32em]">Solo Table</span>
+                  <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em]">Solo Table</span>
                 </Badge>
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.32em] text-emerald-100/60">
+                <div className="flex items-center gap-2 text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
                   <span>Round</span>
                   <span className="text-emerald-50">{gameState.matchRound}</span>
                 </div>
@@ -975,11 +1010,11 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="flex justify-center pt-6 pb-8">
+          <div className="flex justify-center pt-6 pb-8 xl:pt-8 xl:pb-10">
             <OpponentArea player={topPlayer} position="top" isTeammate={true} isActive={topPlayer.isCurrentPlayer} />
           </div>
 
-          <div className="flex-1 flex items-center justify-between px-10 md:px-20">
+          <div className="flex-1 flex items-center justify-between px-10 md:px-20 xl:px-28">
             <div className="flex-shrink-0">
               <OpponentArea
                 player={leftPlayer}
@@ -990,7 +1025,7 @@ export function GameTable({
             </div>
 
             <div className="flex-1 flex items-center justify-center">
-              <div className="relative w-[17rem] h-[13rem] md:w-[19rem] md:h-[15rem]">
+              <div className="relative w-[clamp(17rem,26vw,26rem)] h-[clamp(13rem,20vw,20rem)]">
                 <div className="absolute inset-0 rounded-3xl border border-white/20 bg-black/25 shadow-[inset_0_0_22px_rgba(0,0,0,0.35)]" />
                 <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.08),transparent_58%)] opacity-70" />
                 <div className="absolute top-3 left-1/2 -translate-x-1/2">
@@ -999,7 +1034,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(topPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[100px] w-[70px] md:h-[120px] md:w-[84px] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1009,7 +1044,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(leftPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[100px] w-[70px] md:h-[120px] md:w-[84px] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1019,7 +1054,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(rightPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[100px] w-[70px] md:h-[120px] md:w-[84px] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1029,7 +1064,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(bottomPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[100px] w-[70px] md:h-[120px] md:w-[84px] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
                   )}
                 </div>
               </div>
@@ -1045,7 +1080,7 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="pt-4 pb-12 md:pb-14 space-y-6">
+          <div className="pt-4 pb-12 md:pb-14 xl:pb-16 space-y-6">
             {isSingleHand && (
               <Hand
                 player={topPlayer}

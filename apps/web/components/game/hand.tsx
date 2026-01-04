@@ -206,36 +206,38 @@ function PlayableCard({
             aria-disabled={!isPlayable}
             aria-grabbed={isDragging}
             className={cn(
-              "relative rounded-xl bg-white/92 backdrop-blur-[2px] shadow-lg border overflow-hidden select-none cursor-grab active:cursor-grabbing",
+              "relative rounded-xl border overflow-hidden select-none cursor-grab active:cursor-grabbing",
+              "bg-white/95 bg-gradient-to-br from-white/98 via-white/94 to-white/86 backdrop-blur-[3px]",
+              "shadow-[0_12px_26px_rgba(0,0,0,0.28)]",
               animationsEnabled && "transition-all duration-200",
-              "h-[110px] w-[76px] md:h-[150px] md:w-[105px]",
+              "h-[var(--hand-card-h)] w-[var(--hand-card-w)]",
               isPlayable
-                ? "border-[#f2c879] ring-2 ring-[#f2c879]/40 hover:shadow-2xl"
-                : "border-white/20 bg-white/85 opacity-80",
+                ? "border-[#f2c879] ring-2 ring-[#f2c879]/40 hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]"
+                : "border-white/30 opacity-90 saturate-95",
               isDragOver && !isDragging && "ring-2 ring-emerald-200/70",
               isDragging && "shadow-[0_22px_55px_rgba(0,0,0,0.35)]"
             )}
             style={{
               transform: `rotate(${isLifted ? 0 : rotation}deg) translateY(${isLifted ? -22 : yOffset}px) scale(${isDragging ? 1.04 : 1})`,
-              marginLeft: index === 0 ? 0 : "-1.25rem",
+              marginLeft: index === 0 ? 0 : "calc(var(--hand-card-w) * -0.2)",
               zIndex: isHovered || isDragging ? 60 : index,
             }}
           >
             <div className="absolute top-1.5 left-2 flex flex-col items-center leading-none">
-              <span className={cn("text-sm md:text-base font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-base md:text-lg -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-[clamp(12px,1.05vw,16px)] font-semibold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-[clamp(14px,1.3vw,18px)] -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             <div className="absolute bottom-1.5 right-2 flex flex-col items-center leading-none rotate-180">
-              <span className={cn("text-sm md:text-base font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-base md:text-lg -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-[clamp(12px,1.05vw,16px)] font-semibold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-[clamp(14px,1.3vw,18px)] -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-[50px] h-[80px] md:w-[60px] md:h-[100px]">
+              <div className="relative w-[calc(var(--hand-card-w)*0.6)] h-[calc(var(--hand-card-h)*0.68)]">
                 {isAce ? (
                   <div className="h-full flex items-center justify-center">
-                    <span className={cn("text-6xl md:text-7xl", suitColor)}>{suitSymbols[card.suit]}</span>
+                    <span className={cn("text-[clamp(48px,4.4vw,72px)]", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : isFace ? (
                   <div
@@ -245,8 +247,10 @@ function PlayableCard({
                       suitColorBg
                     )}
                   >
-                    <span className={cn("text-2xl md:text-3xl font-semibold", suitColor)}>{card.rank}</span>
-                    <span className={cn("text-2xl md:text-3xl", suitColor)}>{suitSymbols[card.suit]}</span>
+                    <span className={cn("text-[clamp(22px,2.3vw,32px)] font-semibold", suitColor)}>
+                      {card.rank}
+                    </span>
+                    <span className={cn("text-[clamp(22px,2.3vw,32px)]", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : (
                   <div className="relative h-full w-full">
@@ -254,7 +258,7 @@ function PlayableCard({
                       <span
                         key={i}
                         className={cn(
-                          "absolute text-lg md:text-xl transform -translate-x-1/2 -translate-y-1/2",
+                          "absolute text-[clamp(16px,1.6vw,22px)] transform -translate-x-1/2 -translate-y-1/2",
                           suitColor,
                           pos.inverted && "rotate-180"
                         )}
@@ -269,7 +273,7 @@ function PlayableCard({
             </div>
 
             {cardValues[card.rank] > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 md:w-6 md:h-6 rounded-full bg-[#f2c879] text-[10px] md:text-xs font-bold flex items-center justify-center text-[#2b1c07] shadow">
+              <div className="absolute -top-0.5 -right-0.5 h-[clamp(20px,1.9vw,26px)] w-[clamp(20px,1.9vw,26px)] rounded-full bg-gradient-to-br from-[#f8e3a6] via-[#f2c879] to-[#d8a14b] text-[clamp(11px,0.9vw,13px)] font-extrabold tracking-[0.02em] flex items-center justify-center text-[#2b1c07] ring-1 ring-[#8a5c17]/45 shadow-[0_2px_8px_rgba(0,0,0,0.35)]">
                 {cardValues[card.rank]}
               </div>
             )}
@@ -347,12 +351,15 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
   return (
     <div className="flex flex-col items-center gap-3 pb-2">
       <div className="flex w-full items-center justify-between px-4 md:px-12">
-        <span data-testid={handLabelTestId} className="text-xs uppercase tracking-[0.35em] text-emerald-100/60">
+        <span
+          data-testid={handLabelTestId}
+          className="text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.32em] text-emerald-100/60"
+        >
           {handLabel}
         </span>
         <span
           className={cn(
-            "text-xs uppercase tracking-[0.35em]",
+            "text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.32em]",
             isCurrentTurn ? "text-[#f2c879]" : "text-emerald-100/40"
           )}
         >
@@ -360,7 +367,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         </span>
       </div>
 
-      <div className="flex justify-center items-end px-10 md:px-16 py-2">
+      <div className="flex justify-center items-end px-10 md:px-16 xl:px-24 py-2">
         {orderedCards.map((card, index) => (
           <PlayableCard
             key={card.id}
@@ -387,7 +394,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         >
           {player.name}
         </Badge>
-        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] md:text-xs text-emerald-100/70 backdrop-blur">
+        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 backdrop-blur">
           {isCurrentTurn ? (
             <span className="text-[#f2c879]">Play a legal card</span>
           ) : (

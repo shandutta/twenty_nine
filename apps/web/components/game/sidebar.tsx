@@ -267,7 +267,7 @@ export function GameSidebar({
                     </Button>
                   ))}
                 </div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-emerald-100/50">{controlModeNote}</p>
+                <p className="text-[11px] text-emerald-100/60 leading-snug">{controlModeNote}</p>
               </CardContent>
             </Card>
 
