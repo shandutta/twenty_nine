@@ -6980,3 +6980,186 @@ From https://github.com/shandutta/twenty_nine
 Already up to date.
 [01/04/2026, 01:00:03] Running pre-commit checks (with Codex auto-fix if needed)...
 [01/04/2026, 01:00:03] Running check: pnpm --filter web lint
+----
+deploy: started 2026-01-04T01:00:07-0800
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 133ms (unchanged)
+.prettierrc.json 34ms (unchanged)
+apps/web/app/api/openrouter/route.ts 211ms (unchanged)
+apps/web/app/game/page.tsx 304ms (unchanged)
+apps/web/app/globals.css 168ms (unchanged)
+apps/web/app/layout.tsx 18ms (unchanged)
+apps/web/app/page.tsx 81ms (unchanged)
+apps/web/components.json 21ms (unchanged)
+apps/web/components/game/hand.tsx 243ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 117ms (unchanged)
+apps/web/components/game/sidebar.tsx 75ms (unchanged)
+apps/web/components/game/table.tsx 300ms (unchanged)
+apps/web/components/game/types.ts 24ms (unchanged)
+apps/web/components/game/use-game-controller.ts 327ms (unchanged)
+apps/web/components/theme-provider.tsx 10ms (unchanged)
+apps/web/components/ui/accordion.tsx 17ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 22ms (unchanged)
+apps/web/components/ui/alert.tsx 10ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 10ms (unchanged)
+apps/web/components/ui/avatar.tsx 6ms (unchanged)
+apps/web/components/ui/badge.tsx 6ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 12ms (unchanged)
+apps/web/components/ui/button-group.tsx 16ms (unchanged)
+apps/web/components/ui/button.tsx 21ms (unchanged)
+apps/web/components/ui/calendar.tsx 51ms (unchanged)
+apps/web/components/ui/card.tsx 10ms (unchanged)
+apps/web/components/ui/carousel.tsx 29ms (unchanged)
+apps/web/components/ui/chart.tsx 140ms (unchanged)
+apps/web/components/ui/checkbox.tsx 114ms (unchanged)
+apps/web/components/ui/collapsible.tsx 8ms (unchanged)
+apps/web/components/ui/command.tsx 51ms (unchanged)
+apps/web/components/ui/context-menu.tsx 64ms (unchanged)
+apps/web/components/ui/dialog.tsx 35ms (unchanged)
+apps/web/components/ui/drawer.tsx 23ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 66ms (unchanged)
+apps/web/components/ui/empty.tsx 18ms (unchanged)
+apps/web/components/ui/field.tsx 57ms (unchanged)
+apps/web/components/ui/form.tsx 102ms (unchanged)
+apps/web/components/ui/hover-card.tsx 6ms (unchanged)
+apps/web/components/ui/input-group.tsx 26ms (unchanged)
+apps/web/components/ui/input-otp.tsx 34ms (unchanged)
+apps/web/components/ui/input.tsx 6ms (unchanged)
+apps/web/components/ui/item.tsx 67ms (unchanged)
+apps/web/components/ui/kbd.tsx 15ms (unchanged)
+apps/web/components/ui/label.tsx 12ms (unchanged)
+apps/web/components/ui/menubar.tsx 51ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 13ms (unchanged)
+apps/web/components/ui/pagination.tsx 13ms (unchanged)
+apps/web/components/ui/popover.tsx 11ms (unchanged)
+apps/web/components/ui/progress.tsx 19ms (unchanged)
+apps/web/components/ui/radio-group.tsx 33ms (unchanged)
+apps/web/components/ui/resizable.tsx 15ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 11ms (unchanged)
+apps/web/components/ui/select.tsx 15ms (unchanged)
+apps/web/components/ui/separator.tsx 3ms (unchanged)
+apps/web/components/ui/sheet.tsx 11ms (unchanged)
+apps/web/components/ui/sidebar.tsx 231ms (unchanged)
+apps/web/components/ui/skeleton.tsx 4ms (unchanged)
+apps/web/components/ui/slider.tsx 8ms (unchanged)
+apps/web/components/ui/sonner.tsx 4ms (unchanged)
+apps/web/components/ui/spinner.tsx 3ms (unchanged)
+apps/web/components/ui/switch.tsx 5ms (unchanged)
+apps/web/components/ui/table.tsx 10ms (unchanged)
+apps/web/components/ui/tabs.tsx 12ms (unchanged)
+apps/web/components/ui/textarea.tsx 40ms (unchanged)
+apps/web/components/ui/toast.tsx 66ms (unchanged)
+apps/web/components/ui/toaster.tsx 11ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 17ms (unchanged)
+apps/web/components/ui/toggle.tsx 7ms (unchanged)
+apps/web/components/ui/tooltip.tsx 15ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 13ms (unchanged)
+apps/web/components/ui/use-toast.ts 60ms (unchanged)
+apps/web/eslint.config.mjs 47ms (unchanged)
+apps/web/hooks/use-mobile.ts 16ms (unchanged)
+apps/web/hooks/use-toast.ts 67ms (unchanged)
+apps/web/lib/engine.ts 5ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 70ms (unchanged)
+apps/web/lib/utils.ts 3ms (unchanged)
+apps/web/next-env.d.ts 7ms (unchanged)
+apps/web/next.config.ts 9ms (unchanged)
+apps/web/package.json 12ms (unchanged)
+apps/web/playwright.config.ts 56ms (unchanged)
+apps/web/pnpm-workspace.yaml 9ms (unchanged)
+apps/web/postcss.config.mjs 5ms (unchanged)
+apps/web/README.md 173ms (unchanged)
+apps/web/scripts/lighthouse.mjs 50ms (unchanged)
+apps/web/scripts/next-dev.mjs 46ms (unchanged)
+apps/web/scripts/next-start.mjs 35ms (unchanged)
+apps/web/styles/globals.css 84ms (unchanged)
+apps/web/test/e2e/game.spec.ts 34ms (unchanged)
+apps/web/test/game-page.test.tsx 18ms (unchanged)
+apps/web/test/setup.ts 1ms (unchanged)
+apps/web/test/useGameController.test.tsx 29ms (unchanged)
+apps/web/tsconfig.json 2ms (unchanged)
+apps/web/twentynine.code-workspace 2ms (unchanged)
+apps/web/vitest.config.ts 13ms (unchanged)
+docs/implementation-guide.md 108ms (unchanged)
+docs/qa/baseline.md 21ms (unchanged)
+docs/qa/release-candidate.md 17ms (unchanged)
+docs/ux/ux-changelog.md 17ms (unchanged)
+package.json 3ms (unchanged)
+packages/engine/package.json 8ms (unchanged)
+packages/engine/src/cards.ts 19ms (unchanged)
+packages/engine/src/config.ts 5ms (unchanged)
+packages/engine/src/game.ts 100ms (unchanged)
+packages/engine/src/index.ts 3ms (unchanged)
+packages/engine/src/royals.ts 11ms (unchanged)
+packages/engine/src/trick.ts 19ms (unchanged)
+packages/engine/test/bidding.test.ts 29ms (unchanged)
+packages/engine/test/cards.test.ts 6ms (unchanged)
+packages/engine/test/game.test.ts 44ms (unchanged)
+packages/engine/test/royals.test.ts 29ms (unchanged)
+packages/engine/test/trick.test.ts 37ms (unchanged)
+packages/engine/tsconfig.json 5ms (unchanged)
+packages/engine/vitest.config.ts 8ms (unchanged)
+pnpm-workspace.yaml 9ms (unchanged)
+README.md 39ms (unchanged)
+scripts/auto-commit.js 134ms (unchanged)
+scripts/verify-next-build.mjs 37ms (unchanged)
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+[01/04/2026, 01:00:23] Running check: pnpm --filter @twentynine/engine test
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+verify-next-build: ok (7 assets checked)
+deploy: restarting twentynine service
+deploy: running health check
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+curl: (7) Failed to connect to 127.0.0.1 port 3100 after 0 ms: Couldn't connect to server
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/game.test.ts (3 tests) 41ms
+ ✓ test/bidding.test.ts (6 tests) 83ms
+ ✓ test/royals.test.ts (6 tests) 47ms
+ ✓ test/cards.test.ts (3 tests) 70ms
+ ✓ test/trick.test.ts (7 tests) 65ms
+
+ Test Files  5 passed (5)
+      Tests  25 passed (25)
+   Start at  09:00:25
+   Duration  2.19s (transform 653ms, setup 0ms, collect 2.05s, tests 306ms, environment 14ms, prepare 1.98s)
+
+[01/04/2026, 01:00:28] Generating commit message via OpenRouter...
+[01/04/2026, 01:00:28] Loaded OPENROUTER_API_KEY from /home/shan/.config/openrouter.key
+deploy: health check ok
+deploy: done
+[01/04/2026, 01:00:29] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 1343ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
+[01/04/2026, 01:00:31] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2407ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
+[01/04/2026, 01:00:36] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
+[01/04/2026, 01:00:36] AI-generated commit message: `update logs with prettier and lint results`
