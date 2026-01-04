@@ -3730,3 +3730,384 @@ Already up to date.
 [01/03/2026, 19:30:19] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2511ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/03/2026, 19:30:25] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/03/2026, 19:30:25] AI-generated commit message: `update game component styles`
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 53ms (unchanged)
+.prettierrc.json 39ms (unchanged)
+apps/web/app/api/openrouter/route.ts 98ms (unchanged)
+apps/web/app/game/page.tsx 102ms (unchanged)
+apps/web/app/globals.css 87ms (unchanged)
+apps/web/app/layout.tsx 11ms (unchanged)
+apps/web/app/page.tsx 39ms (unchanged)
+apps/web/components.json 4ms (unchanged)
+apps/web/components/game/hand.tsx 93ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 42ms (unchanged)
+apps/web/components/game/sidebar.tsx 69ms (unchanged)
+apps/web/components/game/table.tsx 116ms (unchanged)
+apps/web/components/game/types.ts 8ms (unchanged)
+apps/web/components/game/use-game-controller.ts 115ms (unchanged)
+apps/web/components/theme-provider.tsx 6ms (unchanged)
+apps/web/components/ui/accordion.tsx 10ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 15ms (unchanged)
+apps/web/components/ui/alert.tsx 9ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 3ms (unchanged)
+apps/web/components/ui/avatar.tsx 6ms (unchanged)
+apps/web/components/ui/badge.tsx 6ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 12ms (unchanged)
+apps/web/components/ui/button-group.tsx 9ms (unchanged)
+apps/web/components/ui/button.tsx 7ms (unchanged)
+apps/web/components/ui/calendar.tsx 26ms (unchanged)
+apps/web/components/ui/card.tsx 9ms (unchanged)
+apps/web/components/ui/carousel.tsx 23ms (unchanged)
+apps/web/components/ui/chart.tsx 53ms (unchanged)
+apps/web/components/ui/checkbox.tsx 4ms (unchanged)
+apps/web/components/ui/collapsible.tsx 4ms (unchanged)
+apps/web/components/ui/command.tsx 18ms (unchanged)
+apps/web/components/ui/context-menu.tsx 20ms (unchanged)
+apps/web/components/ui/dialog.tsx 14ms (unchanged)
+apps/web/components/ui/drawer.tsx 11ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 22ms (unchanged)
+apps/web/components/ui/empty.tsx 7ms (unchanged)
+apps/web/components/ui/field.tsx 16ms (unchanged)
+apps/web/components/ui/form.tsx 17ms (unchanged)
+apps/web/components/ui/hover-card.tsx 5ms (unchanged)
+apps/web/components/ui/input-group.tsx 11ms (unchanged)
+apps/web/components/ui/input-otp.tsx 8ms (unchanged)
+apps/web/components/ui/input.tsx 3ms (unchanged)
+apps/web/components/ui/item.tsx 11ms (unchanged)
+apps/web/components/ui/kbd.tsx 3ms (unchanged)
+apps/web/components/ui/label.tsx 3ms (unchanged)
+apps/web/components/ui/menubar.tsx 13ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 12ms (unchanged)
+apps/web/components/ui/pagination.tsx 13ms (unchanged)
+apps/web/components/ui/popover.tsx 5ms (unchanged)
+apps/web/components/ui/progress.tsx 6ms (unchanged)
+apps/web/components/ui/radio-group.tsx 3ms (unchanged)
+apps/web/components/ui/resizable.tsx 4ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 5ms (unchanged)
+apps/web/components/ui/select.tsx 10ms (unchanged)
+apps/web/components/ui/separator.tsx 3ms (unchanged)
+apps/web/components/ui/sheet.tsx 9ms (unchanged)
+apps/web/components/ui/sidebar.tsx 46ms (unchanged)
+apps/web/components/ui/skeleton.tsx 3ms (unchanged)
+apps/web/components/ui/slider.tsx 8ms (unchanged)
+apps/web/components/ui/sonner.tsx 3ms (unchanged)
+apps/web/components/ui/spinner.tsx 3ms (unchanged)
+apps/web/components/ui/switch.tsx 4ms (unchanged)
+apps/web/components/ui/table.tsx 5ms (unchanged)
+apps/web/components/ui/tabs.tsx 4ms (unchanged)
+apps/web/components/ui/textarea.tsx 3ms (unchanged)
+apps/web/components/ui/toast.tsx 16ms (unchanged)
+apps/web/components/ui/toaster.tsx 8ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 7ms (unchanged)
+apps/web/components/ui/toggle.tsx 4ms (unchanged)
+apps/web/components/ui/tooltip.tsx 5ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 6ms (unchanged)
+apps/web/components/ui/use-toast.ts 21ms (unchanged)
+apps/web/eslint.config.mjs 13ms (unchanged)
+apps/web/hooks/use-mobile.ts 5ms (unchanged)
+apps/web/hooks/use-toast.ts 17ms (unchanged)
+apps/web/lib/engine.ts 2ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 32ms (unchanged)
+apps/web/lib/utils.ts 2ms (unchanged)
+apps/web/next-env.d.ts 5ms (unchanged)
+apps/web/next.config.ts 3ms (unchanged)
+apps/web/package.json 4ms (unchanged)
+apps/web/playwright.config.ts 6ms (unchanged)
+apps/web/pnpm-workspace.yaml 3ms (unchanged)
+apps/web/postcss.config.mjs 2ms (unchanged)
+apps/web/README.md 41ms (unchanged)
+apps/web/scripts/lighthouse.mjs 27ms (unchanged)
+apps/web/scripts/next-dev.mjs 8ms (unchanged)
+apps/web/styles/globals.css 23ms (unchanged)
+apps/web/test/e2e/game.spec.ts 34ms (unchanged)
+apps/web/test/game-page.test.tsx 26ms (unchanged)
+apps/web/test/setup.ts 2ms (unchanged)
+apps/web/test/useGameController.test.tsx 17ms (unchanged)
+apps/web/tsconfig.json 3ms (unchanged)
+apps/web/twentynine.code-workspace 1ms (unchanged)
+apps/web/vitest.config.ts 3ms (unchanged)
+docs/implementation-guide.md 54ms (unchanged)
+docs/qa/baseline.md 14ms (unchanged)
+docs/qa/release-candidate.md 10ms (unchanged)
+docs/ux/ux-changelog.md 13ms (unchanged)
+package.json 2ms (unchanged)
+packages/engine/package.json 2ms (unchanged)
+packages/engine/src/cards.ts 8ms (unchanged)
+packages/engine/src/config.ts 4ms (unchanged)
+packages/engine/src/game.ts 66ms (unchanged)
+packages/engine/src/index.ts 3ms (unchanged)
+packages/engine/src/royals.ts 14ms (unchanged)
+packages/engine/src/trick.ts 21ms (unchanged)
+packages/engine/test/bidding.test.ts 30ms (unchanged)
+packages/engine/test/cards.test.ts 6ms (unchanged)
+packages/engine/test/game.test.ts 10ms (unchanged)
+packages/engine/test/royals.test.ts 13ms (unchanged)
+packages/engine/test/trick.test.ts 13ms (unchanged)
+packages/engine/tsconfig.json 2ms (unchanged)
+packages/engine/vitest.config.ts 3ms (unchanged)
+pnpm-workspace.yaml 4ms (unchanged)
+README.md 18ms (unchanged)
+scripts/auto-commit.js 81ms (unchanged)
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/trick.test.ts (4 tests) 6ms
+ ✓ test/cards.test.ts (3 tests) 10ms
+ ✓ test/bidding.test.ts (6 tests) 9ms
+ ✓ test/royals.test.ts (6 tests) 14ms
+ ✓ test/game.test.ts (2 tests) 9ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  03:30:41
+   Duration  687ms (transform 326ms, setup 0ms, collect 749ms, tests 48ms, environment 1ms, prepare 682ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 61ms
+ ✓ test/game-page.test.tsx (2 tests) 556ms
+   ✓ /game UI > disables illegal moves  353ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  03:30:44
+   Duration  3.17s (transform 536ms, setup 241ms, collect 1.63s, tests 617ms, environment 1.46s, prepare 369ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (16.9s)
+
+
+  1) [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ─────────────────────────────────
+
+    Error: Console/page errors:
+    Request failed: https://va.vercel-scripts.com/v1/script.debug.js (net::ERR_BLOCKED_BY_ORB)
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "Request failed: https://va.vercel-scripts.com/v1/script.debug.js (net::ERR_BLOCKED_BY_ORB)",[39m
+    [31m+ ][39m
+
+      134 |   }
+      135 |
+    > 136 |   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
+          |                                                                ^
+      137 | });
+      138 |
+        at /home/shan/twentynine/apps/web/test/e2e/game.spec.ts:136:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/playwright/test-results/game-game-page-smoke-flow-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ──────────────────────────────────
+ ELIFECYCLE  Command failed with exit code 1.
+[main 9abcdc5] `update game component styles`
+ 3 files changed, 589 insertions(+), 4 deletions(-)
+ create mode 100644 .tmp/board.png
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/cards.test.ts (3 tests) 7ms
+ ✓ test/trick.test.ts (4 tests) 7ms
+ ✓ test/bidding.test.ts (6 tests) 9ms
+ ✓ test/royals.test.ts (6 tests) 7ms
+ ✓ test/game.test.ts (2 tests) 20ms
+
+ Test Files  5 passed (5)
+      Tests  21 passed (21)
+   Start at  03:31:33
+   Duration  665ms (transform 334ms, setup 0ms, collect 738ms, tests 50ms, environment 2ms, prepare 683ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 58ms
+ ✓ test/game-page.test.tsx (2 tests) 630ms
+   ✓ /game UI > disables illegal moves  367ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  03:31:35
+   Duration  3.07s (transform 576ms, setup 193ms, collect 1.54s, tests 687ms, environment 1.34s, prepare 262ms)
+
+pre-push: building web app
+
+> web@0.1.0 build /home/shan/twentynine/apps/web
+> next build --webpack
+
+▲ Next.js 16.1.1 (webpack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 7.5s
+  Running TypeScript ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/6) ...
+  Generating static pages using 7 workers (1/6) 
+  Generating static pages using 7 workers (2/6) 
+  Generating static pages using 7 workers (4/6) 
+✓ Generating static pages using 7 workers (6/6) in 854.1ms
+  Finalizing page optimization ...
+  Collecting build traces ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/openrouter
+└ ○ /game
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+pre-push: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+
+Running 1 test using 1 worker
+
+  ✘  1 [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow (16.7s)
+
+
+  1) [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ─────────────────────────────────
+
+    Error: Console/page errors:
+    Request failed: https://va.vercel-scripts.com/v1/script.debug.js (net::ERR_BLOCKED_BY_ORB)
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 3[39m
+
+    [32m- Array [][39m
+    [31m+ Array [[39m
+    [31m+   "Request failed: https://va.vercel-scripts.com/v1/script.debug.js (net::ERR_BLOCKED_BY_ORB)",[39m
+    [31m+ ][39m
+
+      134 |   }
+      135 |
+    > 136 |   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
+          |                                                                ^
+      137 | });
+      138 |
+        at /home/shan/twentynine/apps/web/test/e2e/game.spec.ts:136:64
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: reports/playwright/test-results/game-game-page-smoke-flow-chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace reports/playwright/test-results/game-game-page-smoke-flow-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › test/e2e/game.spec.ts:5:5 › game page smoke flow ──────────────────────────────────
+ ELIFECYCLE  Command failed with exit code 1.
+error: failed to push some refs to 'https://github.com/shandutta/twenty_nine.git'
+[01/03/2026, 19:32:49] git push failed.
+ ELIFECYCLE  Command failed with exit code 1.
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+[01/03/2026, 19:45:02] Starting auto-commit run
+[01/03/2026, 19:45:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD
