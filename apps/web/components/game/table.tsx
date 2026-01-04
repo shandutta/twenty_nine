@@ -140,19 +140,19 @@ function PlayedCard({ card }: { card: PlayingCard }) {
     <div className="relative h-[98px] w-[68px] md:h-[120px] md:w-[84px] rounded-xl bg-white/95 shadow-xl border border-slate-200/70 overflow-hidden">
       <div className="absolute top-1 left-1.5 flex flex-col items-center leading-none">
         <span className={cn("text-[10px] md:text-xs font-semibold", suitColor)}>{card.rank}</span>
-        <span className={cn("text-[10px] md:text-xs -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+        <span className={cn("text-xs md:text-sm -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       <div className="absolute bottom-1 right-1.5 flex flex-col items-center leading-none rotate-180">
         <span className={cn("text-[10px] md:text-xs font-semibold", suitColor)}>{card.rank}</span>
-        <span className={cn("text-[10px] md:text-xs -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+        <span className={cn("text-xs md:text-sm -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="relative w-[40px] h-[65px] md:w-[48px] md:h-[80px]">
+        <div className="relative w-[42px] h-[68px] md:w-[52px] md:h-[86px]">
           {isAce ? (
             <div className="h-full flex items-center justify-center">
-              <span className={cn("text-3xl md:text-4xl", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-4xl md:text-5xl", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
           ) : isFace ? (
             <div
@@ -162,8 +162,8 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 suitColorBg
               )}
             >
-              <span className={cn("text-lg md:text-xl font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-base md:text-lg", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-xl md:text-2xl font-semibold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-lg md:text-xl", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
           ) : (
             <div className="relative h-full w-full">
@@ -171,7 +171,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 <span
                   key={i}
                   className={cn(
-                    "absolute text-xs md:text-sm transform -translate-x-1/2 -translate-y-1/2",
+                    "absolute text-sm md:text-base transform -translate-x-1/2 -translate-y-1/2",
                     suitColor,
                     pos.inverted && "rotate-180"
                   )}
@@ -268,6 +268,10 @@ function OpponentArea({
   isActive: boolean;
 }) {
   const cardCount = player.cards.length;
+  const stackClass = cn(
+    "flex items-center -space-x-4",
+    isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
+  );
 
   if (position === "top") {
     return (
@@ -287,29 +291,10 @@ function OpponentArea({
             </Badge>
           )}
         </div>
-        <div
-          className={cn(
-            "relative inline-flex items-center rounded-full px-2 py-1",
-            isActive && "ring-2 ring-[#f2c879]/40 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
-          )}
-        >
-          <div className="absolute inset-0 rounded-full border border-white/10 bg-gradient-to-b from-[#0d1914]/85 via-[#08110e]/95 to-black/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" />
-          <div className="relative flex items-center gap-1">
-            {Array.from({ length: cardCount }).map((_, i) => {
-              const offset = i - (cardCount - 1) / 2;
-              const rotate = offset * 2.2;
-              const lift = -Math.abs(offset) * 1.5;
-              return (
-                <div
-                  key={i}
-                  className="transition-transform duration-300"
-                  style={{ transform: `translateY(${lift}px) rotate(${rotate}deg)` }}
-                >
-                  <CardBack size="medium" />
-                </div>
-              );
-            })}
-          </div>
+        <div className={stackClass}>
+          {Array.from({ length: cardCount }).map((_, i) => (
+            <CardBack key={i} size="medium" />
+          ))}
         </div>
       </div>
     );
@@ -320,7 +305,7 @@ function OpponentArea({
       <span className={cn("text-sm font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}>
         {player.name}
       </span>
-      <div className={cn("flex -space-x-6", isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2")}>
+      <div className={stackClass}>
         {Array.from({ length: cardCount }).map((_, i) => (
           <CardBack key={i} size="small" />
         ))}

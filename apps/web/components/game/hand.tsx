@@ -223,19 +223,19 @@ function PlayableCard({
           >
             <div className="absolute top-1.5 left-2 flex flex-col items-center leading-none">
               <span className={cn("text-sm md:text-base font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-sm md:text-base -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-base md:text-lg -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             <div className="absolute bottom-1.5 right-2 flex flex-col items-center leading-none rotate-180">
               <span className={cn("text-sm md:text-base font-semibold", suitColor)}>{card.rank}</span>
-              <span className={cn("text-sm md:text-base -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
+              <span className={cn("text-base md:text-lg -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative w-[50px] h-[80px] md:w-[60px] md:h-[100px]">
                 {isAce ? (
                   <div className="h-full flex items-center justify-center">
-                    <span className={cn("text-5xl md:text-6xl", suitColor)}>{suitSymbols[card.suit]}</span>
+                    <span className={cn("text-6xl md:text-7xl", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : isFace ? (
                   <div
@@ -246,7 +246,7 @@ function PlayableCard({
                     )}
                   >
                     <span className={cn("text-2xl md:text-3xl font-semibold", suitColor)}>{card.rank}</span>
-                    <span className={cn("text-xl md:text-2xl", suitColor)}>{suitSymbols[card.suit]}</span>
+                    <span className={cn("text-2xl md:text-3xl", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : (
                   <div className="relative h-full w-full">
@@ -254,7 +254,7 @@ function PlayableCard({
                       <span
                         key={i}
                         className={cn(
-                          "absolute text-base md:text-lg transform -translate-x-1/2 -translate-y-1/2",
+                          "absolute text-lg md:text-xl transform -translate-x-1/2 -translate-y-1/2",
                           suitColor,
                           pos.inverted && "rotate-180"
                         )}
@@ -376,7 +376,10 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
       </div>
 
       <div className="flex items-center gap-2">
-        <Badge variant="outline" className="border-white/15 bg-white/5 text-emerald-50">
+        <Badge
+          variant="outline"
+          className="border-white/20 bg-[#0b1512]/85 text-emerald-50 shadow-[0_6px_18px_rgba(0,0,0,0.35)] backdrop-blur"
+        >
           {player.name}
         </Badge>
         <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[11px] md:text-xs text-emerald-100/70 backdrop-blur">
