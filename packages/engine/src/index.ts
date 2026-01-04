@@ -1,13 +1,16 @@
 export {
   SUITS,
   RANKS,
+  JOKER_RANK,
+  JOKER_SUIT,
   RANK_ORDER,
+  addJokerToDeck,
   createDeck,
   compareRanks,
   rankPoints,
   cardPoints,
 } from "./cards";
-export type { Card, Rank, Suit } from "./cards";
+export type { Card, CardSuit, Rank, Suit } from "./cards";
 export type { EngineConfig } from "./config";
 export {
   chooseBotCard,

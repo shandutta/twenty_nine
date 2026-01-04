@@ -3,7 +3,11 @@ import type { EngineConfig } from "./config";
 
 export type TeamId = 0 | 1;
 
-export const hasRoyals = (hand: Card[], trumpSuit: Suit): boolean => {
+export const hasRoyals = (
+  hand: Card[],
+  trumpSuit: Suit | null,
+): boolean => {
+  if (!trumpSuit) return false;
   let hasKing = false;
   let hasQueen = false;
   for (const card of hand) {
@@ -22,7 +26,7 @@ export const canDeclareRoyals = ({
   declarerTeam,
 }: {
   hand: Card[];
-  trumpSuit: Suit;
+  trumpSuit: Suit | null;
   trumpRevealed: boolean;
   lastTrickWinnerTeam: TeamId;
   declarerTeam: TeamId;

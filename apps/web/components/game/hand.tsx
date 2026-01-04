@@ -19,13 +19,16 @@ const suitSymbols: Record<Suit, string> = {
   diamonds: "♦",
   clubs: "♣",
   spades: "♠",
+  joker: "🃏",
 }
 
 function getSuitColor(suit: Suit) {
+  if (suit === "joker") return "text-violet-600"
   return suit === "hearts" || suit === "diamonds" ? "text-red-600" : "text-gray-900"
 }
 
 const cardValues: Record<string, number> = {
+  Joker: 0,
   J: 3,
   "9": 2,
   A: 1,
@@ -130,7 +133,7 @@ function getPipPositions(rank: string): { x: number; y: number; inverted?: boole
 }
 
 function isFaceCard(rank: string) {
-  return ["J", "Q", "K"].includes(rank)
+  return ["J", "Q", "K", "Joker"].includes(rank)
 }
 
 function PlayableCard({
@@ -149,11 +152,23 @@ function PlayableCard({
 }) {
   const [isHovered, setIsHovered] = useState(false)
   const suitColor = getSuitColor(card.suit)
-  const suitColorBg = card.suit === "hearts" || card.suit === "diamonds" ? "bg-red-50" : "bg-gray-50"
-  const suitColorBorder = card.suit === "hearts" || card.suit === "diamonds" ? "border-red-300" : "border-gray-300"
+  const suitColorBg =
+    card.suit === "joker"
+      ? "bg-violet-50"
+      : card.suit === "hearts" || card.suit === "diamonds"
+          ? "bg-red-50"
+          : "bg-gray-50"
+  const suitColorBorder =
+    card.suit === "joker"
+      ? "border-violet-300"
+      : card.suit === "hearts" || card.suit === "diamonds"
+          ? "border-red-300"
+          : "border-gray-300"
   const pips = getPipPositions(card.rank)
+  const isJoker = card.rank === "Joker"
   const isFace = isFaceCard(card.rank)
   const isAce = card.rank === "A"
+  const cornerRank = isJoker ? "Jkr" : card.rank
 
   // Calculate fan positioning
   const centerOffset = (total - 1) / 2
@@ -184,20 +199,24 @@ function PlayableCard({
           >
             {/* Top left corner index */}
             <div className="absolute top-1.5 left-2 flex flex-col items-center leading-none">
-              <span className={cn("text-sm md:text-base font-bold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-sm md:text-base font-bold", suitColor)}>{cornerRank}</span>
               <span className={cn("text-sm md:text-base -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             {/* Bottom right corner index (inverted) */}
             <div className="absolute bottom-1.5 right-2 flex flex-col items-center leading-none rotate-180">
-              <span className={cn("text-sm md:text-base font-bold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-sm md:text-base font-bold", suitColor)}>{cornerRank}</span>
               <span className={cn("text-sm md:text-base -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
 
             {/* Card center content */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="relative w-[50px] h-[80px] md:w-[60px] md:h-[100px]">
-                {isAce ? (
+                {isJoker ? (
+                  <div className="h-full flex items-center justify-center">
+                    <span className="text-4xl md:text-5xl text-violet-600">🃏</span>
+                  </div>
+                ) : isAce ? (
                   // Ace: single large suit symbol
                   <div className="h-full flex items-center justify-center">
                     <span className={cn("text-5xl md:text-6xl", suitColor)}>{suitSymbols[card.suit]}</span>
@@ -211,7 +230,7 @@ function PlayableCard({
                       suitColorBg,
                     )}
                   >
-                    <span className={cn("text-2xl md:text-3xl font-bold", suitColor)}>{card.rank}</span>
+                    <span className={cn("text-2xl md:text-3xl font-bold", suitColor)}>{cornerRank}</span>
                     <span className={cn("text-xl md:text-2xl", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : (
@@ -245,7 +264,9 @@ function PlayableCard({
         </TooltipTrigger>
         <TooltipContent side="top">
           <p>
-            {card.rank} of {card.suit} ({cardValues[card.rank]} pts)
+            {card.rank === "Joker"
+              ? `Joker (no-suit trump, ${cardValues[card.rank]} pts)`
+              : `${card.rank} of ${card.suit} (${cardValues[card.rank]} pts)`}
           </p>
         </TooltipContent>
       </Tooltip>
@@ -255,8 +276,8 @@ function PlayableCard({
 
 export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animationsEnabled }: HandProps) {
   // Sort cards by suit then by value
-  const suitOrder: Suit[] = ["spades", "hearts", "clubs", "diamonds"]
-  const rankOrder = ["J", "9", "A", "10", "K", "Q", "8", "7"]
+  const suitOrder: Suit[] = ["joker", "spades", "hearts", "clubs", "diamonds"]
+  const rankOrder = ["Joker", "J", "9", "A", "10", "K", "Q", "8", "7"]
 
   const sortedCards = [...player.cards].sort((a, b) => {
     const suitDiff = suitOrder.indexOf(a.suit) - suitOrder.indexOf(b.suit)

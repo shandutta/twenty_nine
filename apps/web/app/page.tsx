@@ -203,7 +203,7 @@ export default function Home() {
                 </div>
                 <div className="mt-1 flex items-center justify-between text-slate-600">
                   <span>Suit</span>
-                  <span>{state.trumpSuit}</span>
+                  <span>{state.trumpSuit ?? "Joker"}</span>
                 </div>
               </div>
             </div>

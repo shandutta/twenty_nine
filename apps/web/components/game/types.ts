@@ -1,5 +1,5 @@
-export type Suit = "hearts" | "diamonds" | "clubs" | "spades"
-export type Rank = "J" | "9" | "A" | "10" | "K" | "Q" | "8" | "7"
+export type Suit = "hearts" | "diamonds" | "clubs" | "spades" | "joker"
+export type Rank = "Joker" | "J" | "9" | "A" | "10" | "K" | "Q" | "8" | "7"
 
 export interface PlayingCard {
   suit: Suit

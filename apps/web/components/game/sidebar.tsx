@@ -244,7 +244,9 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                 <div className="flex justify-between text-sm">
                   <span>Trump</span>
                   <span className="font-medium text-foreground">
-                    {gameState.trumpRevealed ? gameState.trumpSuit : "Hidden"}
+                    {gameState.trumpRevealed
+                      ? gameState.trumpSuit ?? "Joker"
+                      : "Hidden"}
                   </span>
                 </div>
               </CardContent>
@@ -272,6 +274,10 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                     <span>Ten (10)</span>
                     <Badge variant="outline">1 pt</Badge>
                   </div>
+                  <div className="flex justify-between">
+                    <span>Joker</span>
+                    <Badge variant="outline">0 pts</Badge>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">K, Q, 8, 7 = 0 points</p>
               </CardContent>
@@ -288,6 +294,8 @@ export function GameSidebar({ gameState, onNewGame, onOpenSettings }: GameSideba
                 <p>• Royals (K+Q of trump) adjust bid by ±4 within bounds</p>
                 <p>• Trump reveals when someone cannot follow suit</p>
                 <p>• Must follow suit if possible</p>
+                <p>• Joker trump means no trump suit</p>
+                <p>• Joker wins any trick when played</p>
                 <p>• Highest card of led suit wins (unless trumped)</p>
               </CardContent>
             </Card>

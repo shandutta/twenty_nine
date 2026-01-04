@@ -5,9 +5,9 @@ import {
   scoreTrick,
   winningPlay,
 } from "../src/index";
-import type { Card, Rank, Suit, TrickState } from "../src/index";
+import type { Card, CardSuit, Rank, Suit, TrickState } from "../src/index";
 
-const card = (suit: Suit, rank: Rank): Card => ({ suit, rank });
+const card = (suit: CardSuit, rank: Rank): Card => ({ suit, rank });
 
 describe("trick winner logic", () => {
   it("ignores trump suit before reveal", () => {
@@ -36,6 +36,20 @@ describe("trick winner logic", () => {
 
     const winner = winningPlay(trick, "spades", true);
     expect(winner.player).toBe(3);
+  });
+
+  it("treats the Joker as the highest trump with no trump suit", () => {
+    const trick: TrickState = {
+      plays: [
+        { player: 0, card: card("hearts", "10") },
+        { player: 1, card: card("spades", "J") },
+        { player: 2, card: card("joker", "Joker") },
+        { player: 3, card: card("spades", "9") },
+      ],
+    };
+
+    const winner = winningPlay(trick, null, true);
+    expect(winner.player).toBe(2);
   });
 });
 

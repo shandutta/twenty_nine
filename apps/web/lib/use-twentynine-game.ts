@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef } from "react";
 import {
+  addJokerToDeck,
   compareRanks,
   createDeck,
   createTrick,
@@ -13,7 +14,7 @@ import type { Card, Suit, TrickState } from "@/lib/engine";
 export type GameState = {
   hands: Card[][];
   trick: TrickState;
-  trumpSuit: Suit;
+  trumpSuit: Suit | null;
   trumpRevealed: boolean;
   currentPlayer: number;
   trickIndex: number;
@@ -64,16 +65,20 @@ const pickLowest = (cards: Card[]): Card => {
 const pickBotCard = (
   hand: Card[],
   trick: TrickState,
-  trumpSuit: Suit,
+  trumpSuit: Suit | null,
   trumpRevealed: boolean,
 ): Card => {
   const legal = getLegalPlays(hand, trick);
   const lead = trick.plays[0]?.card.suit ?? null;
-  const trumps = hand.filter((card) => card.suit === trumpSuit);
+  const trumps = trumpSuit
+    ? hand.filter((card) => card.suit === trumpSuit)
+    : hand.filter((card) => card.rank === "Joker");
 
   if (!lead) {
     if (trumpRevealed) {
-      const nonTrump = hand.filter((card) => card.suit !== trumpSuit);
+      const nonTrump = trumpSuit
+        ? hand.filter((card) => card.suit !== trumpSuit)
+        : hand.filter((card) => card.rank !== "Joker");
       return nonTrump.length > 0 ? pickHighest(nonTrump) : pickHighest(hand);
     }
     return pickHighest(hand);
@@ -100,16 +105,22 @@ const removeCard = (hand: Card[], card: Card): Card[] => {
   return next;
 };
 
+const cardLabel = (card: Card): string =>
+  card.rank === "Joker" ? "Joker" : `${card.rank}${card.suit[0].toUpperCase()}`;
+
 const createInitialState = (): GameState => {
-  const deck = shuffle(createDeck());
-  const hands = deal(deck);
   const suits: Suit[] = ["clubs", "diamonds", "hearts", "spades"];
-  const trumpSuit = suits[Math.floor(Math.random() * suits.length)];
+  const useJokerTrump = Math.random() < 0.25;
+  const trumpSuit = useJokerTrump
+    ? null
+    : suits[Math.floor(Math.random() * suits.length)];
+  const deck = addJokerToDeck(shuffle(createDeck()), trumpSuit);
+  const hands = deal(deck);
   return {
     hands,
     trick: createTrick(),
     trumpSuit,
-    trumpRevealed: false,
+    trumpRevealed: trumpSuit === null ? true : false,
     currentPlayer: 0,
     trickIndex: 0,
     scores: [0, 0],
@@ -144,10 +155,12 @@ const applyPlay = (state: GameState, player: number, card: Card): GameState => {
     return index === player ? removeCard(cards, card) : cards;
   });
 
-  const log = [...state.log, `Player ${player + 1} played ${card.rank}${card.suit[0].toUpperCase()}.`];
+  const log = [...state.log, `Player ${player + 1} played ${cardLabel(card)}.`];
 
   if (!state.trumpRevealed && nextTrumpRevealed) {
-    log.push(`Trump revealed: ${state.trumpSuit}.`);
+    log.push(
+      `Trump revealed: ${state.trumpSuit ?? "Joker (no suit)"}.`,
+    );
   }
 
   if (nextTrick.plays.length < PLAYER_COUNT) {

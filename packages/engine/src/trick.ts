@@ -1,5 +1,5 @@
-import { cardPoints, compareRanks } from "./cards";
-import type { Card, Suit } from "./cards";
+import { JOKER_RANK, cardPoints, compareRanks } from "./cards";
+import type { Card, CardSuit, Suit } from "./cards";
 
 export type TrickPlay = {
   player: number;
@@ -12,7 +12,7 @@ export type TrickState = {
 
 export const createTrick = (): TrickState => ({ plays: [] });
 
-export const leadSuit = (trick: TrickState): Suit | null => {
+export const leadSuit = (trick: TrickState): CardSuit | null => {
   return trick.plays.length === 0 ? null : trick.plays[0].card.suit;
 };
 
@@ -77,7 +77,7 @@ const highestByRank = (plays: TrickPlay[]): TrickPlay => {
 
 export const winningPlay = (
   trick: TrickState,
-  trumpSuit: Suit,
+  trumpSuit: Suit | null,
   trumpRevealed: boolean,
 ): TrickPlay => {
   if (trick.plays.length === 0) {
@@ -90,9 +90,18 @@ export const winningPlay = (
   }
 
   if (trumpRevealed) {
-    const trumps = trick.plays.filter((play) => play.card.suit === trumpSuit);
-    if (trumps.length > 0) {
-      return highestByRank(trumps);
+    if (trumpSuit) {
+      const trumps = trick.plays.filter((play) => play.card.suit === trumpSuit);
+      if (trumps.length > 0) {
+        return highestByRank(trumps);
+      }
+    } else {
+      const jokers = trick.plays.filter(
+        (play) => play.card.rank === JOKER_RANK,
+      );
+      if (jokers.length > 0) {
+        return jokers[0];
+      }
     }
   }
 

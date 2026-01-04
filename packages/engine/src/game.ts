@@ -1,4 +1,4 @@
-import { cardPoints, compareRanks, createDeck } from "./cards";
+import { addJokerToDeck, cardPoints, compareRanks, createDeck } from "./cards";
 import type { Card, Suit } from "./cards";
 import { createTrick, getLegalPlays, playCard, winningPlay } from "./trick";
 import type { TrickState } from "./trick";
@@ -14,7 +14,7 @@ export type GameState = {
   trickNumber: number;
   leader: number;
   currentPlayer: number;
-  trumpSuit: Suit;
+  trumpSuit: Suit | null;
   trumpRevealed: boolean;
   points: [number, number];
   tricksWon: [number, number];
@@ -69,7 +69,8 @@ const dealHands = (deck: Card[]): Card[][] => {
   return hands;
 };
 
-const cardLabel = (card: Card): string => `${card.rank} of ${card.suit}`;
+const cardLabel = (card: Card): string =>
+  card.rank === "Joker" ? "Joker" : `${card.rank} of ${card.suit}`;
 
 export const createGameState = ({
   seed,
@@ -83,12 +84,14 @@ export const createGameState = ({
   dealer?: number;
   bidderTeam?: TeamId;
   bidTarget?: number;
-  trumpSuit?: Suit;
+  trumpSuit?: Suit | null;
   config?: EngineConfig;
 }): GameState => {
   const deck = shuffleDeck(createDeck(), seed);
-  const chosenTrump = trumpSuit ?? deck[0].suit;
-  const hands = dealHands(deck);
+  const chosenTrump =
+    typeof trumpSuit === "undefined" ? deck[0].suit : trumpSuit;
+  const deckWithJoker = addJokerToDeck(deck, chosenTrump);
+  const hands = dealHands(deckWithJoker);
   const leader = nextPlayer(dealer);
 
   return {
@@ -98,7 +101,7 @@ export const createGameState = ({
     leader,
     currentPlayer: leader,
     trumpSuit: chosenTrump,
-    trumpRevealed: false,
+    trumpRevealed: chosenTrump === null ? true : false,
     points: [0, 0],
     tricksWon: [0, 0],
     bidderTeam,
@@ -106,7 +109,10 @@ export const createGameState = ({
     lastTrickWinnerTeam: null,
     royalsDeclaredBy: null,
     phase: "playing",
-    log: [`Hand start. Dealer: P${dealer + 1}.`],
+    log: [
+      `Hand start. Dealer: P${dealer + 1}.`,
+      ...(chosenTrump === null ? ["Trump set to Joker (no suit)."] : []),
+    ],
     seed,
     config,
   };

@@ -18,9 +18,11 @@ const suitSymbols: Record<string, string> = {
   diamonds: "♦",
   clubs: "♣",
   spades: "♠",
+  joker: "🃏",
 }
 
 function getSuitColor(suit: Suit) {
+  if (suit === "joker") return "text-violet-600"
   return suit === "hearts" || suit === "diamonds" ? "text-red-600" : "text-gray-900"
 }
 
@@ -107,35 +109,51 @@ function getPipPositions(rank: string): { x: number; y: number; inverted?: boole
 }
 
 function isFaceCard(rank: string) {
-  return ["J", "Q", "K"].includes(rank)
+  return ["J", "Q", "K", "Joker"].includes(rank)
 }
 
 function PlayedCard({ card }: { card: PlayingCard }) {
   const suitColor = getSuitColor(card.suit)
-  const suitColorBg = card.suit === "hearts" || card.suit === "diamonds" ? "bg-red-50" : "bg-gray-50"
-  const suitColorBorder = card.suit === "hearts" || card.suit === "diamonds" ? "border-red-300" : "border-gray-300"
+  const suitColorBg =
+    card.suit === "joker"
+      ? "bg-violet-50"
+      : card.suit === "hearts" || card.suit === "diamonds"
+          ? "bg-red-50"
+          : "bg-gray-50"
+  const suitColorBorder =
+    card.suit === "joker"
+      ? "border-violet-300"
+      : card.suit === "hearts" || card.suit === "diamonds"
+          ? "border-red-300"
+          : "border-gray-300"
   const pips = getPipPositions(card.rank)
+  const isJoker = card.rank === "Joker"
   const isFace = isFaceCard(card.rank)
   const isAce = card.rank === "A"
+  const cornerRank = isJoker ? "Jkr" : card.rank
 
   return (
     <div className="relative h-[100px] w-[70px] md:h-[120px] md:w-[84px] rounded-lg bg-white shadow-xl border border-gray-300 overflow-hidden">
       {/* Top-left corner index */}
       <div className="absolute top-1 left-1.5 flex flex-col items-center leading-none">
-        <span className={cn("text-[10px] md:text-xs font-bold", suitColor)}>{card.rank}</span>
+        <span className={cn("text-[10px] md:text-xs font-bold", suitColor)}>{cornerRank}</span>
         <span className={cn("text-[10px] md:text-xs -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       {/* Bottom-right corner index (inverted) */}
       <div className="absolute bottom-1 right-1.5 flex flex-col items-center leading-none rotate-180">
-        <span className={cn("text-[10px] md:text-xs font-bold", suitColor)}>{card.rank}</span>
+        <span className={cn("text-[10px] md:text-xs font-bold", suitColor)}>{cornerRank}</span>
         <span className={cn("text-[10px] md:text-xs -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
       </div>
 
       {/* Card center content */}
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative w-[40px] h-[65px] md:w-[48px] md:h-[80px]">
-          {isAce ? (
+          {isJoker ? (
+            <div className="h-full flex items-center justify-center">
+              <span className="text-3xl md:text-4xl text-violet-600">🃏</span>
+            </div>
+          ) : isAce ? (
             <div className="h-full flex items-center justify-center">
               <span className={cn("text-3xl md:text-4xl", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
@@ -147,7 +165,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 suitColorBg,
               )}
             >
-              <span className={cn("text-lg md:text-xl font-bold", suitColor)}>{card.rank}</span>
+              <span className={cn("text-lg md:text-xl font-bold", suitColor)}>{cornerRank}</span>
               <span className={cn("text-base md:text-lg", suitColor)}>{suitSymbols[card.suit]}</span>
             </div>
           ) : (
@@ -379,10 +397,14 @@ export function GameTable({ gameState, onPlayCard, legalCardIds, animationsEnabl
             {/* Trump indicator */}
             <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/95 backdrop-blur border border-border shadow-lg">
               <span className="text-xs text-muted-foreground">Trump:</span>
-              {gameState.trumpRevealed && gameState.trumpSuit ? (
-                <span className={cn("text-xl", getSuitColor(gameState.trumpSuit))}>
-                  {suitSymbols[gameState.trumpSuit]}
-                </span>
+              {gameState.trumpRevealed ? (
+                gameState.trumpSuit ? (
+                  <span className={cn("text-xl", getSuitColor(gameState.trumpSuit))}>
+                    {suitSymbols[gameState.trumpSuit]}
+                  </span>
+                ) : (
+                  <span className="text-xl text-violet-600">🃏</span>
+                )
               ) : (
                 <span className="text-lg font-bold text-muted-foreground">?</span>
               )}
