@@ -18,11 +18,6 @@ export interface Team {
   handPoints: number;
 }
 
-export interface MatchTrack {
-  teamA: number;
-  teamB: number;
-}
-
 export type MatchEndReason = "red" | "black";
 
 export interface Player {

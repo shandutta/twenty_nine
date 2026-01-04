@@ -20,8 +20,6 @@ interface SettingsSheetProps {
   onAnimationsChange: (enabled: boolean) => void;
   autoPlay: boolean;
   onAutoPlayChange: (enabled: boolean) => void;
-  targetScore: number;
-  onTargetScoreChange: (score: number) => void;
   onNewGame: () => void;
 }
 
@@ -36,8 +34,6 @@ export function SettingsSheet({
   onAnimationsChange,
   autoPlay,
   onAutoPlayChange,
-  targetScore,
-  onTargetScoreChange,
   onNewGame,
 }: SettingsSheetProps) {
   const [cardSpeed, setCardSpeed] = useState("normal");
@@ -155,26 +151,13 @@ export function SettingsSheet({
                   </div>
                   <Switch id="autoplay" checked={autoPlay} onCheckedChange={onAutoPlayChange} />
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Target Score</Label>
-                  <Select value={String(targetScore)} onValueChange={(value) => onTargetScoreChange(Number(value))}>
-                    <SelectTrigger className="border-sidebar-border/70 bg-sidebar/60 w-full hover:bg-sidebar-accent/30">
-                      <SelectValue placeholder="Select target" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="4">4 Points (Quick)</SelectItem>
-                      <SelectItem value="6">6 Points (Standard)</SelectItem>
-                      <SelectItem value="8">8 Points (Extended)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="border-sidebar-border/60 bg-sidebar/60 space-y-3 rounded-xl border p-3">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-muted-foreground">
-                    Round Controls
+                    Match Reset
                   </p>
-                  <p className="text-xs text-muted-foreground">Shuffle a fresh deck and deal a new round.</p>
+                  <p className="text-xs text-muted-foreground">Reset pips, rounds, and shuffle a fresh deck.</p>
                   <Button onClick={onNewGame} className="w-full bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
-                    Start New Game
+                    Start New Match
                   </Button>
                 </div>
               </div>

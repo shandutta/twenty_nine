@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
+import { MATCH_PIPS } from "@twentynine/engine";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
 import {
   LLM_MODEL_OPTIONS,
   REASONING_EFFORT_OPTIONS,
   type ReasoningEffort,
 } from "@/components/game/use-game-controller";
-import { Cog, RotateCcw } from "lucide-react";
+import { Download, Share2, Sparkles, Trophy, Cog, RotateCcw } from "lucide-react";
 
 interface GameTableProps {
   gameState: GameState;
@@ -31,6 +32,8 @@ interface GameTableProps {
   onChooseTrump: (suit: Suit | null) => void;
   onChooseTrumpFromSeventh: () => void;
   onNewGame: () => void;
+  onNextHand: () => void;
+  canStartNextHand: boolean;
   canRevealTrump: boolean;
   onRevealTrump: () => void;
   canDeclareRoyals: boolean;
@@ -60,6 +63,28 @@ const TRUMP_CHOICES: Array<{ suit: Suit; label: string; symbol: string }> = [
   { suit: "diamonds", label: "Diamonds", symbol: suitSymbols.diamonds },
   { suit: "hearts", label: "Hearts", symbol: suitSymbols.hearts },
   { suit: "spades", label: "Spades", symbol: suitSymbols.spades },
+];
+
+const MATCH_CARD_BASE =
+  "relative h-9 w-7 rounded-[0.6rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
+
+const MATCH_PIP_STYLES = {
+  red: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
+  black: "bg-[#0a0a0a] ring-1 ring-white/30 shadow-[inset_0_0_6px_rgba(255,255,255,0.15)]",
+  empty: "bg-white/10 ring-1 ring-white/10",
+} as const;
+
+const VICTORY_SPARKS = [
+  { left: "12%", top: "18%", size: "size-2", delay: "0s" },
+  { left: "24%", top: "8%", size: "size-1.5", delay: "0.3s" },
+  { left: "38%", top: "14%", size: "size-2.5", delay: "0.6s" },
+  { left: "62%", top: "10%", size: "size-2", delay: "0.2s" },
+  { left: "78%", top: "16%", size: "size-1.5", delay: "0.5s" },
+  { left: "88%", top: "26%", size: "size-2.5", delay: "0.1s" },
+  { left: "16%", top: "78%", size: "size-2.5", delay: "0.4s" },
+  { left: "32%", top: "70%", size: "size-1.5", delay: "0.7s" },
+  { left: "68%", top: "74%", size: "size-2", delay: "0.3s" },
+  { left: "84%", top: "68%", size: "size-1.5", delay: "0.6s" },
 ];
 
 function getSuitColor(suit: Suit) {
@@ -398,6 +423,8 @@ export function GameTable({
   onChooseTrump,
   onChooseTrumpFromSeventh,
   onNewGame,
+  onNextHand,
+  canStartNextHand,
   canRevealTrump,
   onRevealTrump,
   canDeclareRoyals,
@@ -471,6 +498,193 @@ export function GameTable({
   const lastTrickCardLabel = lastTrick
     ? `${lastTrick.winningCard.rank}${suitSymbols[lastTrick.winningCard.suit]}`
     : "--";
+  const matchFinished = gameState.matchWinner !== null;
+  const matchWinnerId = gameState.matchWinner;
+  const matchWinnerTeam = matchWinnerId ? (matchWinnerId === "teamA" ? teamA : teamB) : null;
+  const matchLoserTeam = matchWinnerId ? (matchWinnerId === "teamA" ? teamB : teamA) : null;
+  const matchEndReason = gameState.matchEndReason;
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const playerWon = matchWinnerId === "teamA";
+  const primaryActionLabel = canStartNextHand ? "Next Hand" : "New Match";
+  const PrimaryActionIcon = canStartNextHand ? Sparkles : RotateCcw;
+  const handlePrimaryAction = canStartNextHand ? onNextHand : onNewGame;
+
+  const formatMatchScore = useCallback(
+    (teamId: "teamA" | "teamB") => {
+      const index = teamId === "teamA" ? 0 : 1;
+      const red = gameState.matchRedPips[index];
+      const black = gameState.matchBlackPips[index];
+      return `R${red}/${MATCH_PIPS} · B${black}/${MATCH_PIPS}`;
+    },
+    [gameState.matchBlackPips, gameState.matchRedPips]
+  );
+
+  const renderMatchRow = useCallback(
+    (teamId: "teamA" | "teamB", tone: "red" | "black") => {
+      const teamIndex = teamId === "teamA" ? 0 : 1;
+      const filledCount = tone === "red" ? gameState.matchRedPips[teamIndex] : gameState.matchBlackPips[teamIndex];
+      const teamBorder = teamId === "teamA" ? "border-emerald-400/25" : "border-rose-400/25";
+      const pipClass = tone === "red" ? MATCH_PIP_STYLES.red : MATCH_PIP_STYLES.black;
+
+      return (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {Array.from({ length: MATCH_PIPS }, (_, index) => {
+            const active = index < filledCount;
+            const dotClass = active ? pipClass : MATCH_PIP_STYLES.empty;
+            return (
+              <div key={`${teamId}-${tone}-${index}`} className={cn(MATCH_CARD_BASE, teamBorder)}>
+                <span
+                  className={cn(
+                    "absolute left-1/2 top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                    dotClass
+                  )}
+                />
+                <span className="pointer-events-none absolute inset-[3px] rounded-[0.45rem] border border-white/5" />
+              </div>
+            );
+          })}
+        </div>
+      );
+    },
+    [gameState.matchBlackPips, gameState.matchRedPips]
+  );
+
+  const shareText = useMemo(() => {
+    if (!matchWinnerTeam || !matchLoserTeam || !matchEndReason) return "";
+    const winnerReason =
+      matchEndReason === "red"
+        ? `hit ${MATCH_PIPS} red pips`
+        : `${matchLoserTeam.name} reached ${MATCH_PIPS} black pips`;
+    return `Twenty-Nine match complete — ${matchWinnerTeam.name} wins (${winnerReason}). Final pips: ${teamA.name} ${formatMatchScore("teamA")}, ${teamB.name} ${formatMatchScore("teamB")}.`;
+  }, [matchEndReason, matchLoserTeam, matchWinnerTeam, formatMatchScore, teamA.name, teamB.name]);
+
+  const matchReasonLine =
+    matchEndReason === "red"
+      ? `${matchWinnerTeam?.name ?? "Team"} reached ${MATCH_PIPS} red pips.`
+      : `${matchLoserTeam?.name ?? "Team"} hit ${MATCH_PIPS} black pips.`;
+
+  const handleShare = useCallback(async () => {
+    if (!matchFinished) return;
+    const text = shareText || "Twenty-Nine match complete.";
+    if (typeof navigator !== "undefined" && "share" in navigator) {
+      try {
+        await navigator.share({ title: "Twenty-Nine Match", text });
+        setActionMessage("Shared.");
+        return;
+      } catch {
+        // fall through to clipboard fallback
+      }
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setActionMessage("Copied to clipboard.");
+      } catch {
+        setActionMessage("Unable to copy.");
+      }
+      return;
+    }
+    setActionMessage("Sharing not supported.");
+  }, [matchFinished, shareText]);
+
+  const handleSaveScoreboard = useCallback(async () => {
+    if (!matchFinished) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1200;
+    canvas.height = 675;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      setActionMessage("Export failed.");
+      return;
+    }
+
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, "#0c1813");
+    gradient.addColorStop(1, "#0b1511");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "rgba(255,255,255,0.08)";
+    ctx.fillRect(70, 70, canvas.width - 140, canvas.height - 140);
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(70, 70, canvas.width - 140, canvas.height - 140);
+
+    ctx.fillStyle = "#f6d38b";
+    ctx.font = "700 54px serif";
+    ctx.fillText("Twenty-Nine", 110, 150);
+
+    ctx.fillStyle = "#e6f5ec";
+    ctx.font = "600 38px serif";
+    ctx.fillText(`${matchWinnerTeam?.name ?? "Team"} wins`, 110, 205);
+
+    ctx.fillStyle = "rgba(230,245,236,0.7)";
+    ctx.font = "400 20px sans-serif";
+    const reasonLine =
+      matchEndReason === "red"
+        ? `Reached ${MATCH_PIPS} red pips`
+        : `${matchLoserTeam?.name ?? "Opponent"} hit ${MATCH_PIPS} black pips`;
+    ctx.fillText(reasonLine, 110, 240);
+
+    const drawPipRow = (x: number, y: number, filled: number, color: string, outline: string) => {
+      for (let i = 0; i < MATCH_PIPS; i += 1) {
+        const cardX = x + i * 52;
+        ctx.fillStyle = "#112019";
+        ctx.fillRect(cardX, y, 42, 58);
+        ctx.strokeStyle = outline;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cardX, y, 42, 58);
+        ctx.fillStyle = i < filled ? color : "rgba(255,255,255,0.12)";
+        ctx.beginPath();
+        ctx.arc(cardX + 21, y + 29, 6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    };
+
+    const teamBlock = (
+      label: string,
+      x: number,
+      y: number,
+      red: number,
+      black: number,
+      accent: string
+    ) => {
+      ctx.fillStyle = "rgba(10,16,12,0.7)";
+      ctx.fillRect(x, y, 980, 140);
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, 980, 140);
+
+      ctx.fillStyle = "#e6f5ec";
+      ctx.font = "600 26px serif";
+      ctx.fillText(label, x + 24, y + 36);
+
+      ctx.fillStyle = "rgba(230,245,236,0.65)";
+      ctx.font = "600 14px sans-serif";
+      ctx.fillText(`Red pips: ${red}/${MATCH_PIPS}`, x + 24, y + 66);
+      drawPipRow(x + 190, y + 46, red, "#e85b5b", "rgba(255,255,255,0.25)");
+
+      ctx.fillStyle = "rgba(230,245,236,0.65)";
+      ctx.fillText(`Black pips: ${black}/${MATCH_PIPS}`, x + 24, y + 116);
+      drawPipRow(x + 190, y + 96, black, "#111111", "rgba(255,255,255,0.18)");
+    };
+
+    teamBlock(teamA.name, 110, 300, gameState.matchRedPips[0], gameState.matchBlackPips[0], "rgba(74,222,128,0.35)");
+    teamBlock(teamB.name, 110, 465, gameState.matchRedPips[1], gameState.matchBlackPips[1], "rgba(251,113,133,0.35)");
+
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+    if (!blob) {
+      setActionMessage("Export failed.");
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `twentynine-match-${Date.now()}.png`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setActionMessage("Scoreboard saved.");
+  }, [matchFinished, matchWinnerTeam, matchLoserTeam, matchEndReason, gameState.matchBlackPips, gameState.matchRedPips, teamA.name, teamB.name]);
 
   const [selectedBid, setSelectedBid] = useState("");
   const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
@@ -501,6 +715,14 @@ export function GameTable({
       clearTimeout(hideTimer);
     };
   }, [lastTrickNumber]);
+
+  useEffect(() => {
+    if (!actionMessage) return;
+    const timer = setTimeout(() => {
+      setActionMessage(null);
+    }, 2200);
+    return () => clearTimeout(timer);
+  }, [actionMessage]);
 
   return (
     <TooltipProvider>
@@ -678,7 +900,7 @@ export function GameTable({
                 </Badge>
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.32em] text-emerald-100/60">
                   <span>Round</span>
-                  <span className="text-emerald-50">{gameState.roundNumber}</span>
+                  <span className="text-emerald-50">{gameState.matchRound}</span>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -740,12 +962,12 @@ export function GameTable({
                   </div>
                 </div>
                 <Button
-                  onClick={onNewGame}
+                  onClick={handlePrimaryAction}
                   size="sm"
                   className="hidden sm:inline-flex md:hidden gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
                 >
-                  <RotateCcw className="h-4 w-4" />
-                  <span>New Game</span>
+                  <PrimaryActionIcon className="h-4 w-4" />
+                  <span>{primaryActionLabel}</span>
                 </Button>
               </div>
             </div>
@@ -839,12 +1061,49 @@ export function GameTable({
               animationsEnabled={animationsEnabled}
             />
           </div>
+          {canStartNextHand && (
+            <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+              <div className="pointer-events-auto mx-4 w-full max-w-md rounded-3xl border border-white/15 bg-[#0b1612]/95 p-6 text-emerald-50 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.34em] text-emerald-100/60">Hand complete</p>
+                    <h3 className="mt-1 text-xl font-semibold text-emerald-50">Ready for the next deal?</h3>
+                  </div>
+                  <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
+                    Round {gameState.matchRound}
+                  </Badge>
+                </div>
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-3 text-xs text-emerald-100/70">
+                  <div className="flex items-center justify-between">
+                    <span>{teamA.name}</span>
+                    <span>{teamA.handPoints} pts</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span>{teamB.name}</span>
+                    <span>{teamB.handPoints} pts</span>
+                  </div>
+                </div>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Button onClick={onNextHand} className="flex-1 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
+                    Deal Next Hand
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={onNewGame}
+                    className="flex-1 border-white/20 bg-white/5 text-emerald-50 hover:bg-white/10"
+                  >
+                    Reset Match
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center sm:hidden">
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur">
           <span className="text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
-            Round {gameState.roundNumber}
+            Round {gameState.matchRound}
           </span>
           <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 p-1">
             {(["standard", "single-hand"] as const).map((mode) => (
@@ -865,15 +1124,117 @@ export function GameTable({
             ))}
           </div>
           <Button
-            onClick={onNewGame}
+            onClick={handlePrimaryAction}
             size="sm"
             className="gap-2 rounded-full bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
           >
-            <RotateCcw className="h-4 w-4" />
-            <span>New Game</span>
+            <PrimaryActionIcon className="h-4 w-4" />
+            <span>{primaryActionLabel}</span>
           </Button>
         </div>
       </div>
+      {matchFinished && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="pointer-events-none absolute inset-0">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(242,200,121,0.25),transparent_55%),radial-gradient(circle_at_bottom,_rgba(232,91,91,0.2),transparent_60%)]" />
+            <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.12),transparent_40%),radial-gradient(circle_at_80%_70%,rgba(255,255,255,0.08),transparent_45%)]" />
+            {VICTORY_SPARKS.map((spark, index) => (
+              <span
+                key={`spark-${index}`}
+                className={cn(
+                  "absolute rounded-full bg-[#f6d38b]/80 opacity-70 blur-[1px] animate-ping",
+                  spark.size
+                )}
+                style={{ left: spark.left, top: spark.top, animationDelay: spark.delay }}
+              />
+            ))}
+          </div>
+          <div className="relative z-10 mx-4 w-full max-w-2xl rounded-[32px] border border-white/15 bg-[#0b1511]/95 p-6 shadow-[0_35px_120px_rgba(0,0,0,0.7)] md:p-8">
+            <div className="absolute inset-2 rounded-[28px] border border-white/10" />
+            <div className="absolute inset-0 rounded-[32px] bg-[radial-gradient(circle_at_15%_15%,rgba(255,255,255,0.08),transparent_45%)]" />
+            <div className="relative">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <span className="flex size-12 items-center justify-center rounded-full border border-[#f2c879]/40 bg-[#231708] text-[#f6d38b] shadow-[0_0_20px_rgba(242,200,121,0.35)]">
+                    <Trophy className="size-5" />
+                  </span>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.38em] text-emerald-100/60">Match Complete</p>
+                    <h2 className="mt-1 text-2xl font-semibold text-emerald-50 md:text-3xl">
+                      {matchWinnerTeam?.name ?? "Team"} wins the table
+                    </h2>
+                    <p className="mt-2 text-sm text-emerald-100/70">{matchReasonLine}</p>
+                  </div>
+                </div>
+                <div className="rounded-full border border-[#f2c879]/30 bg-[#1a1306]/80 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[#f6d38b] shadow-[inset_0_0_10px_rgba(242,200,121,0.2)]">
+                  {matchEndReason === "red" ? "Red pips" : "Black pips"}
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-200">{teamA.name}</span>
+                    <span className="text-emerald-50">{formatMatchScore("teamA")}</span>
+                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Red pips
+                  </div>
+                  {renderMatchRow("teamA", "red")}
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Black pips
+                  </div>
+                  {renderMatchRow("teamA", "black")}
+                </div>
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-rose-200">{teamB.name}</span>
+                    <span className="text-emerald-50">{formatMatchScore("teamB")}</span>
+                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Red pips
+                  </div>
+                  {renderMatchRow("teamB", "red")}
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Black pips
+                  </div>
+                  {renderMatchRow("teamB", "black")}
+                </div>
+              </div>
+
+              {actionMessage && (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-emerald-100/70">
+                  <Sparkles className="size-3 text-[#f2c879]" />
+                  {actionMessage}
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button onClick={onNewGame} className="gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
+                  <RotateCcw className="h-4 w-4" />
+                  Start New Match
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleShare}
+                  className="gap-2 border-white/20 bg-white/5 text-emerald-50 hover:bg-white/10"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {playerWon ? "Share Victory" : "Share Result"}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveScoreboard}
+                  className="gap-2 border-white/20 bg-white/5 text-emerald-50 hover:bg-white/10"
+                >
+                  <Download className="h-4 w-4" />
+                  Save Scoreboard
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </TooltipProvider>
   );
 }

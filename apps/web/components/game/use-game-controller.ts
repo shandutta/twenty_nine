@@ -533,6 +533,7 @@ export const useGameController = () => {
     if (engineState.phase !== "playing") {
       return [];
     }
+    if (engineState.matchWinner !== null) return [];
     if (!isHumanTurn) return [];
     const hand = engineState.hands[engineState.currentPlayer] ?? [];
     return getLegalPlays(hand, engineState.trick, {
@@ -545,6 +546,7 @@ export const useGameController = () => {
   const handlePlayCard = useCallback(
     (card: PlayingCard) => {
       if (engineState.phase !== "playing") return;
+      if (engineState.matchWinner !== null) return;
       if (!isHumanTurn) return;
       if (!legalCards.includes(card.id)) return;
 
@@ -557,7 +559,10 @@ export const useGameController = () => {
     [dispatch, engineState, isHumanTurn, legalCards]
   );
 
-  const canBid = useMemo(() => engineState.phase === "bidding" && isHumanTurn, [engineState, isHumanTurn]);
+  const canBid = useMemo(
+    () => engineState.phase === "bidding" && isHumanTurn && engineState.matchWinner === null,
+    [engineState, isHumanTurn]
+  );
 
   const bidOptions = useMemo(() => {
     if (!canBid) return [];
@@ -582,7 +587,10 @@ export const useGameController = () => {
     dispatch({ type: "passBid", player: engineState.currentPlayer });
   }, [canBid, dispatch, engineState.currentPlayer]);
 
-  const canChooseTrump = useMemo(() => engineState.phase === "choose-trump" && isHumanTurn, [engineState, isHumanTurn]);
+  const canChooseTrump = useMemo(
+    () => engineState.phase === "choose-trump" && isHumanTurn && engineState.matchWinner === null,
+    [engineState, isHumanTurn]
+  );
 
   const handleChooseTrump = useCallback(
     (suit: Suit | null) => {
@@ -631,6 +639,7 @@ export const useGameController = () => {
 
   const canRevealTrump = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (engineState.matchWinner !== null) return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.trumpRevealed) return false;
     if (engineState.trumpFromSeventh) return false;
@@ -646,6 +655,7 @@ export const useGameController = () => {
 
   const canDeclareRoyalsForHuman = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (engineState.matchWinner !== null) return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.royalsDeclaredBy !== null) return false;
     if (engineState.lastTrickWinnerTeam === null) return false;
@@ -670,6 +680,7 @@ export const useGameController = () => {
     if (engineState.phase !== "playing") {
       setLlmInUse(false);
     }
+    if (engineState.matchWinner !== null) return;
     if (engineState.phase === "hand-complete") return;
     if (isHumanTurn) return;
 

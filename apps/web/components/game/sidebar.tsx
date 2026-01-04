@@ -215,7 +215,7 @@ export function GameSidebar({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-xl font-serif text-emerald-50">Solo Table</h1>
-            <p className="text-xs uppercase tracking-[0.35em] text-emerald-100/60">Round {gameState.roundNumber}</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-emerald-100/60">Round {gameState.matchRound}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onOpenSettings} className="text-emerald-100/70">
             <Settings className="h-5 w-5" />
@@ -456,7 +456,9 @@ export function GameSidebar({
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                         Red pips
                       </span>
-                      <span className="text-emerald-50">{teamARed}/{MATCH_PIPS}</span>
+                      <span className="text-emerald-50">
+                        {teamARed}/{MATCH_PIPS}
+                      </span>
                     </div>
                     {renderMatchRow("teamA", "red")}
                     <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
@@ -464,7 +466,9 @@ export function GameSidebar({
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
                         Black pips
                       </span>
-                      <span className="text-emerald-50">{teamABlack}/{MATCH_PIPS}</span>
+                      <span className="text-emerald-50">
+                        {teamABlack}/{MATCH_PIPS}
+                      </span>
                     </div>
                     {renderMatchRow("teamA", "black")}
                   </div>
@@ -486,7 +490,9 @@ export function GameSidebar({
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                         Red pips
                       </span>
-                      <span className="text-emerald-50">{teamBRed}/{MATCH_PIPS}</span>
+                      <span className="text-emerald-50">
+                        {teamBRed}/{MATCH_PIPS}
+                      </span>
                     </div>
                     {renderMatchRow("teamB", "red")}
                     <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
@@ -494,7 +500,9 @@ export function GameSidebar({
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
                         Black pips
                       </span>
-                      <span className="text-emerald-50">{teamBBlack}/{MATCH_PIPS}</span>
+                      <span className="text-emerald-50">
+                        {teamBBlack}/{MATCH_PIPS}
+                      </span>
                     </div>
                     {renderMatchRow("teamB", "black")}
                   </div>
@@ -689,7 +697,7 @@ export function GameSidebar({
       <div className="p-4 border-t border-white/10 space-y-2">
         <Button onClick={onNewGame} className="w-full gap-2 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
           <RotateCcw className="h-4 w-4" />
-          New Game
+          New Match
         </Button>
       </div>
     </aside>

@@ -542,9 +542,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
         if (matchBlackPips[bidderTeam] >= MATCH_PIPS) {
           matchWinner = winner;
           matchEndReason = "black";
-          log.push(
-            `Match over: Team ${winner + 1} wins as Team ${bidderTeam + 1} hit ${MATCH_PIPS} black pips.`
-          );
+          log.push(`Match over: Team ${winner + 1} wins as Team ${bidderTeam + 1} hit ${MATCH_PIPS} black pips.`);
         }
       }
     }
