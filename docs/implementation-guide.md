@@ -107,6 +107,8 @@ Prod host (this machine):
 
 - The production service is a systemd unit named `twentynine` (`/etc/systemd/system/twentynine.service`).
 - Check status with `systemctl status twentynine` and logs with `journalctl -u twentynine -n 200`.
+- Caddy terminates HTTP(S) and proxies to `127.0.0.1:3100` (config at `/etc/caddy/Caddyfile`).
+- IP access (`https://46.224.49.76`) uses `tls internal` (self-signed). Browsers will warn unless you trust the local CA.
 
 Ports (enforced by wrappers):
 
