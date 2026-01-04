@@ -274,11 +274,7 @@ type LlmDecision = {
   hasTrace: boolean;
 };
 
-const requestLLMMove = async (
-  state: EngineState,
-  legalMoves: Card[],
-  settings: BotSettings
-): Promise<LlmDecision> => {
+const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: BotSettings): Promise<LlmDecision> => {
   const player = state.currentPlayer;
   const hand = state.hands[player] ?? [];
   const lead = leadSuit(state.trick) ?? "none";

@@ -40,6 +40,19 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
   await expect(page.getByTestId("player-hand-label")).toBeVisible();
 
+  const aiTab = page.getByRole("tab", { name: /^AI$/ });
+  await aiTab.click();
+  await expect(aiTab).toHaveAttribute("aria-selected", "true");
+  const llmHeading = page.getByRole("heading", { name: "LLM Bots" });
+  await expect(llmHeading).toBeVisible();
+  const aiSwitch = llmHeading.locator("..").getByRole("switch");
+  if ((await aiSwitch.getAttribute("aria-checked")) === "true") {
+    await aiSwitch.click();
+  }
+  const overviewTab = page.getByRole("tab", { name: /^Overview$/ });
+  await overviewTab.click();
+  await expect(overviewTab).toHaveAttribute("aria-selected", "true");
+
   const shouldCaptureScreenshots = process.env.E2E_SCREENSHOTS !== "0";
   if (shouldCaptureScreenshots) {
     const screenshotDir = path.resolve(process.cwd(), "..", "..", "docs", "ux", "screens");
@@ -119,7 +132,6 @@ test("game page smoke flow", async ({ page }) => {
 
   await expect(handButtons.first()).toBeVisible();
 
-  const aiTab = page.getByRole("tab", { name: /^AI$/ });
   await aiTab.click();
   await expect(aiTab).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("heading", { name: "LLM Bots" })).toBeVisible();

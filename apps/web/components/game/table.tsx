@@ -8,7 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
-import { LLM_MODEL_OPTIONS, REASONING_EFFORT_OPTIONS, type ReasoningEffort } from "@/components/game/use-game-controller";
+import {
+  LLM_MODEL_OPTIONS,
+  REASONING_EFFORT_OPTIONS,
+  type ReasoningEffort,
+} from "@/components/game/use-game-controller";
 import { Cog, RotateCcw } from "lucide-react";
 
 interface GameTableProps {
@@ -283,8 +287,7 @@ function LiveAiIndicator({ active }: { active: boolean }) {
   );
 }
 
-const formatModelLabel = (value: string) =>
-  LLM_MODEL_OPTIONS.find((option) => option.value === value)?.label ?? value;
+const formatModelLabel = (value: string) => LLM_MODEL_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
 const formatEffortLabel = (value: ReasoningEffort) =>
   REASONING_EFFORT_OPTIONS.find((option) => option.value === value)?.label ?? value;
@@ -301,11 +304,7 @@ function ReasoningTracePanel({
   if (!show) return null;
   const modelLabel = meta ? formatModelLabel(meta.model) : "—";
   const effortLabel = meta ? formatEffortLabel(meta.effort) : "—";
-  const body = trace?.trim()
-    ? trace
-    : meta?.hasTrace
-      ? "Trace unavailable for this model."
-      : "No trace yet.";
+  const body = trace?.trim() ? trace : meta?.hasTrace ? "Trace unavailable for this model." : "No trace yet.";
 
   return (
     <div className="pointer-events-auto w-[min(22rem,78vw)] rounded-2xl border border-white/10 bg-black/70 p-3 text-[11px] text-emerald-100/70 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
@@ -507,7 +506,7 @@ export function GameTable({
     <TooltipProvider>
       <div className="relative h-full w-full p-4 md:p-8">
         {(llmInUse || showReasoningTrace) && (
-          <div className="absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
+          <div className="pointer-events-none absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
             <LiveAiIndicator active={llmInUse} />
             <ReasoningTracePanel trace={llmReasoning} meta={llmReasoningMeta} show={showReasoningTrace} />
           </div>
