@@ -69,7 +69,11 @@ test("game page smoke flow", async ({ page }) => {
     const bidSelectVisible =
       (await bidSelect.count()) > 0 && (await bidSelect.isVisible({ timeout: 0 }).catch(() => false));
     const placeBidEnabled =
-      (await placeBid.count()) > 0 && (await placeBid.first().isEnabled({ timeout: 0 }).catch(() => false));
+      (await placeBid.count()) > 0 &&
+      (await placeBid
+        .first()
+        .isEnabled({ timeout: 0 })
+        .catch(() => false));
     if (bidSelectVisible && !placeBidEnabled) {
       await bidSelect.click();
       const option = page.getByRole("option", { name: /Bid \d+/ }).first();
@@ -85,7 +89,11 @@ test("game page smoke flow", async ({ page }) => {
 
     const passButton = page.getByRole("button", { name: /^Pass$/ });
     const passEnabled =
-      (await passButton.count()) > 0 && (await passButton.first().isEnabled({ timeout: 0 }).catch(() => false));
+      (await passButton.count()) > 0 &&
+      (await passButton
+        .first()
+        .isEnabled({ timeout: 0 })
+        .catch(() => false));
     if (passEnabled) {
       await passButton.first().click();
       await page.waitForTimeout(300);
