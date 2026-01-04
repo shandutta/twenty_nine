@@ -87,7 +87,7 @@ export const createGameState = ({
   config?: EngineConfig;
 }): GameState => {
   const deck = shuffleDeck(createDeck(), seed);
-  const chosenTrump = trumpSuit ?? deck[0].suit;
+  const chosenTrump = trumpSuit ?? deck[6].suit;
   const hands = dealHands(deck);
   const leader = nextPlayer(dealer);
 
