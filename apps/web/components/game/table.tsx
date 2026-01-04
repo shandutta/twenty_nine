@@ -641,14 +641,7 @@ export function GameTable({
       }
     };
 
-    const teamBlock = (
-      label: string,
-      x: number,
-      y: number,
-      red: number,
-      black: number,
-      accent: string
-    ) => {
+    const teamBlock = (label: string, x: number, y: number, red: number, black: number, accent: string) => {
       ctx.fillStyle = "rgba(10,16,12,0.7)";
       ctx.fillRect(x, y, 980, 140);
       ctx.strokeStyle = accent;
@@ -684,7 +677,16 @@ export function GameTable({
     link.click();
     URL.revokeObjectURL(url);
     setActionMessage("Scoreboard saved.");
-  }, [matchFinished, matchWinnerTeam, matchLoserTeam, matchEndReason, gameState.matchBlackPips, gameState.matchRedPips, teamA.name, teamB.name]);
+  }, [
+    matchFinished,
+    matchWinnerTeam,
+    matchLoserTeam,
+    matchEndReason,
+    gameState.matchBlackPips,
+    gameState.matchRedPips,
+    teamA.name,
+    teamB.name,
+  ]);
 
   const [selectedBid, setSelectedBid] = useState("");
   const bidValues = useMemo(() => bidOptions.map(String), [bidOptions]);
@@ -1141,10 +1143,7 @@ export function GameTable({
             {VICTORY_SPARKS.map((spark, index) => (
               <span
                 key={`spark-${index}`}
-                className={cn(
-                  "absolute rounded-full bg-[#f6d38b]/80 opacity-70 blur-[1px] animate-ping",
-                  spark.size
-                )}
+                className={cn("absolute rounded-full bg-[#f6d38b]/80 opacity-70 blur-[1px] animate-ping", spark.size)}
                 style={{ left: spark.left, top: spark.top, animationDelay: spark.delay }}
               />
             ))}
@@ -1177,13 +1176,9 @@ export function GameTable({
                     <span className="text-emerald-200">{teamA.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamA")}</span>
                   </div>
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
-                    Red pips
-                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
                   {renderMatchRow("teamA", "red")}
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
-                    Black pips
-                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
                   {renderMatchRow("teamA", "black")}
                 </div>
                 <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
@@ -1191,13 +1186,9 @@ export function GameTable({
                     <span className="text-rose-200">{teamB.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamB")}</span>
                   </div>
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
-                    Red pips
-                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
                   {renderMatchRow("teamB", "red")}
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
-                    Black pips
-                  </div>
+                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
                   {renderMatchRow("teamB", "black")}
                 </div>
               </div>

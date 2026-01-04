@@ -26,15 +26,6 @@ const suitSymbols: Record<Suit, string> = {
   spades: "♠",
 };
 
-const MATCH_CARD_BASE =
-  "relative h-9 w-7 rounded-[0.6rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_10px_18px_rgba(0,0,0,0.45)]";
-
-const MATCH_PIP_STYLES = {
-  bid: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_12px_rgba(232,91,91,0.55)]",
-  set: "bg-[#0a0a0a] ring-1 ring-white/30 shadow-[inset_0_0_8px_rgba(255,255,255,0.18)]",
-  empty: "bg-white/10 ring-1 ring-white/10",
-} as const;
-
 const formatCard = (card: Card): string => `${card.rank}${suitSymbols[card.suit]}`;
 
 const formatCardList = (cards: Card[]): string => (cards.length === 0 ? "--" : cards.map(formatCard).join(", "));
@@ -322,7 +313,7 @@ function GamePageClient() {
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>
         <AlertDialogContent className="border-white/10 bg-[#0c1813] text-emerald-50">
           <AlertDialogHeader>
-            <AlertDialogTitle>Start a new game?</AlertDialogTitle>
+            <AlertDialogTitle>Start a new match?</AlertDialogTitle>
             <AlertDialogDescription className="text-emerald-100/70">
               This resets the match, clears all pips, and starts the round count back at 0.
             </AlertDialogDescription>
@@ -332,7 +323,7 @@ function GamePageClient() {
               Keep Playing
             </AlertDialogCancel>
             <AlertDialogAction onClick={confirmNewGame} className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
-              Start New Game
+              Start New Match
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
