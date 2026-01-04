@@ -159,7 +159,7 @@ function GamePageClient() {
     setCoachResponse(null);
 
     const message = {
-      trump: engineState.trumpRevealed ? engineState.trumpSuit : "hidden",
+      trump: engineState.trumpRevealed ? engineState.trumpSuit ?? "joker (no trump)" : "hidden",
       currentTrick: engineState.trick.plays.map((play) => ({
         player: playerLabel(play.player),
         card: formatCard(play.card),
@@ -227,6 +227,7 @@ function GamePageClient() {
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
         controlMode={controlMode}
+        onControlModeChange={onControlModeChange}
         coachEnabled={coachEnabled}
         onCoachEnabledChange={setCoachEnabled}
         coachLoading={coachLoading}
@@ -251,6 +252,7 @@ function GamePageClient() {
           legalCardIds={legalCardIds}
           animationsEnabled={animationsEnabled}
           controlMode={controlMode}
+          onControlModeChange={onControlModeChange}
           bidOptions={bidOptions}
           canBid={canBid}
           onPlaceBid={onPlaceBid}
@@ -275,8 +277,6 @@ function GamePageClient() {
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
-        controlMode={controlMode}
-        onControlModeChange={onControlModeChange}
         onNewGame={requestNewGame}
       />
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>

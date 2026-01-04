@@ -121,13 +121,16 @@ export const createGameState = ({
   const derivedBidderTeam = bidderTeam ?? (bidderPlayer !== null ? teamForPlayer(bidderPlayer) : null);
   const resolvedBidTarget = bidTarget ?? (phase === "playing" || phase === "hand-complete" ? config.minBid : null);
   const chosenTrump =
-    typeof trumpSuit === "undefined" ? (phase === "playing" || phase === "hand-complete" ? deck[0].suit : null) : trumpSuit;
+    typeof trumpSuit === "undefined"
+      ? phase === "playing" || phase === "hand-complete"
+        ? deck[0].suit
+        : null
+      : trumpSuit;
   const leader =
     phase === "playing" || phase === "hand-complete" ? openingLeader(dealer, bidderPlayer, config) : nextPlayer(dealer);
   const currentPlayer =
     phase === "bidding" ? nextPlayer(dealer) : phase === "choose-trump" ? (bidderPlayer ?? nextPlayer(dealer)) : leader;
-  const trumpRevealed =
-    (phase === "playing" || phase === "hand-complete") && chosenTrump === null ? true : false;
+  const trumpRevealed = (phase === "playing" || phase === "hand-complete") && chosenTrump === null ? true : false;
 
   return {
     hands,
@@ -217,11 +220,7 @@ const finalizeTrumpChoice = ({
     phase: "playing",
     leader,
     currentPlayer: leader,
-    log: [
-      ...state.log,
-      logLine,
-      state.undealt.length > 0 ? "Remaining cards dealt." : "Hand complete.",
-    ],
+    log: [...state.log, logLine, state.undealt.length > 0 ? "Remaining cards dealt." : "Hand complete."],
   };
 };
 
@@ -319,8 +318,8 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     return finalizeTrumpChoice({
       state,
       trumpSuit: action.suit,
-      trumpRevealed: false,
-      logLine: `Trump chosen by P${action.player + 1}: ${action.suit}.`,
+      trumpRevealed: action.suit === null ? true : false,
+      logLine: `Trump chosen by P${action.player + 1}: ${action.suit ?? "Joker (no trump)"}.`,
     });
   }
 
@@ -379,9 +378,6 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
   if (action.type !== "playCard") return state;
   if (state.phase !== "playing") {
     throw new Error("Hand is not in play.");
-  }
-  if (state.trumpSuit === null) {
-    throw new Error("Trump has not been chosen.");
   }
 
   if (action.player !== state.currentPlayer) {

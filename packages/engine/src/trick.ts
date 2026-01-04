@@ -65,7 +65,7 @@ const highestByRank = (plays: TrickPlay[]): TrickPlay => {
   });
 };
 
-export const winningPlay = (trick: TrickState, trumpSuit: Suit, trumpRevealed: boolean): TrickPlay => {
+export const winningPlay = (trick: TrickState, trumpSuit: Suit | null, trumpRevealed: boolean): TrickPlay => {
   if (trick.plays.length === 0) {
     throw new Error("Cannot determine winner of an empty trick.");
   }
@@ -75,7 +75,7 @@ export const winningPlay = (trick: TrickState, trumpSuit: Suit, trumpRevealed: b
     throw new Error("Trick has no lead suit.");
   }
 
-  if (trumpRevealed) {
+  if (trumpRevealed && trumpSuit) {
     const trumps = trick.plays.filter((play) => play.card.suit === trumpSuit);
     if (trumps.length > 0) {
       return highestByRank(trumps);

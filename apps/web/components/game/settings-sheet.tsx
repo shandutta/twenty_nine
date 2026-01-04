@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Volume2, Sparkles, Play } from "lucide-react";
 import { useState } from "react";
-import type { ControlMode } from "@/components/game/types";
 
 interface SettingsSheetProps {
   open: boolean;
@@ -19,8 +18,6 @@ interface SettingsSheetProps {
   onAnimationsChange: (enabled: boolean) => void;
   autoPlay: boolean;
   onAutoPlayChange: (enabled: boolean) => void;
-  controlMode: ControlMode;
-  onControlModeChange: (mode: ControlMode) => void;
   onNewGame: () => void;
 }
 
@@ -33,8 +30,6 @@ export function SettingsSheet({
   onAnimationsChange,
   autoPlay,
   onAutoPlayChange,
-  controlMode,
-  onControlModeChange,
   onNewGame,
 }: SettingsSheetProps) {
   const [volume, setVolume] = useState([75]);
@@ -141,21 +136,6 @@ export function SettingsSheet({
                 </div>
               </div>
               <div className="border-sidebar-border/60 mt-4 space-y-4 border-t pt-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <Label htmlFor="single-hand" className="text-sm text-sidebar-foreground">
-                      Single-hand control
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      Play both Team A hands. Switching deals a fresh round.
-                    </p>
-                  </div>
-                  <Switch
-                    id="single-hand"
-                    checked={controlMode === "single-hand"}
-                    onCheckedChange={(checked) => onControlModeChange(checked ? "single-hand" : "standard")}
-                  />
-                </div>
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="autoplay" className="text-sm text-sidebar-foreground">

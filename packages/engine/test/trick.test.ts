@@ -32,6 +32,20 @@ describe("trick winner logic", () => {
     const winner = winningPlay(trick, "spades", true);
     expect(winner.player).toBe(3);
   });
+
+  it("treats Joker trump as no-trump (lead suit wins)", () => {
+    const trick: TrickState = {
+      plays: [
+        { player: 0, card: card("hearts", "10") },
+        { player: 1, card: card("spades", "J") },
+        { player: 2, card: card("hearts", "A") },
+        { player: 3, card: card("clubs", "A") },
+      ],
+    };
+
+    const winner = winningPlay(trick, null, true);
+    expect(winner.player).toBe(2);
+  });
 });
 
 describe("follow suit rule", () => {

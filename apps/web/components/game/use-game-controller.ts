@@ -226,6 +226,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     .map((card) => `{"rank":"${card.rank}","suit":"${card.suit}","points":${cardPoints(card)}}`)
     .join(", ");
 
+  const trumpLabel = state.trumpSuit ?? "joker (no trump)";
   const prompt = [
     'You are an expert 29 card game bot. Return JSON only with keys "rank" and "suit".',
     "Always choose from the provided legal moves.",
@@ -240,7 +241,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     "",
     `Player: ${playerMeta.name} (${playerMeta.position}).`,
     `Your team: ${TEAM_LABELS[myTeam]}. Bidder: ${bidderLabel} (target ${bidTarget}).`,
-    `Trick ${trickIndex} of 8. Lead suit: ${lead}. Trump: ${state.trumpRevealed ? state.trumpSuit : "hidden"}.`,
+    `Trick ${trickIndex} of 8. Lead suit: ${lead}. Trump: ${state.trumpRevealed ? trumpLabel : "hidden"}.`,
     `Early trick: ${state.trickNumber < 3 ? "yes" : "no"}.`,
     `Score: Team A ${state.points[0]} pts, Team B ${state.points[1]} pts.`,
     `Current trick plays: ${currentTrick}.`,
@@ -434,10 +435,7 @@ export const useGameController = () => {
     [dispatch, engineState, isHumanTurn, legalCards]
   );
 
-  const canBid = useMemo(
-    () => engineState.phase === "bidding" && isHumanTurn,
-    [engineState, isHumanTurn]
-  );
+  const canBid = useMemo(() => engineState.phase === "bidding" && isHumanTurn, [engineState, isHumanTurn]);
 
   const bidOptions = useMemo(() => {
     if (!canBid) return [];
@@ -462,13 +460,10 @@ export const useGameController = () => {
     dispatch({ type: "passBid", player: engineState.currentPlayer });
   }, [canBid, dispatch, engineState.currentPlayer]);
 
-  const canChooseTrump = useMemo(
-    () => engineState.phase === "choose-trump" && isHumanTurn,
-    [engineState, isHumanTurn]
-  );
+  const canChooseTrump = useMemo(() => engineState.phase === "choose-trump" && isHumanTurn, [engineState, isHumanTurn]);
 
   const handleChooseTrump = useCallback(
-    (suit: Suit) => {
+    (suit: Suit | null) => {
       if (!canChooseTrump) return;
       dispatch({ type: "chooseTrump", player: engineState.currentPlayer, suit });
     },

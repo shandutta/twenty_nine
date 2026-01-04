@@ -6480,3 +6480,270 @@ Already up to date.
 [01/04/2026, 00:15:18] Retrying OpenRouter (model=google/gemini-2.0-flash-exp:free) in 2454ms after error: 429 Provider returned error; request_id=n/a; body={"error":{"message":"Provider returned error","code":429,"metadata":{"raw":"google/gemini-2.0-flash-exp:free i…
 [01/04/2026, 00:15:24] OpenRouter request_id=n/a model=meta-llama/llama-3.1-8b-instruct
 [01/04/2026, 00:15:24] AI-generated commit message: `feat: add single-hand control mode`
+deploy: running prettier (write)
+
+> twentynine@ format /home/shan/twentynine
+> prettier --write .
+
+.github/workflows/ci.yml 56ms (unchanged)
+.prettierrc.json 41ms (unchanged)
+apps/web/app/api/openrouter/route.ts 108ms (unchanged)
+apps/web/app/game/page.tsx 117ms (unchanged)
+apps/web/app/globals.css 94ms (unchanged)
+apps/web/app/layout.tsx 15ms (unchanged)
+apps/web/app/page.tsx 42ms (unchanged)
+apps/web/components.json 3ms (unchanged)
+apps/web/components/game/hand.tsx 80ms (unchanged)
+apps/web/components/game/settings-sheet.tsx 35ms (unchanged)
+apps/web/components/game/sidebar.tsx 74ms (unchanged)
+apps/web/components/game/table.tsx 123ms (unchanged)
+apps/web/components/game/types.ts 11ms (unchanged)
+apps/web/components/game/use-game-controller.ts 109ms
+apps/web/components/theme-provider.tsx 3ms (unchanged)
+apps/web/components/ui/accordion.tsx 8ms (unchanged)
+apps/web/components/ui/alert-dialog.tsx 10ms (unchanged)
+apps/web/components/ui/alert.tsx 6ms (unchanged)
+apps/web/components/ui/aspect-ratio.tsx 3ms (unchanged)
+apps/web/components/ui/avatar.tsx 5ms (unchanged)
+apps/web/components/ui/badge.tsx 5ms (unchanged)
+apps/web/components/ui/breadcrumb.tsx 10ms (unchanged)
+apps/web/components/ui/button-group.tsx 7ms (unchanged)
+apps/web/components/ui/button.tsx 7ms (unchanged)
+apps/web/components/ui/calendar.tsx 20ms (unchanged)
+apps/web/components/ui/card.tsx 7ms (unchanged)
+apps/web/components/ui/carousel.tsx 24ms (unchanged)
+apps/web/components/ui/chart.tsx 49ms (unchanged)
+apps/web/components/ui/checkbox.tsx 3ms (unchanged)
+apps/web/components/ui/collapsible.tsx 3ms (unchanged)
+apps/web/components/ui/command.tsx 11ms (unchanged)
+apps/web/components/ui/context-menu.tsx 15ms (unchanged)
+apps/web/components/ui/dialog.tsx 10ms (unchanged)
+apps/web/components/ui/drawer.tsx 8ms (unchanged)
+apps/web/components/ui/dropdown-menu.tsx 20ms (unchanged)
+apps/web/components/ui/empty.tsx 9ms (unchanged)
+apps/web/components/ui/field.tsx 19ms (unchanged)
+apps/web/components/ui/form.tsx 16ms (unchanged)
+apps/web/components/ui/hover-card.tsx 4ms (unchanged)
+apps/web/components/ui/input-group.tsx 12ms (unchanged)
+apps/web/components/ui/input-otp.tsx 11ms (unchanged)
+apps/web/components/ui/input.tsx 3ms (unchanged)
+apps/web/components/ui/item.tsx 10ms (unchanged)
+apps/web/components/ui/kbd.tsx 3ms (unchanged)
+apps/web/components/ui/label.tsx 2ms (unchanged)
+apps/web/components/ui/menubar.tsx 13ms (unchanged)
+apps/web/components/ui/navigation-menu.tsx 8ms (unchanged)
+apps/web/components/ui/pagination.tsx 14ms (unchanged)
+apps/web/components/ui/popover.tsx 5ms (unchanged)
+apps/web/components/ui/progress.tsx 4ms (unchanged)
+apps/web/components/ui/radio-group.tsx 6ms (unchanged)
+apps/web/components/ui/resizable.tsx 6ms (unchanged)
+apps/web/components/ui/scroll-area.tsx 4ms (unchanged)
+apps/web/components/ui/select.tsx 12ms (unchanged)
+apps/web/components/ui/separator.tsx 3ms (unchanged)
+apps/web/components/ui/sheet.tsx 9ms (unchanged)
+apps/web/components/ui/sidebar.tsx 52ms (unchanged)
+apps/web/components/ui/skeleton.tsx 6ms (unchanged)
+apps/web/components/ui/slider.tsx 8ms (unchanged)
+apps/web/components/ui/sonner.tsx 3ms (unchanged)
+apps/web/components/ui/spinner.tsx 3ms (unchanged)
+apps/web/components/ui/switch.tsx 3ms (unchanged)
+apps/web/components/ui/table.tsx 6ms (unchanged)
+apps/web/components/ui/tabs.tsx 4ms (unchanged)
+apps/web/components/ui/textarea.tsx 3ms (unchanged)
+apps/web/components/ui/toast.tsx 16ms (unchanged)
+apps/web/components/ui/toaster.tsx 5ms (unchanged)
+apps/web/components/ui/toggle-group.tsx 6ms (unchanged)
+apps/web/components/ui/toggle.tsx 4ms (unchanged)
+apps/web/components/ui/tooltip.tsx 6ms (unchanged)
+apps/web/components/ui/use-mobile.tsx 3ms (unchanged)
+apps/web/components/ui/use-toast.ts 18ms (unchanged)
+apps/web/eslint.config.mjs 14ms (unchanged)
+apps/web/hooks/use-mobile.ts 4ms (unchanged)
+apps/web/hooks/use-toast.ts 19ms (unchanged)
+apps/web/lib/engine.ts 2ms (unchanged)
+apps/web/lib/use-twentynine-game.ts 36ms (unchanged)
+apps/web/lib/utils.ts 2ms (unchanged)
+apps/web/next-env.d.ts 4ms (unchanged)
+apps/web/next.config.ts 3ms (unchanged)
+apps/web/package.json 5ms (unchanged)
+apps/web/playwright.config.ts 15ms (unchanged)
+apps/web/pnpm-workspace.yaml 4ms (unchanged)
+apps/web/postcss.config.mjs 2ms (unchanged)
+apps/web/README.md 57ms (unchanged)
+apps/web/scripts/lighthouse.mjs 34ms (unchanged)
+apps/web/scripts/next-dev.mjs 14ms (unchanged)
+apps/web/scripts/next-start.mjs 10ms (unchanged)
+apps/web/styles/globals.css 30ms (unchanged)
+apps/web/test/e2e/game.spec.ts 30ms (unchanged)
+apps/web/test/game-page.test.tsx 22ms (unchanged)
+apps/web/test/setup.ts 1ms (unchanged)
+apps/web/test/useGameController.test.tsx 19ms (unchanged)
+apps/web/tsconfig.json 3ms (unchanged)
+apps/web/twentynine.code-workspace 4ms (unchanged)
+apps/web/vitest.config.ts 6ms (unchanged)
+docs/implementation-guide.md 61ms (unchanged)
+docs/qa/baseline.md 17ms (unchanged)
+docs/qa/release-candidate.md 11ms (unchanged)
+docs/ux/ux-changelog.md 16ms (unchanged)
+package.json 2ms (unchanged)
+packages/engine/package.json 1ms (unchanged)
+packages/engine/src/cards.ts 11ms (unchanged)
+packages/engine/src/config.ts 4ms (unchanged)
+packages/engine/src/game.ts 55ms
+packages/engine/src/index.ts 2ms (unchanged)
+packages/engine/src/royals.ts 5ms (unchanged)
+packages/engine/src/trick.ts 9ms (unchanged)
+packages/engine/test/bidding.test.ts 16ms (unchanged)
+packages/engine/test/cards.test.ts 4ms (unchanged)
+packages/engine/test/game.test.ts 8ms (unchanged)
+packages/engine/test/royals.test.ts 7ms (unchanged)
+packages/engine/test/trick.test.ts 10ms (unchanged)
+packages/engine/tsconfig.json 2ms (unchanged)
+packages/engine/vitest.config.ts 6ms (unchanged)
+pnpm-workspace.yaml 5ms (unchanged)
+README.md 18ms (unchanged)
+scripts/auto-commit.js 64ms (unchanged)
+scripts/verify-next-build.mjs 9ms (unchanged)
+deploy: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+deploy: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/bidding.test.ts (6 tests) 8ms
+ ✓ test/trick.test.ts (4 tests) 6ms
+ ✓ test/game.test.ts (3 tests) 8ms
+ ✓ test/royals.test.ts (6 tests) 8ms
+ ✓ test/cards.test.ts (3 tests) 9ms
+
+ Test Files  5 passed (5)
+      Tests  22 passed (22)
+   Start at  08:15:41
+   Duration  761ms (transform 377ms, setup 0ms, collect 799ms, tests 40ms, environment 2ms, prepare 682ms)
+
+
+> web@0.1.0 test /home/shan/twentynine/apps/web
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/apps/web
+
+ ✓ test/useGameController.test.tsx (2 tests) 63ms
+ ✓ test/game-page.test.tsx (2 tests) 575ms
+   ✓ /game UI > disables illegal moves  359ms
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  08:15:43
+   Duration  3.14s (transform 663ms, setup 174ms, collect 1.67s, tests 638ms, environment 1.35s, prepare 306ms)
+
+deploy: running e2e tests
+
+> web@0.1.0 test:e2e /home/shan/twentynine/apps/web
+> playwright test
+
+[WebServer] [31m[1m⨯[22m[39m Unable to acquire lock at [36m/home/shan/twentynine/apps/web/.next/dev/lock[39m, is another instance of [36mnext dev[39m running?
+Error: Process from config.webServer was not able to start. Exit code: 1
+
+ ELIFECYCLE  Command failed with exit code 1.
+[main 68afe96] `feat: add single-hand control mode`
+ 13 files changed, 636 insertions(+), 125 deletions(-)
+ create mode 100644 .tmp/board-stacks-2.png
+ create mode 100644 .tmp/board-stacks.png
+pre-push: running prettier check
+
+> twentynine@ format:check /home/shan/twentynine
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+pre-push: running lint
+
+> twentynine@ lint /home/shan/twentynine
+> pnpm -C apps/web lint
+
+
+> web@0.1.0 lint /home/shan/twentynine/apps/web
+> eslint
+
+pre-push: running unit tests
+
+> twentynine@ test /home/shan/twentynine
+> pnpm -C packages/engine test && pnpm -C apps/web test
+
+
+> @twentynine/engine@0.0.1 test /home/shan/twentynine/packages/engine
+> vitest run
+
+
+ RUN  v3.2.4 /home/shan/twentynine/packages/engine
+
+ ✓ test/bidding.test.ts (6 tests) 8ms
+ ✓ test/cards.test.ts (3 tests) 9ms
+ ✓ test/game.test.ts (3 tests) 12ms
+ ✓ test/royals.test.ts (6 tests) 10ms
+ ❯ test/trick.test.ts (5 tests | 1 failed) 27ms
+   ✓ trick winner logic > ignores trump suit before reveal 5ms
+   ✓ trick winner logic > uses highest trump after reveal 1ms
+   × trick winner logic > treats Joker trump as no-trump (lead suit wins) 16ms
+     → expected +0 to be 2 // Object.is equality
+   ✓ follow suit rule > forces a player to follow suit when possible 1ms
+   ✓ scoring totals > adds last trick bonus so total hand points equal 29 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/trick.test.ts > trick winner logic > treats Joker trump as no-trump (lead suit wins)
+AssertionError: expected +0 to be 2 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 2[39m
+[31m+ 0[39m
+
+ ❯ test/trick.test.ts:47:27
+     45| 
+     46|     const winner = winningPlay(trick, null, true);
+     47|     expect(winner.player).toBe(2);
+       |                           ^
+     48|   });
+     49| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 22 passed (23)
+   Start at  08:16:11
+   Duration  635ms (transform 286ms, setup 0ms, collect 690ms, tests 67ms, environment 2ms, prepare 647ms)
+
+ ELIFECYCLE  Test failed. See above for more details.
+ ELIFECYCLE  Test failed. See above for more details.
+error: failed to push some refs to 'https://github.com/shandutta/twenty_nine.git'
+[01/04/2026, 00:16:12] git push failed.
+ ELIFECYCLE  Command failed with exit code 1.
+
+> twentynine@ auto:commit /home/shan/twentynine
+> node scripts/auto-commit.js
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env.local -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+[01/04/2026, 00:30:02] Starting auto-commit run
+[01/04/2026, 00:30:02] Pulling latest changes from origin...
+From https://github.com/shandutta/twenty_nine
+ * branch            main       -> FETCH_HEAD

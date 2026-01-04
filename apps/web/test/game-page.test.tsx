@@ -93,6 +93,7 @@ describe("/game UI", () => {
       onPassBid: vi.fn(),
       canChooseTrump: false,
       onChooseTrump: vi.fn(),
+      onChooseTrumpFromSeventh: vi.fn(),
       onNewGame: vi.fn(),
       canRevealTrump: false,
       onRevealTrump: vi.fn(),
