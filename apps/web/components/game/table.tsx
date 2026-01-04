@@ -293,7 +293,7 @@ function OpponentArea({
         </div>
         <div className={stackClass}>
           {Array.from({ length: cardCount }).map((_, i) => (
-            <CardBack key={i} size="medium" />
+            <CardBack key={i} size="small" />
           ))}
         </div>
       </div>
@@ -554,9 +554,8 @@ export function GameTable({
         </div>
 
         <div className="relative h-full flex flex-col px-4 md:px-6 py-4">
-          <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c1813]/85 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(2,6,5,0.7),_transparent_70%)]" />
-            <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.05)_0,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_8px)]" />
+          <div className="relative rounded-[22px] border border-white/10 bg-[#0b1511]/80 px-4 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_16px_40px_rgba(0,0,0,0.35)] backdrop-blur">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(2,6,5,0.7),_transparent_70%)]" />
             <div className="relative flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <Badge className="gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-emerald-50 shadow-[inset_0_0_12px_rgba(34,197,94,0.15)]">
