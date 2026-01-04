@@ -10,6 +10,7 @@ test-results
 .corepack-cache
 .env
 .env.local
+.logs/
 _v0.zip
 .v0-twenty-nine-game-table/
 v0-twenty-nine-game-table.zip

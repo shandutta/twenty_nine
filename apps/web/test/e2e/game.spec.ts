@@ -66,33 +66,37 @@ test("game page smoke flow", async ({ page }) => {
   while (Date.now() < deadline) {
     const bidSelect = page.locator('[data-slot="select-trigger"]').first();
     const placeBid = page.getByRole("button", { name: /^Place bid$/ });
-    if ((await bidSelect.isVisible().catch(() => false)) && !(await placeBid.isEnabled().catch(() => false))) {
+    const bidSelectVisible =
+      (await bidSelect.count()) > 0 && (await bidSelect.isVisible({ timeout: 0 }).catch(() => false));
+    const placeBidEnabled =
+      (await placeBid.count()) > 0 && (await placeBid.first().isEnabled({ timeout: 0 }).catch(() => false));
+    if (bidSelectVisible && !placeBidEnabled) {
       await bidSelect.click();
       const option = page.getByRole("option", { name: /Bid \d+/ }).first();
       if (await option.isVisible().catch(() => false)) {
         await option.click();
       }
     }
-    if ((await placeBid.isVisible().catch(() => false)) && (await placeBid.isEnabled().catch(() => false))) {
-      await placeBid.click();
+    if ((await placeBid.count()) > 0 && placeBidEnabled) {
+      await placeBid.first().click();
       await page.waitForTimeout(300);
       continue;
     }
 
     const passButton = page.getByRole("button", { name: /^Pass$/ });
-    if ((await passButton.isVisible().catch(() => false)) && (await passButton.isEnabled().catch(() => false))) {
-      await passButton.click();
+    const passEnabled =
+      (await passButton.count()) > 0 && (await passButton.first().isEnabled({ timeout: 0 }).catch(() => false));
+    if (passEnabled) {
+      await passButton.first().click();
       await page.waitForTimeout(300);
       continue;
     }
 
-    const enabledTrump = page
-      .locator("button:not([disabled])")
-      .filter({ hasText: /Clubs|Diamonds|Hearts|Spades/ })
-      .first();
+    const enabledTrump = page.getByRole("button", { name: /Clubs|Diamonds|Hearts|Spades/ });
     if ((await enabledTrump.count()) > 0) {
-      await enabledTrump.scrollIntoViewIfNeeded();
-      await enabledTrump.click({ force: true });
+      const trumpButton = enabledTrump.first();
+      await trumpButton.scrollIntoViewIfNeeded();
+      await trumpButton.click({ force: true });
       await page.waitForTimeout(300);
       continue;
     }
