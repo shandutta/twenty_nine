@@ -126,7 +126,7 @@ Deployment:
 - When it runs, it installs deps (if needed), runs prettier/lint/tests (and optional e2e), cleans `.next`, builds the Next.js app, verifies build assets, then restarts the systemd service and hits a local `/game` health check.
 - Restart requires sudo. If sudo is unavailable, the script exits and instructs you to run `sudo systemctl restart twentynine`.
 - Build integrity guard: `scripts/verify-next-build.mjs` ensures all assets listed in the Next.js build manifests exist (prevents missing `/_next/static/...` files).
-- Optional health cron (idempotent): `scripts/install-health-cron.sh` adds a `scripts/healthcheck.sh` entry to the user crontab (default every 10 minutes). The installer exits early if the marker is already present.
+- Health check timer (systemd): `twentynine-healthcheck.timer` runs `scripts/healthcheck.sh` every 10 minutes with log output appended to `.logs/healthcheck.log`. Use `systemctl status twentynine-healthcheck.timer` to verify it.
 
 CI/CD:
 

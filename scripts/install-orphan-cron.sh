@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 CRON_MARKER="# twentynine-orphan-check"
 CRON_SCHEDULE="${TWENTYNINE_ORPHAN_CRON:-15 4 * * *}"
-CRON_CMD="${ROOT_DIR}/scripts/check-orphan-next.sh --fix ${CRON_MARKER}"
+CRON_CMD="cd ${ROOT_DIR} && mkdir -p ${ROOT_DIR}/.logs && PATH=/home/shan/.nvm/versions/node/v24.12.0/bin:/usr/bin:/bin COREPACK_HOME=${ROOT_DIR}/.corepack-cache ${ROOT_DIR}/scripts/check-orphan-next.sh --fix >> ${ROOT_DIR}/.logs/orphan-check.log 2>&1 ${CRON_MARKER}"
 
 CURRENT_CRON=$(crontab -l 2>/dev/null || true)
 
