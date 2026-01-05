@@ -325,8 +325,7 @@ export function GameSidebar({
                 <CardContent className="pt-0 space-y-1.5 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   {isBidding && (
                     <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/65">
-                      Bidding is based on the first four cards. The winner names trump, picks Joker (no trump), or uses
-                      the 7th card before the final deal.
+                      Bidding is based on the first four cards. The winner names trump before the final deal.
                     </p>
                   )}
                   <div className="flex items-center justify-between text-[clamp(11px,0.85vw,13px)]">
@@ -342,7 +341,7 @@ export function GameSidebar({
                         ? "Your turn to bid"
                         : `Waiting for ${currentPlayer}`
                       : canChooseTrump
-                        ? "Pick the trump suit, Joker (no trump), or use the 7th card"
+                        ? "Pick the trump suit"
                         : `Waiting for ${currentPlayer}`}
                   </div>
                   {isBidding && bidOptions.length > 0 && (
@@ -469,15 +468,13 @@ export function GameSidebar({
                 <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 text-[clamp(11px,0.85vw,13px)] leading-relaxed text-emerald-100/70 space-y-1.5">
-                <p>
-                  • Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.
-                </p>
+                <p>• Bidding is based on the first four cards; the winner names trump.</p>
                 <p>• After trump is set, each player receives their final four cards.</p>
                 <p>
                   • Must follow suit if possible; trump stays hidden until someone can&apos;t follow suit (then they can
                   reveal it).
                 </p>
-                <p>• Joker = no trump; highest card of the led suit wins.</p>
+                <p>• No-trump hand: highest card of the led suit wins.</p>
                 <p>• Last trick grants the 29th point; royals (K+Q of trump) adjust target +/-4.</p>
               </CardContent>
             </Card>

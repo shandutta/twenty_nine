@@ -1101,8 +1101,7 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                    Bidding is based on the first four cards. The winner names trump or uses the 7th card before the
-                    final deal.
+                    Bidding is based on the first four cards. The winner names trump before the final deal.
                   </p>
                   <div className="text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
@@ -1158,15 +1157,13 @@ export function GameTable({
                     </Badge>
                   </div>
                   <p className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
-                    Bidding is based on the first four cards · Winner names trump, picks Joker, or uses the 7th card
+                    Bidding is based on the first four cards · Winner names trump
                   </p>
                   <div className="text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">
                     Bid winner: <span className="text-emerald-50">{bidderName}</span>
                   </div>
                   <div className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
-                    {canChooseTrump
-                      ? "Pick the trump suit, Joker (no trump), or use the 7th card"
-                      : `Waiting for ${currentPlayerName}`}
+                    {canChooseTrump ? "Pick the trump suit" : `Waiting for ${currentPlayerName}`}
                   </div>
                   {canChooseTrump && (
                     <div className="space-y-2">
