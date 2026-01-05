@@ -50,6 +50,7 @@ interface GameTableProps {
     costUsd: number | null;
   } | null;
   showReasoningTrace: boolean;
+  reasoningTraceSupported?: boolean | null;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -357,6 +358,7 @@ function ReasoningTracePanel({
   trace,
   meta,
   show,
+  supported,
 }: {
   trace: string | null;
   meta: {
@@ -369,11 +371,19 @@ function ReasoningTracePanel({
     costUsd: number | null;
   } | null;
   show: boolean;
+  supported: boolean | null;
 }) {
   if (!show) return null;
   const modelLabel = meta ? formatModelLabel(meta.model) : "—";
   const effortLabel = meta ? formatEffortLabel(meta.effort) : "—";
-  const body = trace?.trim() ? trace : meta?.hasTrace ? "Trace unavailable for this model." : "No trace yet.";
+  const reasoningUnavailable = supported === false;
+  const body = reasoningUnavailable
+    ? "Selected model does not return reasoning traces on OpenRouter."
+    : trace?.trim()
+      ? trace
+      : meta?.hasTrace
+        ? "Trace unavailable for this model."
+        : "No trace yet.";
   const promptTokens = meta?.usage ? getUsageNumber(meta.usage, "prompt_tokens") : null;
   const completionTokens = meta?.usage ? getUsageNumber(meta.usage, "completion_tokens") : null;
   const totalTokensDirect = meta?.usage ? getUsageNumber(meta.usage, "total_tokens") : null;
@@ -521,6 +531,7 @@ export function GameTable({
   llmReasoning,
   llmReasoningMeta,
   showReasoningTrace,
+  reasoningTraceSupported = null,
 }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
@@ -592,6 +603,34 @@ export function GameTable({
   const matchWinnerTeam = matchWinnerId ? (matchWinnerId === "teamA" ? teamA : teamB) : null;
   const matchLoserTeam = matchWinnerId ? (matchWinnerId === "teamA" ? teamB : teamA) : null;
   const matchEndReason = gameState.matchEndReason;
+  const isFinalTrick = lastTrick?.trickNumber === 8;
+  const contractTeamId = teamA.bid !== undefined ? "teamA" : teamB.bid !== undefined ? "teamB" : null;
+  const bidderTeam = contractTeamId === "teamA" ? teamA : contractTeamId === "teamB" ? teamB : null;
+  const defenderTeam = contractTeamId === "teamA" ? teamB : contractTeamId === "teamB" ? teamA : null;
+  const bidTarget = gameState.currentBid;
+  const bidderPoints = bidderTeam?.handPoints ?? 0;
+  const madeBid = contractTeamId && bidTarget !== null ? bidderPoints >= bidTarget : null;
+  const handWinnerTeam = contractTeamId ? (madeBid ? bidderTeam : defenderTeam) : null;
+  const handLoserTeam = contractTeamId ? (madeBid ? defenderTeam : bidderTeam) : null;
+  const handLoserPoints =
+    handLoserTeam?.id === "teamA" ? teamA.handPoints : handLoserTeam?.id === "teamB" ? teamB.handPoints : null;
+  const pointMargin = Math.abs(teamA.handPoints - teamB.handPoints);
+  const scoreLine = `${teamA.handPoints}–${teamB.handPoints}`;
+  const bidMargin = contractTeamId && bidTarget !== null ? bidderPoints - bidTarget : null;
+  const pipTeamIndex = contractTeamId === "teamA" ? 0 : contractTeamId === "teamB" ? 1 : null;
+  const pipType = contractTeamId && madeBid !== null ? (madeBid ? "red" : "black") : null;
+  const pipCount =
+    pipTeamIndex === null || !pipType
+      ? null
+      : pipType === "red"
+        ? gameState.matchRedPips[pipTeamIndex]
+        : gameState.matchBlackPips[pipTeamIndex];
+  const pipBadgeTone =
+    pipType === "red"
+      ? "border-rose-400/40 bg-rose-500/15 text-rose-100"
+      : "border-white/25 bg-black/40 text-emerald-50";
+  const handWinnerTone =
+    handWinnerTeam?.id === "teamA" ? "text-emerald-200" : handWinnerTeam?.id === "teamB" ? "text-rose-200" : "";
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [trumpToast, setTrumpToast] = useState<{ title: string; subtitle: string } | null>(null);
   const [showTrumpToast, setShowTrumpToast] = useState(false);
@@ -801,7 +840,7 @@ export function GameTable({
     : "text-[#f6d38b]";
 
   useEffect(() => {
-    if (lastTrickNumber === null) {
+    if (lastTrickNumber === null || lastTrickNumber === 8) {
       const hideTimer = setTimeout(() => {
         setShowTrickToast(false);
       }, 0);
@@ -918,6 +957,147 @@ export function GameTable({
     return () => clearTimeout(timer);
   }, [actionMessage]);
 
+  const renderFinalHandSummary = (variant: "full" | "compact") => {
+    if (!isFinalTrick || !lastTrick) return null;
+    const compact = variant === "compact";
+    const bidDeltaValue = bidMargin === null ? null : Math.abs(bidMargin);
+    const bidDeltaText =
+      bidDeltaValue === null || madeBid === null ? null : `${madeBid ? "+" : "-"}${bidDeltaValue}`;
+    const handHeader = handWinnerTeam ? `${handWinnerTeam.name} takes the hand` : "Hand complete";
+    const handOutcomeLine =
+      handWinnerTeam && handLoserTeam
+        ? `${handWinnerTeam.name} won by ${pointMargin} pts · ${scoreLine}`
+        : `Score ${scoreLine}`;
+
+    return (
+      <div
+        className={cn(
+          "relative overflow-hidden rounded-[28px] border border-white/15 bg-[#0b1612]/95 shadow-[0_28px_80px_rgba(0,0,0,0.6)]",
+          compact ? "p-4" : "p-5"
+        )}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(242,200,121,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(10,20,16,0.8),_transparent_70%)]" />
+        <div className="relative space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.36em] text-emerald-100/60">
+                Final Trick · Hand Resolution
+              </p>
+              <h3 className={cn("mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold", handWinnerTone)}>
+                {handHeader}
+              </h3>
+              <p className="mt-1 text-[clamp(11px,0.9vw,13px)] text-emerald-100/70">{handOutcomeLine}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="border-white/20 bg-white/5 text-emerald-100">Trick 8</Badge>
+              <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
+                +{lastTrick.points} pts
+              </Badge>
+            </div>
+          </div>
+
+          <div className={cn("grid gap-3", compact ? "md:grid-cols-2" : "md:grid-cols-3")}>
+            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+              <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
+                Trick 8 recap
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+                <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
+                <span className="text-emerald-100/70">won for</span>
+                <Badge className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}>
+                  {lastTrickTeam?.name ?? "Team"}
+                </Badge>
+              </div>
+              <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                Winning card <span className="text-emerald-50">{lastTrickCardLabel}</span>
+                <span className="ml-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70">
+                  Last trick bonus +1
+                </span>
+              </div>
+              {!compact && (
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="origin-left scale-90">
+                    <PlayedCard card={lastTrick.winningCard} />
+                  </div>
+                  <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.24em] text-emerald-100/60">
+                    Final winning card
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+              <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
+                Hand result
+              </div>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className={cn("text-[clamp(16px,1.25vw,18px)] font-semibold", handWinnerTone)}>
+                  {handWinnerTeam?.name ?? "Team"}
+                </span>
+                <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                  by {pointMargin} pts
+                </span>
+              </div>
+              <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Score {scoreLine}</div>
+              {bidderTeam && bidTarget !== null && (
+                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                  Contract {bidTarget} · {bidderTeam.name} {madeBid ? "made" : "missed"}
+                  {bidDeltaText ? ` (${bidDeltaText})` : ""}
+                </div>
+              )}
+              {handLoserTeam && (
+                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
+                  {handLoserTeam.name} finishes with {handLoserPoints ?? 0} pts
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+              <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
+                <span>Pip impact</span>
+                {pipType && pipTeamIndex !== null && pipCount !== null && (
+                  <Badge className={cn("border text-[10px] uppercase tracking-[0.22em]", pipBadgeTone)}>
+                    {pipType === "red" ? "Red" : "Black"} +1
+                  </Badge>
+                )}
+              </div>
+              {pipType && bidderTeam && pipCount !== null ? (
+                <>
+                  <div className="mt-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+                    {bidderTeam.name} gains 1 {pipType} pip
+                  </div>
+                  <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                    Now {pipType === "red" ? `R${pipCount}/${MATCH_PIPS}` : `B${pipCount}/${MATCH_PIPS}`}
+                  </div>
+                </>
+              ) : (
+                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                  Pip change unavailable.
+                </div>
+              )}
+              <div className="mt-2 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
+                {teamA.name}: R{gameState.matchRedPips[0]}/B{gameState.matchBlackPips[0]} · {teamB.name}: R
+                {gameState.matchRedPips[1]}/B{gameState.matchBlackPips[1]}
+              </div>
+              {matchFinished && matchWinnerTeam && matchEndReason && (
+                <div className="mt-2 text-[clamp(10px,0.75vw,12px)] text-emerald-100/70">
+                  Match over — {matchReasonLine}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {!matchFinished && (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/70">
+              <span>Ready for next round</span>
+              <span className="text-emerald-50">Round {gameState.matchRound}</span>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const cardSizing: CSSVars = {
     "--hand-card-w": "clamp(76px,7.5vw,132px)",
     "--hand-card-h": "clamp(110px,10.5vw,196px)",
@@ -940,10 +1120,15 @@ export function GameTable({
         {(llmInUse || showReasoningTrace) && (
           <div className="pointer-events-none absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
             <LiveAiIndicator active={llmInUse} />
-            <ReasoningTracePanel trace={llmReasoning} meta={llmReasoningMeta} show={showReasoningTrace} />
+            <ReasoningTracePanel
+              trace={llmReasoning}
+              meta={llmReasoningMeta}
+              show={showReasoningTrace}
+              supported={reasoningTraceSupported}
+            />
           </div>
         )}
-        {lastTrick && (
+        {lastTrick && !isFinalTrick && (
           <div
             className={cn(
               "pointer-events-none absolute left-1/2 top-20 z-20 -translate-x-1/2 transition-all duration-300",
@@ -1025,12 +1210,8 @@ export function GameTable({
                   <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-amber-100/70">
                     Redeal
                   </span>
-                  <span className="text-[clamp(13px,1vw,15px)] font-semibold text-amber-50">
-                    {redealToast.title}
-                  </span>
-                  <span className="text-[clamp(11px,0.85vw,13px)] text-amber-100/75">
-                    {redealToast.subtitle}
-                  </span>
+                  <span className="text-[clamp(13px,1vw,15px)] font-semibold text-amber-50">{redealToast.title}</span>
+                  <span className="text-[clamp(11px,0.85vw,13px)] text-amber-100/75">{redealToast.subtitle}</span>
                 </div>
               </div>
             </div>
@@ -1335,30 +1516,8 @@ export function GameTable({
           </div>
           {canStartNextHand && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-              <div className="pointer-events-auto mx-4 w-full max-w-md rounded-3xl border border-white/15 bg-[#0b1612]/95 p-6 text-emerald-50 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-emerald-100/60">
-                      Hand complete
-                    </p>
-                    <h3 className="mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold text-emerald-50">
-                      Ready for the next deal?
-                    </h3>
-                  </div>
-                  <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
-                    Round {gameState.matchRound}
-                  </Badge>
-                </div>
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                  <div className="flex items-center justify-between">
-                    <span>{teamA.name}</span>
-                    <span>{teamA.handPoints} pts</span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between">
-                    <span>{teamB.name}</span>
-                    <span>{teamB.handPoints} pts</span>
-                  </div>
-                </div>
+              <div className="pointer-events-auto mx-4 w-full max-w-3xl rounded-[32px] border border-white/15 bg-[#0b1612]/90 p-5 text-emerald-50 shadow-[0_28px_90px_rgba(0,0,0,0.6)] backdrop-blur">
+                {renderFinalHandSummary("full")}
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Button onClick={onNextHand} className="flex-1 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
                     Deal Next Hand
@@ -1445,6 +1604,8 @@ export function GameTable({
                   {matchEndReason === "red" ? "Red pips" : "Black pips"}
                 </div>
               </div>
+
+              <div className="mt-5">{renderFinalHandSummary("compact")}</div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">

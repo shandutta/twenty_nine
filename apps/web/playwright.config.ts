@@ -24,7 +24,7 @@ export default defineConfig({
   outputDir: "reports/playwright/test-results",
   webServer: useWebServer
     ? {
-        command: `pnpm -C apps/web dev -- --port ${serverPort}`,
+        command: `NEXT_PUBLIC_GAME_LOGGING=0 pnpm -C apps/web dev -- --port ${serverPort}`,
         url: `http://127.0.0.1:${serverPort}`,
         cwd: repoRoot,
         reuseExistingServer: !process.env.CI,

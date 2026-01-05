@@ -116,6 +116,7 @@ function GamePageClient() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
+  const [modelReasoningSupport, setModelReasoningSupport] = useState<Record<string, boolean> | null>(null);
   const [confirmNewGameOpen, setConfirmNewGameOpen] = useState(false);
 
   useSoundEffects({
@@ -172,7 +173,7 @@ function GamePageClient() {
   const trickWinningCard = trickSummary ? formatCard(trickSummary.winningCard) : "--";
   const trickPoints = trickSummary?.points ?? 0;
   const trickNextLead = trickSummary ? playerNameById(gameState.currentPlayerId) : null;
-  const trickDialogOpen = trickResolution.open && Boolean(trickSummary);
+  const trickDialogOpen = trickResolution.open && Boolean(trickSummary) && trickSummary?.trickNumber !== 8;
 
   const canRequestCoach =
     coachEnabled && isCoachTurn && gameState.phase === "playing" && !coachLoading && openRouterConfigured !== false;
@@ -205,6 +206,43 @@ function GamePageClient() {
   }, []);
 
   useEffect(() => {
+    if (!trickResolution.pending) return;
+    if (trickSummary?.trickNumber !== 8) return;
+    onAcknowledgeTrickResolution();
+  }, [onAcknowledgeTrickResolution, trickResolution.pending, trickSummary?.trickNumber]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadModelSupport = async () => {
+      try {
+        const response = await fetch("/api/openrouter/models");
+        const data = (await response.json().catch(() => null)) as
+          | { models?: Array<{ id?: string; supportsReasoning?: boolean }> }
+          | null;
+        if (!isMounted) return;
+        if (!Array.isArray(data?.models)) {
+          setModelReasoningSupport(null);
+          return;
+        }
+        const supportMap: Record<string, boolean> = {};
+        for (const model of data.models) {
+          if (!model || typeof model.id !== "string") continue;
+          supportMap[model.id] = Boolean(model.supportsReasoning);
+        }
+        setModelReasoningSupport(supportMap);
+      } catch {
+        if (isMounted) {
+          setModelReasoningSupport(null);
+        }
+      }
+    };
+    void loadModelSupport();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     try {
       const stored = localStorage.getItem("twentynine.easyMode");
       if (stored !== null) {
@@ -227,6 +265,12 @@ function GamePageClient() {
     setCoachResponse(null);
     setCoachError(null);
   }, [gameState.currentPlayerId, gameState.trickNumber, gameState.phase, coachEnabled]);
+
+  const reasoningTraceSupported = useMemo(() => {
+    if (!modelReasoningSupport) return null;
+    if (!(botSettings.model in modelReasoningSupport)) return null;
+    return modelReasoningSupport[botSettings.model];
+  }, [botSettings.model, modelReasoningSupport]);
 
   const requestCoach = async () => {
     if (!coachEnabled) {
@@ -341,6 +385,7 @@ function GamePageClient() {
         onOpenSettings={() => setSettingsOpen(true)}
         easyMode={easyMode}
         botSettings={botSettings}
+        reasoningTraceSupported={reasoningTraceSupported}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
         onBotModelChange={setBotModel}
@@ -394,6 +439,7 @@ function GamePageClient() {
           llmReasoning={llmReasoning}
           llmReasoningMeta={llmReasoningMeta}
           showReasoningTrace={botSettings.showReasoningTrace}
+          reasoningTraceSupported={reasoningTraceSupported}
         />
       </main>
       <SettingsSheet
