@@ -1082,8 +1082,8 @@ export function GameTable({
             <OpponentArea player={topPlayer} position="top" isTeammate={true} isActive={topPlayer.isCurrentPlayer} />
           </div>
 
-          <div className="flex-1 flex items-center justify-between px-10 md:px-20 xl:px-28">
-            <div className="flex-shrink-0">
+          <div className="flex-1 flex flex-wrap items-center justify-center gap-6 px-6 sm:px-8 lg:flex-nowrap lg:justify-between lg:px-16 xl:px-28">
+            <div className="flex-shrink-0 order-2 lg:order-none">
               <OpponentArea
                 player={leftPlayer}
                 position="left"
@@ -1092,7 +1092,7 @@ export function GameTable({
               />
             </div>
 
-            <div className="flex-1 flex items-center justify-center">
+            <div className="order-1 flex w-full items-center justify-center lg:order-none lg:w-auto">
               <div className="relative w-[clamp(14.5rem,78vw,18rem)] h-[clamp(11rem,60vw,14.5rem)] sm:w-[clamp(17rem,26vw,26rem)] sm:h-[clamp(13rem,20vw,20rem)]">
                 <div className="absolute inset-0 rounded-3xl border border-white/20 bg-black/25 shadow-[inset_0_0_22px_rgba(0,0,0,0.35)]" />
                 <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.08),transparent_58%)] opacity-70" />
@@ -1138,7 +1138,7 @@ export function GameTable({
               </div>
             </div>
 
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 order-3 lg:order-none">
               <OpponentArea
                 player={rightPlayer}
                 position="right"

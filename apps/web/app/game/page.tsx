@@ -175,11 +175,7 @@ function GamePageClient() {
   const trickDialogOpen = trickResolution.open && Boolean(trickSummary);
 
   const canRequestCoach =
-    coachEnabled &&
-    isCoachTurn &&
-    gameState.phase === "playing" &&
-    !coachLoading &&
-    openRouterConfigured !== false;
+    coachEnabled && isCoachTurn && gameState.phase === "playing" && !coachLoading && openRouterConfigured !== false;
   const requestNewGame = () => setConfirmNewGameOpen(true);
 
   const confirmNewGame = () => {

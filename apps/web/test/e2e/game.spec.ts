@@ -79,9 +79,17 @@ test("game page smoke flow", async ({ page }) => {
 
   const handButtons = page.locator('button[aria-label*=" of "]');
   const enabledHandButtons = page.locator('button[aria-label*=" of "][aria-disabled="false"]');
+  const resolveTrickButton = page.getByRole("button", { name: /OK - Next trick/i });
+  const dismissTrickDialog = async () => {
+    if (await resolveTrickButton.isVisible({ timeout: 0 }).catch(() => false)) {
+      await resolveTrickButton.click();
+      await page.waitForTimeout(250);
+    }
+  };
 
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
+    await dismissTrickDialog();
     const bidSelect = page.locator('[data-slot="select-trigger"]').first();
     const placeBid = page.getByRole("button", { name: /^Place bid$/ });
     const bidSelectVisible =
@@ -118,11 +126,16 @@ test("game page smoke flow", async ({ page }) => {
       continue;
     }
 
-    const enabledTrump = page.getByRole("button", { name: /Clubs|Diamonds|Hearts|Spades/ });
-    if ((await enabledTrump.count()) > 0) {
-      const trumpButton = enabledTrump.first();
-      await trumpButton.scrollIntoViewIfNeeded();
-      await trumpButton.click({ force: true });
+    const useSeventh = page.getByRole("button", { name: /Use 7th card/i });
+    if (await useSeventh.isVisible({ timeout: 0 }).catch(() => false)) {
+      await useSeventh.click();
+      await page.waitForTimeout(300);
+      continue;
+    }
+
+    const noTrump = page.getByRole("button", { name: /No trump/i });
+    if (await noTrump.isVisible({ timeout: 0 }).catch(() => false)) {
+      await noTrump.click();
       await page.waitForTimeout(300);
       continue;
     }
@@ -148,6 +161,7 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
 
   const playLegalMove = async () => {
+    await dismissTrickDialog();
     await expect.poll(async () => enabledHandButtons.count(), { timeout: 20_000 }).toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
     await expect(legal).toBeEnabled();
