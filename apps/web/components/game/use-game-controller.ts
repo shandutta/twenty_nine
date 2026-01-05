@@ -864,17 +864,6 @@ export const useGameController = () => {
   const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
-  const [showReasoningTrace, setShowReasoningTrace] = useState(false);
-  const [llmReasoning, setLlmReasoning] = useState<string | null>(null);
-  const [llmReasoningMeta, setLlmReasoningMeta] = useState<{
-    model: string;
-    effort: ReasoningEffort;
-    ts: number;
-    hasTrace: boolean;
-    latencyMs: number | null;
-    usage: LlmUsage;
-    costUsd: number | null;
-  } | null>(null);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
@@ -991,9 +980,6 @@ export const useGameController = () => {
         parsed.reasoningEffort === "none"
       ) {
         setReasoningEffort(parsed.reasoningEffort);
-      }
-      if (typeof parsed.showReasoningTrace === "boolean") {
-        setShowReasoningTrace(parsed.showReasoningTrace);
       }
       if (parsed.controlMode === "standard" || parsed.controlMode === "single-hand") {
         setControlMode(parsed.controlMode);
@@ -1650,7 +1636,6 @@ export const useGameController = () => {
     setBotModel,
     setBotTemperature,
     setReasoningEffort,
-    setShowReasoningTrace,
     controlMode,
     controlModeLocked,
     onControlModeChange: handleControlModeChange,
