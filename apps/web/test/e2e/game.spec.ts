@@ -162,10 +162,13 @@ test("game page smoke flow", async ({ page }) => {
 
   const playLegalMove = async () => {
     await expect
-      .poll(async () => {
-        await dismissTrickDialog();
-        return enabledHandButtons.count();
-      }, { timeout: 20_000 })
+      .poll(
+        async () => {
+          await dismissTrickDialog();
+          return enabledHandButtons.count();
+        },
+        { timeout: 20_000 }
+      )
       .toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
     await expect(legal).toBeEnabled();
