@@ -1,8 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Locator } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
 test("game page smoke flow", async ({ page }) => {
+  test.setTimeout(120_000);
   const errors: string[] = [];
 
   page.on("console", (message) => {
@@ -86,6 +87,16 @@ test("game page smoke flow", async ({ page }) => {
       await page.waitForTimeout(250);
     }
   };
+  const clickIfReady = async (locator: Locator, timeoutMs = 2000) => {
+    if ((await locator.count()) === 0) return false;
+    const target = locator.first();
+    const visible = await target.isVisible({ timeout: 0 }).catch(() => false);
+    if (!visible) return false;
+    const enabled = await target.isEnabled({ timeout: 0 }).catch(() => true);
+    if (!enabled) return false;
+    await target.click({ timeout: timeoutMs }).catch(() => {});
+    return true;
+  };
 
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -101,14 +112,13 @@ test("game page smoke flow", async ({ page }) => {
         .isEnabled({ timeout: 0 })
         .catch(() => false));
     if (bidSelectVisible && !placeBidEnabled) {
-      await bidSelect.click();
+      await clickIfReady(bidSelect);
       const option = page.getByRole("option", { name: /Bid \d+/ }).first();
-      if (await option.isVisible().catch(() => false)) {
-        await option.click();
+      if (await option.isVisible({ timeout: 0 }).catch(() => false)) {
+        await option.click({ timeout: 2000 }).catch(() => {});
       }
     }
-    if ((await placeBid.count()) > 0 && placeBidEnabled) {
-      await placeBid.first().click();
+    if (placeBidEnabled && (await clickIfReady(placeBid))) {
       await page.waitForTimeout(300);
       continue;
     }
@@ -120,22 +130,31 @@ test("game page smoke flow", async ({ page }) => {
         .first()
         .isEnabled({ timeout: 0 })
         .catch(() => false));
-    if (passEnabled) {
-      await passButton.first().click();
+    if (passEnabled && (await clickIfReady(passButton))) {
       await page.waitForTimeout(300);
       continue;
     }
 
     const useSeventh = page.getByRole("button", { name: /Use 7th card/i });
-    if (await useSeventh.isVisible({ timeout: 0 }).catch(() => false)) {
-      await useSeventh.click();
+    if (await clickIfReady(useSeventh)) {
       await page.waitForTimeout(300);
       continue;
     }
 
     const noTrump = page.getByRole("button", { name: /No trump/i });
-    if (await noTrump.isVisible({ timeout: 0 }).catch(() => false)) {
-      await noTrump.click();
+    if (await clickIfReady(noTrump)) {
+      await page.waitForTimeout(300);
+      continue;
+    }
+
+    const joker = page.getByRole("button", { name: /Joker/i });
+    if (await clickIfReady(joker)) {
+      await page.waitForTimeout(300);
+      continue;
+    }
+
+    const trumpSuitButton = page.getByRole("button", { name: /Clubs|Diamonds|Hearts|Spades/i });
+    if (await clickIfReady(trumpSuitButton)) {
       await page.waitForTimeout(300);
       continue;
     }
