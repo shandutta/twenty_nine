@@ -91,14 +91,11 @@ function GamePageClient() {
     lastMove,
     botSettings,
     llmInUse,
-    llmReasoning,
-    llmReasoningMeta,
     setBotEnabled,
     setBotDifficulty,
     setBotModel,
     setBotTemperature,
     setReasoningEffort,
-    setShowReasoningTrace,
     trickResolution,
     onAcknowledgeTrickResolution,
     controlMode,
@@ -116,7 +113,6 @@ function GamePageClient() {
   const [coachError, setCoachError] = useState<string | null>(null);
   const [coachResponse, setCoachResponse] = useState<string | null>(null);
   const [openRouterConfigured, setOpenRouterConfigured] = useState<boolean | null>(null);
-  const [modelReasoningSupport, setModelReasoningSupport] = useState<Record<string, boolean> | null>(null);
   const [confirmNewGameOpen, setConfirmNewGameOpen] = useState(false);
 
   useSoundEffects({
@@ -210,37 +206,6 @@ function GamePageClient() {
     if (trickSummary?.trickNumber !== 8) return;
     onAcknowledgeTrickResolution();
   }, [onAcknowledgeTrickResolution, trickResolution.pending, trickSummary?.trickNumber]);
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadModelSupport = async () => {
-      try {
-        const response = await fetch("/api/openrouter/models");
-        const data = (await response.json().catch(() => null)) as {
-          models?: Array<{ id?: string; supportsReasoning?: boolean }>;
-        } | null;
-        if (!isMounted) return;
-        if (!Array.isArray(data?.models)) {
-          setModelReasoningSupport(null);
-          return;
-        }
-        const supportMap: Record<string, boolean> = {};
-        for (const model of data.models) {
-          if (!model || typeof model.id !== "string") continue;
-          supportMap[model.id] = Boolean(model.supportsReasoning);
-        }
-        setModelReasoningSupport(supportMap);
-      } catch {
-        if (isMounted) {
-          setModelReasoningSupport(null);
-        }
-      }
-    };
-    void loadModelSupport();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     try {
