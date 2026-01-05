@@ -350,9 +350,9 @@ export function GameSidebar({
                   {isBidding && bidOptions.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
-                      <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/20 bg-white/5 text-[clamp(12px,0.95vw,14px)] text-emerald-50 shadow-[0_0_0_1px_rgba(242,200,121,0.15)]">
-                        <SelectValue placeholder="Choose bid" />
-                      </SelectTrigger>
+                        <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/20 bg-white/5 text-[clamp(12px,0.95vw,14px)] text-emerald-50 shadow-[0_0_0_1px_rgba(242,200,121,0.15)]">
+                          <SelectValue placeholder="Choose bid" />
+                        </SelectTrigger>
                         <SelectContent>
                           {bidOptions.map((bid) => (
                             <SelectItem key={bid} value={String(bid)}>
