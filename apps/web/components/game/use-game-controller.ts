@@ -80,6 +80,7 @@ const PLAYER_META: PlayerMeta[] = [
 const PRIMARY_HUMAN = 0;
 const PARTNER_HUMAN = 2;
 const BOT_THINK_TIME_MS = 450;
+const TRICK_RESOLUTION_DELAY_MS = 500;
 
 export const LLM_MODEL_OPTIONS = [
   { value: "openai/gpt-5.2-chat", label: "GPT-5.2 Chat" },
@@ -133,6 +134,15 @@ const estimateHandStrength = (hand: Card[]): number => {
   const basePoints = hand.reduce((sum, card) => sum + cardPoints(card), 0);
   const highCards = hand.filter((card) => card.rank === "J" || card.rank === "9").length;
   return basePoints + highCards * 0.6;
+};
+
+const getLegalBidOptions = (state: EngineState): number[] => {
+  const minBid = state.config.minBid;
+  const maxBid = state.config.maxBidTarget;
+  const current = state.bidTarget ?? minBid - 1;
+  const start = Math.max(minBid, current + 1);
+  if (start > maxBid) return [];
+  return Array.from({ length: maxBid - start + 1 }, (_, i) => start + i);
 };
 
 const chooseBotBidAmount = (hand: Card[], currentBid: number | null, config: EngineState["config"]): number | null => {
@@ -253,6 +263,53 @@ const parseCardFromText = (text: string, legalMoves: Card[]): Card | null => {
   return legalMoves.find((card) => card.rank === rank && card.suit === suit) ?? null;
 };
 
+const parseBidFromText = (text: string, legalBids: number[]): number | null | undefined => {
+  const normalized = text.trim().toLowerCase();
+  const extracted = extractJson(text);
+  const parseAmount = (value: unknown): number | null => {
+    if (value === null) return null;
+    if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
+    if (typeof value === "string" && value.trim()) {
+      const parsed = Number.parseFloat(value);
+      if (Number.isFinite(parsed)) return Math.round(parsed);
+    }
+    return null;
+  };
+
+  if (extracted && typeof extracted === "object") {
+    const record = extracted as Record<string, unknown>;
+    const action = typeof record.action === "string" ? record.action.trim().toLowerCase() : null;
+    if (action === "pass" || action === "fold" || action === "check") {
+      return null;
+    }
+    if (record.pass === true) {
+      return null;
+    }
+    const amount = parseAmount(record.amount ?? record.bid ?? record.raise);
+    if (amount === null) {
+      return action === "pass" ? null : undefined;
+    }
+    if (legalBids.includes(amount)) {
+      return amount;
+    }
+    return undefined;
+  }
+
+  if (normalized.includes("pass")) {
+    return null;
+  }
+
+  const numberMatch = normalized.match(/-?\d+/);
+  if (numberMatch) {
+    const amount = Number.parseInt(numberMatch[0] ?? "", 10);
+    if (Number.isFinite(amount) && legalBids.includes(amount)) {
+      return amount;
+    }
+  }
+
+  return undefined;
+};
+
 const extractReasoningTrace = (
   message: { reasoning?: unknown; reasoning_details?: unknown } | null
 ): { text: string | null; hasTrace: boolean } => {
@@ -311,6 +368,125 @@ type LlmDecision = {
   model: string | null;
   hasTrace: boolean;
   metrics: LlmMetrics | null;
+};
+
+type LlmBidDecision = {
+  bid: number | null | undefined;
+  reasoning: string | null;
+  model: string | null;
+  hasTrace: boolean;
+  metrics: LlmMetrics | null;
+};
+
+const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise<LlmBidDecision> => {
+  const player = state.currentPlayer;
+  const hand = state.hands[player] ?? [];
+  const playerMeta = PLAYER_META[player];
+  const myTeam = teamForPlayer(player);
+  const bidderTeam = state.bidderTeam;
+  const bidderLabel = bidderTeam === null ? "TBD" : TEAM_LABELS[bidderTeam];
+  const currentBid = state.bidTarget === null ? "none" : state.bidTarget;
+  const legalBids = getLegalBidOptions(state);
+  const bidHistory = state.bidHistory.length
+    ? state.bidHistory
+        .map((entry) => `${PLAYER_META[entry.player].name}:${entry.bid === null ? "pass" : entry.bid}`)
+        .join(", ")
+    : "none";
+  const strategy = STRATEGY_GUIDE[settings.difficulty];
+  const legalBidsLabel = legalBids.length ? legalBids.join(", ") : "none";
+
+  const prompt = [
+    'You are an expert 29 card game bidder. Return JSON only with either {"action":"pass"} or {"action":"bid","amount":17}.',
+    "Always choose a bid amount from the provided legal raises.",
+    "Passing is always allowed.",
+    "",
+    "Strategy guardrails:",
+    "- Bid only when your 4-card hand has enough trump potential or high points to justify the contract.",
+    "- If the current bid is already high for your hand, pass.",
+    "- Prefer a minimal raise when your hand is borderline.",
+    strategy,
+    "",
+    `Player: ${playerMeta.name} (${playerMeta.position}).`,
+    `Your team: ${TEAM_LABELS[myTeam]}. Current bidder: ${bidderLabel}.`,
+    `Current bid: ${currentBid}.`,
+    `Bid history: ${bidHistory}.`,
+    `Your hand: ${hand.map(cardLabel).join(", ")}.`,
+    `Legal raises: ${legalBidsLabel}.`,
+    legalBids.length === 0 ? "No legal raises available; you must pass." : "",
+    "",
+    "Respond with JSON only.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const modelQueue = Array.from(new Set([settings.model, ...settings.fallbackModels].filter(Boolean)));
+
+  for (const model of modelQueue) {
+    try {
+      const response = await fetch("/api/openrouter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          temperature: settings.temperature,
+          trace: {
+            source: "bot",
+            matchRound: state.matchRound,
+            trickNumber: state.trickNumber + 1,
+            phase: state.phase,
+            playerId: playerMeta.id,
+            playerName: playerMeta.name,
+            gameSeed: state.seed,
+            turnId: state.log.length,
+          },
+          reasoning: {
+            effort: settings.reasoningEffort,
+            exclude: !settings.showReasoningTrace,
+          },
+          messages: [
+            {
+              role: "system",
+              content: "You choose whether to raise or pass in 29 bidding. Respond with JSON only.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        continue;
+      }
+
+      const data = (await response.json().catch(() => null)) as {
+        message?: { content?: string; reasoning?: unknown; reasoning_details?: unknown };
+        metrics?: { durationMs?: number; usage?: LlmUsage; costUsd?: number | null };
+      } | null;
+      const message = data?.message ?? null;
+      const content = message?.content;
+      if (!content) {
+        continue;
+      }
+      const parsed = parseBidFromText(content, legalBids);
+      if (parsed !== undefined) {
+        const reasoning = extractReasoningTrace(message);
+        return {
+          bid: parsed,
+          reasoning: reasoning.text,
+          model,
+          hasTrace: reasoning.hasTrace,
+          metrics: {
+            durationMs: typeof data?.metrics?.durationMs === "number" ? data.metrics.durationMs : null,
+            usage: data?.metrics?.usage ?? null,
+            costUsd: typeof data?.metrics?.costUsd === "number" ? data.metrics.costUsd : null,
+          },
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return { bid: undefined, reasoning: null, model: null, hasTrace: false, metrics: null };
 };
 
 const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: BotSettings): Promise<LlmDecision> => {
@@ -821,7 +997,33 @@ export const useGameController = () => {
 
         if (snapshot.phase === "bidding") {
           const hand = snapshot.hands[botPlayer] ?? [];
-          const bid = chooseBotBidAmount(hand, snapshot.bidTarget, snapshot.config);
+          let bidDecision: number | null | undefined = undefined;
+
+          if (botSettings.enabled && shouldUseLLM()) {
+            setLlmInUse(true);
+            try {
+              const llmDecision = await requestLLMBid(snapshot, botSettings);
+              bidDecision = llmDecision.bid;
+              if (llmDecision.model && bidDecision !== undefined) {
+                setLlmReasoning(llmDecision.reasoning);
+                setLlmReasoningMeta({
+                  model: llmDecision.model,
+                  effort: botSettings.reasoningEffort,
+                  ts: Date.now(),
+                  hasTrace: llmDecision.hasTrace,
+                  latencyMs: llmDecision.metrics?.durationMs ?? null,
+                  usage: llmDecision.metrics?.usage ?? null,
+                  costUsd: llmDecision.metrics?.costUsd ?? null,
+                });
+              }
+            } finally {
+              setLlmInUse(false);
+            }
+          }
+
+          const fallbackBid = chooseBotBidAmount(hand, snapshot.bidTarget, snapshot.config);
+          const bid = bidDecision === undefined ? fallbackBid : bidDecision;
+
           const latest = stateRef.current;
           if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
             return;

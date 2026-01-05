@@ -343,28 +343,8 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
     setDragOverId(null);
   };
 
-  const handLabel = player.name === "You" ? "Your hand" : `${player.name} hand`;
-  const handLabelTestId = player.name === "You" ? "player-hand-label" : undefined;
-
   return (
     <div className="flex flex-col items-center gap-2.5 pb-2">
-      <div className="flex w-full max-w-[min(92vw,980px)] items-center justify-between rounded-full border border-white/10 bg-black/35 px-4 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur md:px-8 md:py-1">
-        <span
-          data-testid={handLabelTestId}
-          className="text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.28em] text-emerald-100/70"
-        >
-          {handLabel}
-        </span>
-        <span
-          className={cn(
-            "text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.28em]",
-            isCurrentTurn ? "text-[#f2c879]" : "text-emerald-100/40"
-          )}
-        >
-          {isCurrentTurn ? "Your turn" : "Waiting"}
-        </span>
-      </div>
-
       <div className="flex justify-center items-end px-10 md:px-16 xl:px-24 py-2">
         {orderedCards.map((card, index) => (
           <PlayableCard
@@ -392,9 +372,16 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         >
           {player.name}
         </Badge>
-        <div className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 backdrop-blur">
+        <div
+          data-testid="player-hand-status"
+          className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 backdrop-blur"
+        >
           {isCurrentTurn ? (
-            <span className="text-[#f2c879]">Play a legal card</span>
+            <>
+              <span className="text-[#f2c879] uppercase tracking-[0.22em]">Your turn</span>
+              <span className="text-emerald-100/35">•</span>
+              <span className="text-[#f2c879]">Play a legal card</span>
+            </>
           ) : (
             <span className="text-emerald-100/60">Reorder your hand</span>
           )}

@@ -189,7 +189,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
   const isAce = card.rank === "A";
 
   return (
-    <div className="relative h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-xl border border-white/40 bg-white/95 bg-gradient-to-br from-white/98 via-white/94 to-white/86 shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[2px] overflow-hidden">
+    <div className="relative h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-[var(--trick-card-radius)] border border-white/40 bg-white/95 bg-gradient-to-br from-white/98 via-white/94 to-white/86 shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[2px] overflow-hidden">
       <div className="absolute top-1 left-1.5 flex flex-col items-center leading-none">
         <span className={cn("text-[clamp(10px,0.8vw,13px)] font-semibold", suitColor)}>{card.rank}</span>
         <span className={cn("text-[clamp(11px,0.9vw,14px)] -mt-0.5", suitColor)}>{suitSymbols[card.suit]}</span>
@@ -812,8 +812,9 @@ export function GameTable({
   const cardSizing: CSSVars = {
     "--hand-card-w": "clamp(76px,7.5vw,132px)",
     "--hand-card-h": "clamp(110px,10.5vw,196px)",
-    "--trick-card-w": "clamp(68px,5.6vw,112px)",
-    "--trick-card-h": "clamp(98px,8.2vw,162px)",
+    "--trick-card-w": "calc(var(--hand-card-w) * 0.9)",
+    "--trick-card-h": "calc(var(--hand-card-h) * 0.9)",
+    "--trick-card-radius": "clamp(10px,1vw,14px)",
   };
 
   return (
@@ -1099,7 +1100,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(topPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-[var(--trick-card-radius)] border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1109,7 +1110,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(leftPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-[var(--trick-card-radius)] border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1119,7 +1120,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(rightPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-[var(--trick-card-radius)] border-2 border-dashed border-white/20" />
                   )}
                 </div>
 
@@ -1129,7 +1130,7 @@ export function GameTable({
                       <PlayedCard card={getPlayedCard(bottomPlayer.id)!} />
                     </div>
                   ) : (
-                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-lg border-2 border-dashed border-white/20" />
+                    <div className="h-[var(--trick-card-h)] w-[var(--trick-card-w)] rounded-[var(--trick-card-radius)] border-2 border-dashed border-white/20" />
                   )}
                 </div>
               </div>

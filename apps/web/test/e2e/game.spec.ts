@@ -42,7 +42,7 @@ test("game page smoke flow", async ({ page }) => {
     await expect(hydrated).toBeVisible({ timeout: 10_000 });
   }
   await expect(page.getByRole("heading", { name: "Solo Table" })).toBeVisible();
-  await expect(page.getByTestId("player-hand-label")).toBeVisible();
+  await expect(page.getByTestId("player-hand-status")).toBeVisible();
 
   const aiTab = page.getByRole("tab", { name: /^AI$/ });
   await aiTab.click();
