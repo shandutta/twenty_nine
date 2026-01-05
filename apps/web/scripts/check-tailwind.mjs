@@ -36,7 +36,7 @@ if (!fs.existsSync(globalsCss)) {
   errors.push("Missing app/globals.css.");
 } else {
   const globalsText = fs.readFileSync(globalsCss, "utf8");
-  if (!globalsText.includes("@import \"tailwindcss\"")) {
+  if (!globalsText.includes('@import "tailwindcss"')) {
     errors.push("app/globals.css does not import tailwindcss.");
   }
 }
