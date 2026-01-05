@@ -101,9 +101,7 @@ export const verifyAccessToken = (token: string): JwtPayload | null => {
   return verifyJwt(token, secret, "access");
 };
 
-export const requireAccessToken = (
-  request: Request
-): { deviceId: string } | { response: NextResponse } => {
+export const requireAccessToken = (request: Request): { deviceId: string } | { response: NextResponse } => {
   const secret = getSecret();
   if (!secret) {
     return { response: NextResponse.json({ error: "AUTH_JWT_SECRET is not configured." }, { status: 500 }) };

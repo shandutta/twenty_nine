@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MATCH_PIPS, cardPoints, chooseBotCard, createDeck, createGameState, reduceGame, shuffleDeck } from "../src/index";
+import {
+  MATCH_PIPS,
+  cardPoints,
+  chooseBotCard,
+  createDeck,
+  createGameState,
+  reduceGame,
+  shuffleDeck,
+} from "../src/index";
 import type { Card, GameAction, Suit } from "../src/index";
 
 const card = (suit: Suit, rank: Card["rank"]): Card => ({ suit, rank });
@@ -130,7 +138,11 @@ describe("guard clauses", () => {
 
   it("ignores trump selection when bidding data is incomplete", () => {
     const chooseTrumpState = createGameState({ seed: 35, phase: "choose-trump", bidTarget: 16 });
-    const next = reduceGame(chooseTrumpState, { type: "chooseTrump", player: chooseTrumpState.currentPlayer, suit: "hearts" });
+    const next = reduceGame(chooseTrumpState, {
+      type: "chooseTrump",
+      player: chooseTrumpState.currentPlayer,
+      suit: "hearts",
+    });
     expect(next).toBe(chooseTrumpState);
 
     const seventhState = createGameState({ seed: 36, phase: "choose-trump", bidTarget: 16 });

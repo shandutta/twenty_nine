@@ -1025,6 +1025,7 @@ export const useGameController = () => {
     }
 
     const context = buildGameLogContext(engineState);
+    const { trickNumber: _trickNumber, ...contextWithoutTrickNumber } = context;
 
     if (lastLogIndexRef.current === null) {
       lastLogIndexRef.current = engineState.log.length;
@@ -1108,7 +1109,7 @@ export const useGameController = () => {
           leader: engineState.currentPlayer,
           trumpSuit: engineState.trumpSuit,
           trumpRevealed: engineState.trumpRevealed,
-          ...context,
+          ...contextWithoutTrickNumber,
         });
       }
       if (engineState.phase === "hand-complete") {

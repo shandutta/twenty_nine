@@ -72,11 +72,7 @@ const SUIT_SHORT: Record<Suit, string> = {
   spades: "S",
 };
 
-const BOT_MODELS = [
-  "openai/gpt-5.2-chat",
-  "google/gemini-3-pro-preview",
-  "anthropic/claude-opus-4.5",
-];
+const BOT_MODELS = ["openai/gpt-5.2-chat", "google/gemini-3-pro-preview", "anthropic/claude-opus-4.5"];
 
 const BOT_TEMPERATURE = 0.3;
 
@@ -342,9 +338,11 @@ export default function App() {
     if (!response.ok) {
       throw new Error("Auth failed.");
     }
-    const data = (await response.json().catch(() => null)) as
-      | { accessToken?: string; refreshToken?: string; expiresIn?: number }
-      | null;
+    const data = (await response.json().catch(() => null)) as {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresIn?: number;
+    } | null;
     if (!data?.accessToken || !data?.refreshToken || !data?.expiresIn) {
       throw new Error("Auth response invalid.");
     }
@@ -361,9 +359,11 @@ export default function App() {
     if (!response.ok) {
       return null;
     }
-    const data = (await response.json().catch(() => null)) as
-      | { accessToken?: string; refreshToken?: string; expiresIn?: number }
-      | null;
+    const data = (await response.json().catch(() => null)) as {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresIn?: number;
+    } | null;
     if (!data?.accessToken || !data?.refreshToken || !data?.expiresIn) {
       return null;
     }
@@ -480,9 +480,7 @@ export default function App() {
           if (!response.ok) {
             continue;
           }
-          const data = (await response.json().catch(() => null)) as
-            | { message?: { content?: string } }
-            | null;
+          const data = (await response.json().catch(() => null)) as { message?: { content?: string } } | null;
           const content = data?.message?.content;
           if (!content) continue;
           const parsed = parseCardFromText(content, legalMoves);
@@ -617,9 +615,7 @@ export default function App() {
           ],
         }),
       });
-      const data = (await response.json().catch(() => null)) as
-        | { message?: { content?: string } }
-        | null;
+      const data = (await response.json().catch(() => null)) as { message?: { content?: string } } | null;
       const content = data?.message?.content?.trim();
       if (content) {
         setCoachResponse(content);

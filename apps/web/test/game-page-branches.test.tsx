@@ -107,7 +107,14 @@ const makeLastMove = (player: number, card: Card): LastMoveInfo => ({
 const makeGameState = (overrides: Partial<GameState> = {}): GameState => {
   const base: GameState = {
     players: [
-      { id: "player1", name: "You", position: "bottom", cards: [makeCard("hearts", "7")], isCurrentPlayer: true, teamId: "teamA" },
+      {
+        id: "player1",
+        name: "You",
+        position: "bottom",
+        cards: [makeCard("hearts", "7")],
+        isCurrentPlayer: true,
+        teamId: "teamA",
+      },
       { id: "player2", name: "West", position: "left", cards: [], isCurrentPlayer: false, teamId: "teamB" },
       { id: "player3", name: "North", position: "top", cards: [], isCurrentPlayer: false, teamId: "teamA" },
       { id: "player4", name: "East", position: "right", cards: [], isCurrentPlayer: false, teamId: "teamB" },
@@ -286,7 +293,14 @@ describe("GamePage logic branches", () => {
       baseControllerState({
         gameState: makeGameState({
           players: [
-            { id: "player1", name: "You", position: "bottom", cards: [makeCard("hearts", "7")], isCurrentPlayer: true, teamId: "teamA" },
+            {
+              id: "player1",
+              name: "You",
+              position: "bottom",
+              cards: [makeCard("hearts", "7")],
+              isCurrentPlayer: true,
+              teamId: "teamA",
+            },
             { id: "player2", name: "West", position: "left", cards: [], isCurrentPlayer: false, teamId: "teamB" },
           ],
           lastTrick: null,
@@ -393,7 +407,10 @@ describe("GamePage logic branches", () => {
     const fetchMock = vi.fn(async (input: RequestInfo) => {
       const url = typeof input === "string" ? input : input.url;
       if (url.includes("/api/openrouter/models")) {
-        return { ok: true, json: async () => ({ models: [{ id: "other-model", supportsReasoning: true }] }) } as Response;
+        return {
+          ok: true,
+          json: async () => ({ models: [{ id: "other-model", supportsReasoning: true }] }),
+        } as Response;
       }
       return { ok: true, json: async () => ({ configured: true }) } as Response;
     });
@@ -886,11 +903,13 @@ describe("GamePage logic branches", () => {
       await getSidebarProps().onRequestCoach();
     });
 
-    const call = fetchMock.mock.calls.find((args) => String(args[0]).includes("/api/openrouter") && args[1]?.method === "POST");
+    const call = fetchMock.mock.calls.find(
+      (args) => String(args[0]).includes("/api/openrouter") && args[1]?.method === "POST"
+    );
     expect(call).toBeTruthy();
     const body = JSON.parse(call?.[1]?.body as string) as { messages?: Array<{ content?: string }> };
     const userMessage = body.messages?.find((message) => message.content?.includes("Analyze this visible state"));
-    expect(userMessage?.content).toContain("\"lastTrick\"");
+    expect(userMessage?.content).toContain('"lastTrick"');
   });
 
   it("falls back to Player labels when trick summary includes unknown ids", async () => {

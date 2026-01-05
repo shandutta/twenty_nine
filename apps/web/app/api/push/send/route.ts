@@ -8,7 +8,7 @@ type PushMessage = {
   data?: Record<string, unknown>;
 };
 
-const chunk = <T,>(items: T[], size: number): T[][] => {
+const chunk = <T>(items: T[], size: number): T[][] => {
   const result: T[][] = [];
   for (let i = 0; i < items.length; i += size) {
     result.push(items.slice(i, i + size));
@@ -28,7 +28,12 @@ export async function POST(request: Request) {
 
   let body: { title?: string; body?: string; data?: Record<string, unknown>; tokens?: string[] } | null = null;
   try {
-    body = (await request.json()) as { title?: string; body?: string; data?: Record<string, unknown>; tokens?: string[] };
+    body = (await request.json()) as {
+      title?: string;
+      body?: string;
+      data?: Record<string, unknown>;
+      tokens?: string[];
+    };
   } catch {
     body = null;
   }
