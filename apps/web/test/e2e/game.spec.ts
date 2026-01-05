@@ -81,7 +81,7 @@ test("game page smoke flow", async ({ page }) => {
   const enabledHandButtons = page.locator('button[aria-label*=" of "][aria-disabled="false"]');
   const resolveTrickButton = page.getByRole("button", { name: /OK - Next trick/i });
   const dismissTrickDialog = async () => {
-    if (await resolveTrickButton.isVisible({ timeout: 0 }).catch(() => false)) {
+    if (await resolveTrickButton.isVisible({ timeout: 500 }).catch(() => false)) {
       await resolveTrickButton.click();
       await page.waitForTimeout(250);
     }
@@ -161,8 +161,12 @@ test("game page smoke flow", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Trick Log" })).toBeVisible();
 
   const playLegalMove = async () => {
-    await dismissTrickDialog();
-    await expect.poll(async () => enabledHandButtons.count(), { timeout: 20_000 }).toBeGreaterThan(0);
+    await expect
+      .poll(async () => {
+        await dismissTrickDialog();
+        return enabledHandButtons.count();
+      }, { timeout: 20_000 })
+      .toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
     await expect(legal).toBeEnabled();
     const label = await legal.getAttribute("aria-label");
