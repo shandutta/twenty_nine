@@ -384,38 +384,70 @@ export function GameSidebar({
                     </div>
                   )}
                   {isChoosingTrump && canChooseTrump && (
-                    <div className="space-y-2 pt-1.5">
-                      <div className="grid grid-cols-2 gap-2">
-                        {TRUMP_CHOICES.map((choice) => (
-                          <Button
-                            key={choice.suit}
-                            size="sm"
-                            onClick={() => onChooseTrump(choice.suit)}
-                            className="h-9 xl:h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
-                          >
-                            <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{choice.symbol}</span>
-                            {choice.label}
-                          </Button>
-                        ))}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {TRUMP_CHOICES.map((choice) => {
+                          const isRed = isRedSuit(choice.suit);
+                          return (
+                            <Button
+                              key={choice.suit}
+                              size="sm"
+                              onClick={() => onChooseTrump(choice.suit)}
+                              className={cn(
+                                "group h-9 xl:h-10 rounded-full border bg-white/5 px-3 text-emerald-50 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)] hover:bg-white/10",
+                                isRed ? "border-rose-300/35" : "border-white/15"
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  "mr-2 grid h-6 w-6 place-items-center rounded-full text-[clamp(13px,1vw,16px)] font-semibold",
+                                  isRed
+                                    ? "bg-rose-500/15 text-rose-200 shadow-[0_0_10px_rgba(232,91,91,0.35)]"
+                                    : "bg-white/10 text-emerald-50/90 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.2)]"
+                                )}
+                              >
+                                {choice.symbol}
+                              </span>
+                              <span
+                                className={cn(
+                                  "text-[clamp(12px,0.95vw,14px)] font-medium tracking-tight",
+                                  isRed ? "text-rose-50" : "text-emerald-50"
+                                )}
+                              >
+                                {choice.label}
+                              </span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <div className="grid gap-1.5">
                         <Button
                           size="sm"
                           onClick={() => onChooseTrump(null)}
-                          className="col-span-2 h-9 xl:h-10 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
+                          className="h-9 xl:h-10 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 px-3 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
                         >
-                          <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{JOKER_SYMBOL}</span>
-                          Joker
+                          <span className="mr-2 grid h-6 w-6 place-items-center rounded-full bg-[#f2c879]/15 text-[clamp(13px,1vw,16px)] text-[#f6d38b] shadow-[0_0_12px_rgba(242,200,121,0.35)]">
+                            {JOKER_SYMBOL}
+                          </span>
+                          <span className="text-[clamp(12px,0.95vw,14px)] font-semibold text-[#f6d38b]">Joker</span>
                           <span className="ml-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-[#f6d38b]/70">
                             No trump
                           </span>
                         </Button>
+                        <Button
+                          size="sm"
+                          onClick={onChooseTrumpFromSeventh}
+                          className="h-9 xl:h-10 rounded-full border border-emerald-200/20 bg-white/5 px-3 text-emerald-50 shadow-[inset_0_0_14px_rgba(16,185,129,0.12)] hover:bg-white/10"
+                        >
+                          <span className="mr-2 grid h-6 w-6 place-items-center rounded-full border border-emerald-200/25 bg-emerald-400/10 text-[clamp(11px,0.85vw,12px)] font-semibold text-emerald-100/80">
+                            7
+                          </span>
+                          <span className="text-[clamp(12px,0.95vw,14px)] font-medium">Use 7th card</span>
+                          <span className="ml-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.26em] text-emerald-100/60">
+                            Hidden trump
+                          </span>
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={onChooseTrumpFromSeventh}
-                        className="h-9 xl:h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
-                      >
-                        Use 7th card (hidden trump)
-                      </Button>
                     </div>
                   )}
                 </CardContent>
