@@ -714,6 +714,7 @@ export const useGameController = () => {
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trickResolutionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAckTrickRef = useRef<number | null>(null);
+  const hydratedAckRef = useRef(false);
   const stateRef = useRef(engineState);
   const skipPresetRef = useRef(false);
 
@@ -798,9 +799,10 @@ export const useGameController = () => {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || hydratedAckRef.current) return;
+    hydratedAckRef.current = true;
     lastAckTrickRef.current = engineState.lastTrick?.number ?? null;
-  }, [hydrated]);
+  }, [engineState.lastTrick?.number, hydrated]);
 
   useEffect(() => {
     stateRef.current = engineState;

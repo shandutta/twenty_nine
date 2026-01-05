@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -178,6 +178,11 @@ function getPipPositions(rank: string): { x: number; y: number; inverted?: boole
 
 function isFaceCard(rank: string) {
   return ["J", "Q", "K"].includes(rank);
+}
+
+function formatSuitName(suit: Suit | null) {
+  if (!suit) return "Joker (no trump)";
+  return `${suit.charAt(0).toUpperCase()}${suit.slice(1)}`;
 }
 
 function PlayedCard({ card }: { card: PlayingCard }) {
@@ -540,6 +545,7 @@ export function GameTable({
       ? `${JOKER_SYMBOL} Joker`
       : "Pending";
   const currentPlayerName = gameState.players.find((p) => p.id === gameState.currentPlayerId)?.name ?? "--";
+  const playerLabels = useMemo(() => gameState.players.map((player) => player.name), [gameState.players]);
   const isBidding = gameState.phase === "bidding";
   const isChoosingTrump = gameState.phase === "choose-trump";
   const royalsTeamId = gameState.royalsDeclaredBy;
@@ -587,6 +593,12 @@ export function GameTable({
   const matchLoserTeam = matchWinnerId ? (matchWinnerId === "teamA" ? teamB : teamA) : null;
   const matchEndReason = gameState.matchEndReason;
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [trumpToast, setTrumpToast] = useState<{ title: string; subtitle: string } | null>(null);
+  const [showTrumpToast, setShowTrumpToast] = useState(false);
+  const [redealToast, setRedealToast] = useState<{ title: string; subtitle: string } | null>(null);
+  const [showRedealToast, setShowRedealToast] = useState(false);
+  const trumpLogIndexRef = useRef<number | null>(null);
+  const redealLogIndexRef = useRef<number | null>(null);
   const playerWon = matchWinnerId === "teamA";
   const primaryActionLabel = canStartNextHand ? "Next Hand" : "New Match";
   const PrimaryActionIcon = canStartNextHand ? Sparkles : RotateCcw;
@@ -777,6 +789,16 @@ export function GameTable({
 
   const [showTrickToast, setShowTrickToast] = useState(false);
   const lastTrickNumber = lastTrick?.trickNumber ?? null;
+  const trumpRevealLabel = useMemo(() => {
+    if (!gameState.trumpSuit) return `${JOKER_SYMBOL} ${formatSuitName(null)}`;
+    return `${suitSymbols[gameState.trumpSuit]} ${formatSuitName(gameState.trumpSuit)}`;
+  }, [gameState.trumpSuit]);
+  const trumpSymbol = gameState.trumpSuit ? suitSymbols[gameState.trumpSuit] : JOKER_SYMBOL;
+  const trumpSymbolClass = gameState.trumpSuit
+    ? gameState.trumpSuit === "hearts" || gameState.trumpSuit === "diamonds"
+      ? "text-rose-300"
+      : "text-slate-100"
+    : "text-[#f6d38b]";
 
   useEffect(() => {
     if (lastTrickNumber === null) {
@@ -800,6 +822,93 @@ export function GameTable({
       clearTimeout(hideTimer);
     };
   }, [lastTrickNumber]);
+
+  useEffect(() => {
+    if (trumpLogIndexRef.current === null) {
+      trumpLogIndexRef.current = gameState.log.length;
+      return;
+    }
+
+    if (gameState.log.length < trumpLogIndexRef.current) {
+      trumpLogIndexRef.current = gameState.log.length;
+      return;
+    }
+
+    const entries = gameState.log.slice(trumpLogIndexRef.current);
+    trumpLogIndexRef.current = gameState.log.length;
+
+    let latestPlayerName: string | null = null;
+    let foundReveal = false;
+
+    for (const entry of entries) {
+      const match = entry.match(/Trump revealed(?: by P(\d))?\./i);
+      if (!match) continue;
+      foundReveal = true;
+      if (match[1]) {
+        const playerIndex = Number(match[1]) - 1;
+        latestPlayerName = playerLabels[playerIndex] ?? `P${match[1]}`;
+      }
+    }
+
+    if (!foundReveal) return;
+
+    const title = latestPlayerName ? `${latestPlayerName} called for trump` : "Trump revealed";
+    const toastTimer = setTimeout(() => {
+      setTrumpToast({
+        title,
+        subtitle: trumpRevealLabel,
+      });
+      setShowTrumpToast(true);
+    }, 0);
+    return () => {
+      clearTimeout(toastTimer);
+    };
+  }, [gameState.log, playerLabels, trumpRevealLabel]);
+
+  useEffect(() => {
+    if (redealLogIndexRef.current === null) {
+      redealLogIndexRef.current = gameState.log.length;
+      return;
+    }
+
+    if (gameState.log.length < redealLogIndexRef.current) {
+      redealLogIndexRef.current = gameState.log.length;
+      return;
+    }
+
+    const entries = gameState.log.slice(redealLogIndexRef.current);
+    redealLogIndexRef.current = gameState.log.length;
+
+    const redealEntry = entries.find((entry) => /all players passed/i.test(entry) || /redealing/i.test(entry));
+    if (!redealEntry) return;
+
+    const toastTimer = setTimeout(() => {
+      setRedealToast({
+        title: "All players passed",
+        subtitle: "Redealing the hand.",
+      });
+      setShowRedealToast(true);
+    }, 0);
+    return () => {
+      clearTimeout(toastTimer);
+    };
+  }, [gameState.log]);
+
+  useEffect(() => {
+    if (!showTrumpToast) return;
+    const timer = setTimeout(() => {
+      setShowTrumpToast(false);
+    }, 2800);
+    return () => clearTimeout(timer);
+  }, [showTrumpToast]);
+
+  useEffect(() => {
+    if (!showRedealToast) return;
+    const timer = setTimeout(() => {
+      setShowRedealToast(false);
+    }, 3200);
+    return () => clearTimeout(timer);
+  }, [showRedealToast]);
 
   useEffect(() => {
     if (!actionMessage) return;
@@ -864,6 +973,64 @@ export function GameTable({
               <div className="hidden sm:block">
                 <div className="origin-center scale-75 md:scale-90">
                   <PlayedCard card={lastTrick.winningCard} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {trumpToast && (
+          <div
+            className={cn(
+              "pointer-events-none absolute left-1/2 top-8 z-30 -translate-x-1/2 transition-all duration-300",
+              showTrumpToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"
+            )}
+            role="alert"
+            aria-live="assertive"
+          >
+            <div className="relative overflow-hidden rounded-[26px] border border-[#f2c879]/40 bg-[#1a1308]/95 px-4 py-3 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(246,211,139,0.18),_transparent_60%)]" />
+              <div className="relative flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-[#f2c879]/50 bg-[#2b1b07]/80 text-xl shadow-[0_0_18px_rgba(246,211,139,0.35)]">
+                  <span className={trumpSymbolClass}>{trumpSymbol}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.35em] text-[#f6d38b]/70">
+                    Trump Reveal
+                  </span>
+                  <span className="text-[clamp(12px,0.95vw,14px)] font-semibold text-[#fdf2d3]">
+                    {trumpToast.title}
+                  </span>
+                  <span className="text-[clamp(11px,0.85vw,13px)] text-[#f6d38b]/75">{trumpToast.subtitle}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {redealToast && (
+          <div
+            className={cn(
+              "pointer-events-none absolute left-1/2 top-14 z-30 -translate-x-1/2 transition-all duration-300",
+              showRedealToast ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-3"
+            )}
+            role="alert"
+            aria-live="assertive"
+          >
+            <div className="relative overflow-hidden rounded-[28px] border border-amber-200/40 bg-[#1c1206]/95 px-5 py-3 shadow-[0_24px_65px_rgba(0,0,0,0.6)]">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,213,128,0.2),_transparent_65%)]" />
+              <div className="relative flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full border border-amber-200/50 bg-[#2b1a07]/80 text-lg shadow-[0_0_22px_rgba(255,214,140,0.35)]">
+                  <span className="text-amber-100/90">↻</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-amber-100/70">
+                    Redeal
+                  </span>
+                  <span className="text-[clamp(13px,1vw,15px)] font-semibold text-amber-50">
+                    {redealToast.title}
+                  </span>
+                  <span className="text-[clamp(11px,0.85vw,13px)] text-amber-100/75">
+                    {redealToast.subtitle}
+                  </span>
                 </div>
               </div>
             </div>
