@@ -845,7 +845,9 @@ export function GameTable({
                 <div className="flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] font-semibold text-emerald-50">
                   <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
                   <span className="text-emerald-100/70">won</span>
-                  <Badge className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}>
+                  <Badge
+                    className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}
+                  >
                     {lastTrickTeam?.name ?? "Team"}
                   </Badge>
                   <span className="text-emerald-50">+{lastTrick.points} pts</span>
@@ -917,7 +919,9 @@ export function GameTable({
                     >
                       Pass
                     </Button>
-                    {!canBid && <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>}
+                    {!canBid && (
+                      <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -1162,8 +1166,12 @@ export function GameTable({
               <div className="pointer-events-auto mx-4 w-full max-w-md rounded-3xl border border-white/15 bg-[#0b1612]/95 p-6 text-emerald-50 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-emerald-100/60">Hand complete</p>
-                    <h3 className="mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold text-emerald-50">Ready for the next deal?</h3>
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-emerald-100/60">
+                      Hand complete
+                    </p>
+                    <h3 className="mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold text-emerald-50">
+                      Ready for the next deal?
+                    </h3>
                   </div>
                   <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
                     Round {gameState.matchRound}
@@ -1252,7 +1260,9 @@ export function GameTable({
                     <Trophy className="size-5" />
                   </span>
                   <div>
-                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.38em] text-emerald-100/60">Match Complete</p>
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.38em] text-emerald-100/60">
+                      Match Complete
+                    </p>
                     <h2 className="mt-1 text-2xl font-semibold text-emerald-50 md:text-3xl">
                       {matchWinnerTeam?.name ?? "Team"} wins the table
                     </h2>
@@ -1270,9 +1280,13 @@ export function GameTable({
                     <span className="text-emerald-200">{teamA.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamA")}</span>
                   </div>
-                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Red pips
+                  </div>
                   {renderMatchRow("teamA", "red")}
-                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Black pips
+                  </div>
                   {renderMatchRow("teamA", "black")}
                 </div>
                 <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
@@ -1280,9 +1294,13 @@ export function GameTable({
                     <span className="text-rose-200">{teamB.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamB")}</span>
                   </div>
-                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Red pips
+                  </div>
                   {renderMatchRow("teamB", "red")}
-                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                    Black pips
+                  </div>
                   {renderMatchRow("teamB", "black")}
                 </div>
               </div>

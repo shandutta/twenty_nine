@@ -162,8 +162,7 @@ export async function POST(request: Request) {
 
   const data = await response.json().catch(() => null);
   const durationMs = Date.now() - startedAt;
-  const usage =
-    data?.usage && typeof data.usage === "object" ? (data.usage as Record<string, unknown>) : null;
+  const usage = data?.usage && typeof data.usage === "object" ? (data.usage as Record<string, unknown>) : null;
   const metrics = {
     durationMs,
     usage,

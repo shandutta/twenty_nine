@@ -207,9 +207,7 @@ export function GameSidebar({
   );
   const displayLog = easyMode ? fullLog : [];
   const lastTrick = gameState.lastTrick;
-  const lastTrickWinner = lastTrick
-    ? gameState.players.find((player) => player.id === lastTrick.winnerPlayerId)
-    : null;
+  const lastTrickWinner = lastTrick ? gameState.players.find((player) => player.id === lastTrick.winnerPlayerId) : null;
   const lastTrickTeam = lastTrick ? (lastTrick.winnerTeamId === "teamA" ? teamA : teamB) : null;
   const lastTrickPlays = lastTrick?.plays ?? [];
 
@@ -252,7 +250,9 @@ export function GameSidebar({
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h1 className="text-[clamp(18px,1.6vw,24px)] font-serif text-emerald-50">Solo Table</h1>
-            <p className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.35em] text-emerald-100/60">Round {gameState.matchRound}</p>
+            <p className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.35em] text-emerald-100/60">
+              Round {gameState.matchRound}
+            </p>
           </div>
           <Button variant="ghost" size="icon" onClick={onOpenSettings} className="text-emerald-100/70">
             <Settings className="h-5 w-5" />
@@ -311,7 +311,9 @@ export function GameSidebar({
             {(isBidding || isChoosingTrump) && (
               <Card className="gap-2 py-3 bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
                 <CardHeader className="pb-0 gap-1">
-                  <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">{isBidding ? "Bidding" : "Choose Trump"}</CardTitle>
+                  <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+                    {isBidding ? "Bidding" : "Choose Trump"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-1.5 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   {isBidding && (
@@ -370,7 +372,9 @@ export function GameSidebar({
                       >
                         Pass
                       </Button>
-                      {!canBid && <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>}
+                      {!canBid && (
+                        <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>
+                      )}
                     </div>
                   )}
                   {isChoosingTrump && canChooseTrump && (
@@ -570,7 +574,9 @@ export function GameSidebar({
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Play against AI bots</p>
-                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Let bots consult an advanced model for every move.</p>
+                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
+                      Let bots consult an advanced model for every move.
+                    </p>
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>
@@ -593,7 +599,9 @@ export function GameSidebar({
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
                   <div className="flex items-center justify-between">
-                    <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/50">Model</span>
+                    <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/50">
+                      Model
+                    </span>
                     <span className="text-emerald-50">{modelLabel}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
@@ -663,15 +671,21 @@ export function GameSidebar({
                         </div>
                         <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
                           <div>
-                            <p className="text-[clamp(11px,0.85vw,13px)] font-semibold text-emerald-50">Show reasoning trace</p>
-                            <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">Displays the latest trace on the table.</p>
+                            <p className="text-[clamp(11px,0.85vw,13px)] font-semibold text-emerald-50">
+                              Show reasoning trace
+                            </p>
+                            <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">
+                              Displays the latest trace on the table.
+                            </p>
                           </div>
                           <Switch
                             checked={botSettings.showReasoningTrace}
                             onCheckedChange={onShowReasoningTraceChange}
                           />
                         </div>
-                        <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">Fallbacks: {fallbackLabels}</p>
+                        <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">
+                          Fallbacks: {fallbackLabels}
+                        </p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -687,7 +701,9 @@ export function GameSidebar({
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Explain last move</p>
-                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Get a quick critique and alternatives.</p>
+                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
+                      Get a quick critique and alternatives.
+                    </p>
                   </div>
                   <Switch checked={coachEnabled} onCheckedChange={onCoachEnabledChange} />
                 </div>
@@ -725,7 +741,9 @@ export function GameSidebar({
                         <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
                           Trick {lastTrick.trickNumber}
                         </p>
-                        <p className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">{lastTrickWinner?.name ?? "Player"} won</p>
+                        <p className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+                          {lastTrickWinner?.name ?? "Player"} won
+                        </p>
                         <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                           {lastTrickTeam?.name ?? "Team"} · +{lastTrick.points} pts
                         </p>
@@ -755,7 +773,9 @@ export function GameSidebar({
                 )}
                 {easyMode && (
                   <div className="space-y-2 border-t border-white/10 pt-3">
-                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Full trick log</p>
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                      Full trick log
+                    </p>
                     <div className="space-y-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                       {displayLog.length === 0 ? (
                         <p>No actions yet.</p>
