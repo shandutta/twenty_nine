@@ -1025,13 +1025,11 @@ export const useGameController = () => {
     }
 
     const context = buildGameLogContext(engineState);
-    const {
-      trickNumber: _trickNumber,
-      leader: _leader,
-      trumpSuit: _trumpSuit,
-      trumpRevealed: _trumpRevealed,
-      ...contextWithoutTrickStart
-    } = context;
+    const contextWithoutTrickStart = { ...context };
+    delete contextWithoutTrickStart.trickNumber;
+    delete contextWithoutTrickStart.leader;
+    delete contextWithoutTrickStart.trumpSuit;
+    delete contextWithoutTrickStart.trumpRevealed;
 
     if (lastLogIndexRef.current === null) {
       lastLogIndexRef.current = engineState.log.length;

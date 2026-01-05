@@ -16,3 +16,16 @@ docs/ux/screens/
 _v0.zip
 .v0-twenty-nine-game-table/
 v0-twenty-nine-game-table.zip
+*~
+*.bak
+*.bk
+*.orig
+*.swp
+*.swo
+*.tmp
+*.old
+*.backup
+next-*.log
+.next/cache/
+.next/trace
+.next/**/*.log

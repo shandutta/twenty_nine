@@ -62,8 +62,8 @@ const verifyJwt = (token: string, secret: string, expectedType?: TokenType): Jwt
   const iss = typeof payload.iss === "string" ? payload.iss : null;
   const sub = typeof payload.sub === "string" ? payload.sub : null;
   const typ = payload.typ === "access" || payload.typ === "refresh" ? payload.typ : null;
-  const iat = typeof payload.iat === "number" ? payload.iat : now;
   const now = Math.floor(Date.now() / 1000);
+  const iat = typeof payload.iat === "number" ? payload.iat : now;
   if (!exp || !iss || !sub || !typ) return null;
   if (iss !== ISSUER) return null;
   if (exp < now) return null;
