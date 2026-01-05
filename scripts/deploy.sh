@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 mkdir -p "$ROOT_DIR/.logs"
 LOG_FILE="$ROOT_DIR/.logs/deploy.log"
 LOCK_FILE="$ROOT_DIR/.logs/deploy.lock"
+LAST_DEPLOY_FILE="$ROOT_DIR/.logs/last-deploy.sha"
 export TZ="America/Los_Angeles"
 RUN_TS=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
@@ -80,7 +81,8 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
   pnpm lint
 
   echo "deploy: running unit tests"
-  pnpm test
+  pnpm test:engine
+  pnpm test:web
 
   if [ "${TWENTYNINE_DEPLOY_E2E:-1}" = "1" ]; then
     echo "deploy: running e2e tests"
@@ -208,6 +210,8 @@ if command -v curl >/dev/null 2>&1; then
 else
   echo "deploy: curl not available; skipping health check"
 fi
+
+git rev-parse HEAD > "$LAST_DEPLOY_FILE"
 
 rm -rf "$BACKUP_DIR"
 echo "deploy: done"

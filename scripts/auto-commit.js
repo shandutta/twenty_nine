@@ -77,6 +77,9 @@ const AUTO_COMMIT_FALLBACK_MODELS = (
 const OPENROUTER_RETRY_ATTEMPTS = Number(process.env.AUTO_COMMIT_RETRY_ATTEMPTS || 2);
 const OPENROUTER_RETRY_BASE_DELAY_MS = Number(process.env.AUTO_COMMIT_RETRY_BASE_DELAY_MS || 1200);
 const AUTO_COMMIT_MAX_TOKENS = Number(process.env.AUTO_COMMIT_MAX_TOKENS || 80);
+const AUTO_COMMIT_DEPLOY = process.env.AUTO_COMMIT_DEPLOY !== "false";
+const AUTO_COMMIT_DEPLOY_CHECKS = process.env.AUTO_COMMIT_DEPLOY_CHECKS;
+const AUTO_COMMIT_DEPLOY_E2E = process.env.AUTO_COMMIT_DEPLOY_E2E;
 
 const rotateAutoCommitLog = () => {
   const logFile = path.join(repoRoot, ".logs", "auto-commit.log");
@@ -447,6 +450,8 @@ const gitCommit = (message) => {
   const commitEnv = { ...process.env };
   // Skip pre-commit hook since we already ran the checks in runChecksWithCodex()
   commitEnv.SKIP_SIMPLE_GIT_HOOKS = "1";
+  // Avoid post-commit auto-deploy; auto-commit will deploy explicitly.
+  commitEnv.TWENTYNINE_AUTODEPLOY = "0";
 
   const commit = spawnSync("git", ["commit", "-m", message], {
     stdio: "inherit",
@@ -458,6 +463,33 @@ const gitCommit = (message) => {
   }
 
   return true;
+};
+
+const runDeploy = () => {
+  if (!AUTO_COMMIT_DEPLOY) {
+    log("Skipping deploy (AUTO_COMMIT_DEPLOY=false)");
+    return;
+  }
+
+  log("Running deploy after auto-commit...");
+  const deployEnv = { ...process.env };
+  if (AUTO_COMMIT_DEPLOY_CHECKS !== undefined) {
+    deployEnv.TWENTYNINE_DEPLOY_CHECKS = AUTO_COMMIT_DEPLOY_CHECKS;
+  }
+  if (AUTO_COMMIT_DEPLOY_E2E !== undefined) {
+    deployEnv.TWENTYNINE_DEPLOY_E2E = AUTO_COMMIT_DEPLOY_E2E;
+  }
+
+  const deploy = spawnSync("pnpm", ["deploy:prod"], {
+    stdio: "inherit",
+    cwd: repoRoot,
+    env: deployEnv,
+  });
+
+  if (deploy.status !== 0) {
+    console.error(`[${timestamp()}] deploy failed.`);
+    process.exit(deploy.status ?? 1);
+  }
 };
 
 const gitPush = () => {
@@ -654,6 +686,7 @@ const main = async () => {
     return;
   }
   runStats.committed = true;
+  runDeploy();
   runStats.pushStatus = gitPush();
 
   log("Auto-commit completed and pushed successfully");
