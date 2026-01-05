@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import type { Card, Suit } from "@twentynine/engine";
+import { cardPoints, type Card, type Suit } from "@twentynine/engine";
 import { GameTable } from "@/components/game/table";
 import { GameSidebar } from "@/components/game/sidebar";
 import { SettingsSheet } from "@/components/game/settings-sheet";
@@ -249,18 +249,60 @@ function GamePageClient() {
 
     const currentPlayerName = currentPlayer!.name;
     const currentPlayerHand = currentPlayer!.cards.map(formatCard);
+    const teamById = (teamId: "teamA" | "teamB") =>
+      teamId === "teamA" ? gameState.teams.teamA : gameState.teams.teamB;
+    const bidderTeamId = gameState.bidWinner
+      ? gameState.teams.teamA.players.includes(gameState.bidWinner)
+        ? "teamA"
+        : "teamB"
+      : null;
+    const bidderTeam = bidderTeamId ? teamById(bidderTeamId) : null;
+    const royalsTeam = gameState.royalsDeclaredBy ? teamById(gameState.royalsDeclaredBy) : null;
     const visibleHands = {
       you: bottomPlayer!.cards.map(formatCard),
       partner: controlMode === "single-hand" && topPlayer ? topPlayer.cards.map(formatCard) : undefined,
     };
     const message = {
       phase: gameState.phase,
+      match: {
+        round: gameState.matchRound,
+        redPips: gameState.matchRedPips,
+        blackPips: gameState.matchBlackPips,
+        winner:
+          gameState.matchWinner === null
+            ? null
+            : gameState.matchWinner === "teamA"
+              ? gameState.teams.teamA.name
+              : gameState.teams.teamB.name,
+        endReason: gameState.matchEndReason,
+      },
+      contract: {
+        bidTarget: gameState.currentBid,
+        bidder: gameState.bidWinner ? playerNameById(gameState.bidWinner) : null,
+        bidderTeam: bidderTeam?.name ?? null,
+        royals: {
+          declaredBy: royalsTeam?.name ?? null,
+          adjustment: gameState.royalsAdjustment,
+          minTarget: gameState.royalsMinTarget,
+          maxTarget: gameState.royalsMaxTarget,
+        },
+      },
       trump: visibleTrumpLabel,
+      trumpRevealed: gameState.trumpRevealed,
       score: {
-        teamA: gameState.teams.teamA.handPoints,
-        teamB: gameState.teams.teamB.handPoints,
+        teamA: {
+          name: gameState.teams.teamA.name,
+          handPoints: gameState.teams.teamA.handPoints,
+          tricksWon: gameState.teams.teamA.tricksWon,
+        },
+        teamB: {
+          name: gameState.teams.teamB.name,
+          handPoints: gameState.teams.teamB.handPoints,
+          tricksWon: gameState.teams.teamB.tricksWon,
+        },
       },
       trickNumber: gameState.trickNumber + 1,
+      currentTrickPoints: gameState.currentTrick.reduce((sum, play) => sum + cardPoints(play.card), 0),
       currentTrick: gameState.currentTrick.map((play) => ({
         player: playerNameById(play.playerId),
         card: formatCard(play.card),
@@ -280,6 +322,10 @@ function GamePageClient() {
       currentPlayer: currentPlayerName,
       currentPlayerHand,
       legalMoves: currentPlayerLegalMoves.map(formatCard),
+      legalMovesWithPoints: currentPlayerLegalMoves.map((card) => ({
+        card: formatCard(card),
+        points: cardPoints(card),
+      })),
     };
 
     try {
@@ -303,7 +349,7 @@ function GamePageClient() {
             {
               role: "system",
               content:
-                "You are a 29 card game coach for the human player. Use ONLY the visible info provided (current trick, last trick, score, trump visibility, and the player's visible hand[s]). Do NOT mention or infer hidden cards, unrevealed trump, or speculate about opponents' hands. When it is the player's turn, give a 1-2 sentence recap plus 1-2 legal card suggestions from legalMoves. Be concise.",
+                "You are a 29 card game coach for the human player. Use ONLY the visible info provided. Do NOT mention or infer hidden cards, unrevealed trump, or speculate about opponents' hands. Provide an in-depth, phase-aware coaching note that reflects the contract (bid target + bidder team), match/hand score, trick number, and trump visibility. Structure the response with short labeled sections in plain text: Situation (2-3 sentences), Objectives & risks (2-4 bullets), Tactics (2-4 bullets), Suggested plays (2-3 options). Only suggest cards that appear in legalMoves (write labels exactly as shown); you may use legalMovesWithPoints for point values. Keep it concise but substantive (~120-180 words).",
             },
             {
               role: "user",
