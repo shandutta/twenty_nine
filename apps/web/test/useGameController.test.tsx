@@ -197,7 +197,7 @@ describe("useGameController", () => {
   });
 
   it("hydrates from localStorage when a snapshot exists", async () => {
-    vi.useFakeTimers();
+    vi.useRealTimers();
 
     const snapshot = createGameState({ seed: 999, phase: "playing", trumpSuit: "spades", bidTarget: 16 });
     const persisted = {
@@ -231,7 +231,7 @@ describe("useGameController", () => {
   });
 
   it("persists updates to localStorage after hydration", async () => {
-    vi.useFakeTimers();
+    vi.useRealTimers();
 
     const { result } = renderHook(() => useGameController());
 
