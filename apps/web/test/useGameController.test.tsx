@@ -287,6 +287,13 @@ describe("useGameController", () => {
     await act(async () => {
       result.current.setBotEnabled(false);
       result.current.setBotDifficulty("medium");
+    });
+
+    await waitFor(() => {
+      expect(result.current.botSettings.reasoningEffort).toBe("medium");
+    });
+
+    await act(async () => {
       result.current.setReasoningEffort("low");
     });
 

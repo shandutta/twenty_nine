@@ -16,10 +16,10 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: ["app/game/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
       thresholds: {
-        lines: 70,
-        branches: 60,
-        functions: 70,
-        statements: 70,
+        lines: 100,
+        branches: 100,
+        functions: 100,
+        statements: 100,
       },
       exclude: [
         ".next/**",

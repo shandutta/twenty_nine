@@ -813,9 +813,7 @@ export const useGameController = () => {
   const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>("easy");
   const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
-    DEFAULT_REASONING_EFFORT_BY_DIFFICULTY.easy
-  );
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(DEFAULT_REASONING_EFFORT_BY_DIFFICULTY.easy);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
@@ -1240,8 +1238,6 @@ export const useGameController = () => {
       })
     );
     setLastMove(null);
-    setLlmReasoning(null);
-    setLlmReasoningMeta(null);
     setControlModeLocked(false);
   }, [resetTrickResolution]);
   const canStartNextHand =
@@ -1255,8 +1251,6 @@ export const useGameController = () => {
     resetTrickResolution();
     setLlmInUse(false);
     setLastMove(null);
-    setLlmReasoning(null);
-    setLlmReasoningMeta(null);
     dispatch({ type: "startNextHand" });
   }, [canStartNextHand, dispatch, resetTrickResolution]);
 
@@ -1521,8 +1515,6 @@ export const useGameController = () => {
         })
       );
       setLastMove(null);
-      setLlmReasoning(null);
-      setLlmReasoningMeta(null);
     },
     [controlMode, controlModeLocked, resetTrickResolution]
   );

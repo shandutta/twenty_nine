@@ -247,10 +247,10 @@ function GamePageClient() {
     setCoachError(null);
     setCoachResponse(null);
 
-    const currentPlayerName = currentPlayer?.name ?? "You";
-    const currentPlayerHand = currentPlayer?.cards.map(formatCard) ?? [];
+    const currentPlayerName = currentPlayer!.name;
+    const currentPlayerHand = currentPlayer!.cards.map(formatCard);
     const visibleHands = {
-      you: bottomPlayer?.cards.map(formatCard) ?? [],
+      you: bottomPlayer!.cards.map(formatCard),
       partner: controlMode === "single-hand" && topPlayer ? topPlayer.cards.map(formatCard) : undefined,
     };
     const message = {
