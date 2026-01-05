@@ -479,48 +479,6 @@ const parseBidFromText = (text: string, legalBids: number[]): number | null | un
   return undefined;
 };
 
-const extractReasoningTrace = (
-  message: { reasoning?: unknown; reasoning_details?: unknown } | null
-): { text: string | null; hasTrace: boolean } => {
-  if (!message) return { text: null, hasTrace: false };
-  if (typeof message.reasoning === "string" && message.reasoning.trim()) {
-    return { text: message.reasoning.trim(), hasTrace: true };
-  }
-  if (!Array.isArray(message.reasoning_details)) {
-    return { text: null, hasTrace: Boolean(message.reasoning_details) };
-  }
-
-  const parts: string[] = [];
-  for (const detail of message.reasoning_details) {
-    if (!detail || typeof detail !== "object") continue;
-    const entry = detail as { type?: string; summary?: string; text?: string };
-    if (entry.type === "reasoning.summary" && entry.summary) {
-      parts.push(`Summary: ${entry.summary}`);
-      continue;
-    }
-    if (entry.type === "reasoning.text" && entry.text) {
-      parts.push(entry.text);
-      continue;
-    }
-    if (entry.type === "reasoning.encrypted") {
-      parts.push("[Encrypted reasoning]");
-      continue;
-    }
-    if (entry.summary) {
-      parts.push(`Summary: ${entry.summary}`);
-      continue;
-    }
-    if (entry.text) {
-      parts.push(entry.text);
-    }
-  }
-
-  if (parts.length === 0) {
-    return { text: null, hasTrace: true };
-  }
-  return { text: parts.join("\n\n"), hasTrace: true };
-};
-
 const shouldUseLLM = () => true;
 
 type LlmUsage = Record<string, unknown> | null;
@@ -864,6 +822,17 @@ export const useGameController = () => {
   const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [showReasoningTrace, setShowReasoningTrace] = useState(false);
+  const [llmReasoning, setLlmReasoning] = useState<string | null>(null);
+  const [llmReasoningMeta, setLlmReasoningMeta] = useState<{
+    model: string;
+    effort: ReasoningEffort;
+    ts: number;
+    hasTrace: boolean;
+    latencyMs: number | null;
+    usage: LlmUsage;
+    costUsd: number | null;
+  } | null>(null);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
@@ -980,6 +949,9 @@ export const useGameController = () => {
         parsed.reasoningEffort === "none"
       ) {
         setReasoningEffort(parsed.reasoningEffort);
+      }
+      if (typeof parsed.showReasoningTrace === "boolean") {
+        setShowReasoningTrace(parsed.showReasoningTrace);
       }
       if (parsed.controlMode === "standard" || parsed.controlMode === "single-hand") {
         setControlMode(parsed.controlMode);
@@ -1636,6 +1608,7 @@ export const useGameController = () => {
     setBotModel,
     setBotTemperature,
     setReasoningEffort,
+    setShowReasoningTrace,
     controlMode,
     controlModeLocked,
     onControlModeChange: handleControlModeChange,
