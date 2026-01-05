@@ -74,7 +74,6 @@ const baseBotSettings: BotSettings = {
   temperature: 0.2,
   usageHint: "Conservative: protects high-value points and plays safely.",
   reasoningEffort: "high",
-  showReasoningTrace: false,
 };
 
 describe("GameSidebar", () => {
@@ -91,7 +90,6 @@ describe("GameSidebar", () => {
         onBotModelChange={vi.fn()}
         onBotTemperatureChange={vi.fn()}
         onReasoningEffortChange={vi.fn()}
-        onShowReasoningTraceChange={vi.fn()}
         controlMode="standard"
         onControlModeChange={vi.fn()}
         controlModeLocked={false}

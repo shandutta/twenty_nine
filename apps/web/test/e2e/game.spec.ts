@@ -25,7 +25,6 @@ test("game page smoke flow", async ({ page }) => {
     botModel: "openai/gpt-5.2-chat",
     botTemperature: 0.2,
     reasoningEffort: "high",
-    showReasoningTrace: false,
     controlMode: "standard",
   };
   await page.addInitScript(

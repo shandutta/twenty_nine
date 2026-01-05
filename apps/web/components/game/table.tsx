@@ -9,11 +9,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
 import { MATCH_PIPS } from "@twentynine/engine";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
-import {
-  LLM_MODEL_OPTIONS,
-  REASONING_EFFORT_OPTIONS,
-  type ReasoningEffort,
-} from "@/components/game/use-game-controller";
 import { Download, Share2, Sparkles, Trophy, Cog, RotateCcw } from "lucide-react";
 
 interface GameTableProps {
@@ -39,18 +34,6 @@ interface GameTableProps {
   canDeclareRoyals: boolean;
   onDeclareRoyals: () => void;
   llmInUse: boolean;
-  llmReasoning: string | null;
-  llmReasoningMeta: {
-    model: string;
-    effort: ReasoningEffort;
-    ts: number;
-    hasTrace: boolean;
-    latencyMs: number | null;
-    usage: Record<string, unknown> | null;
-    costUsd: number | null;
-  } | null;
-  showReasoningTrace: boolean;
-  reasoningTraceSupported?: boolean | null;
 }
 
 const suitSymbols: Record<string, string> = {
@@ -333,102 +316,6 @@ function LiveAiIndicator({ active }: { active: boolean }) {
         <span className="h-1 w-1 animate-pulse rounded-full bg-[#f2c879]/50 [animation-delay:150ms]" />
         <span className="h-1 w-1 animate-pulse rounded-full bg-[#f2c879]/40 [animation-delay:300ms]" />
       </span>
-    </div>
-  );
-}
-
-const formatModelLabel = (value: string) => LLM_MODEL_OPTIONS.find((option) => option.value === value)?.label ?? value;
-
-const formatEffortLabel = (value: ReasoningEffort) =>
-  REASONING_EFFORT_OPTIONS.find((option) => option.value === value)?.label ?? value;
-
-const readNumber = (value: unknown): number | null =>
-  typeof value === "number" && Number.isFinite(value) ? value : null;
-
-const getUsageNumber = (usage: Record<string, unknown> | null, key: string): number | null => {
-  if (!usage) return null;
-  return readNumber(usage[key]);
-};
-
-const formatLatency = (value: number | null) => (value === null ? "—" : `${Math.round(value)}ms`);
-
-const formatUsd = (value: number | null) => (value === null ? "—" : `$${value.toFixed(6)}`);
-
-function ReasoningTracePanel({
-  trace,
-  meta,
-  show,
-  supported,
-}: {
-  trace: string | null;
-  meta: {
-    model: string;
-    effort: ReasoningEffort;
-    ts: number;
-    hasTrace: boolean;
-    latencyMs: number | null;
-    usage: Record<string, unknown> | null;
-    costUsd: number | null;
-  } | null;
-  show: boolean;
-  supported: boolean | null;
-}) {
-  if (!show) return null;
-  const modelLabel = meta ? formatModelLabel(meta.model) : "—";
-  const effortLabel = meta ? formatEffortLabel(meta.effort) : "—";
-  const reasoningUnavailable = supported === false;
-  const body = reasoningUnavailable
-    ? "Selected model does not return reasoning traces on OpenRouter."
-    : trace?.trim()
-      ? trace
-      : meta?.hasTrace
-        ? "Trace unavailable for this model."
-        : "No trace yet.";
-  const promptTokens = meta?.usage ? getUsageNumber(meta.usage, "prompt_tokens") : null;
-  const completionTokens = meta?.usage ? getUsageNumber(meta.usage, "completion_tokens") : null;
-  const totalTokensDirect = meta?.usage ? getUsageNumber(meta.usage, "total_tokens") : null;
-  const totalTokens =
-    totalTokensDirect !== null
-      ? totalTokensDirect
-      : promptTokens !== null || completionTokens !== null
-        ? (promptTokens ?? 0) + (completionTokens ?? 0)
-        : null;
-  const promptLabel = promptTokens === null ? "—" : String(promptTokens);
-  const completionLabel = completionTokens === null ? "—" : String(completionTokens);
-  const tokenLabel =
-    totalTokens !== null
-      ? `${totalTokens}${promptTokens !== null || completionTokens !== null ? ` (P${promptLabel}/C${completionLabel})` : ""}`
-      : promptTokens !== null || completionTokens !== null
-        ? `P${promptLabel}/C${completionLabel}`
-        : "—";
-
-  return (
-    <div className="pointer-events-auto w-[min(22rem,78vw)] rounded-2xl border border-white/10 bg-black/70 p-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
-      <div className="flex items-center justify-between gap-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/50">
-        <span>Reasoning Trace</span>
-        <span className="text-emerald-50">{effortLabel}</span>
-      </div>
-      <div className="mt-1 flex items-center justify-between gap-3 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
-        <span className="uppercase tracking-[0.24em]">Model</span>
-        <span className="text-emerald-50">{modelLabel}</span>
-      </div>
-      <div className="mt-2 grid grid-cols-3 gap-3 text-[clamp(10px,0.75vw,12px)]">
-        <div>
-          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Latency</div>
-          <div className="text-emerald-50">{formatLatency(meta?.latencyMs ?? null)}</div>
-        </div>
-        <div>
-          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Tokens</div>
-          <div className="text-emerald-50">{tokenLabel}</div>
-        </div>
-        <div>
-          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Cost</div>
-          <div className="text-emerald-50">{formatUsd(meta?.costUsd ?? null)}</div>
-        </div>
-      </div>
-      <div className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/40 p-2 text-emerald-100/70">
-        {body}
-      </div>
     </div>
   );
 }

@@ -231,12 +231,6 @@ function GamePageClient() {
     setCoachError(null);
   }, [gameState.currentPlayerId, gameState.trickNumber, gameState.phase, coachEnabled]);
 
-  const reasoningTraceSupported = useMemo(() => {
-    if (!modelReasoningSupport) return null;
-    if (!(botSettings.model in modelReasoningSupport)) return null;
-    return modelReasoningSupport[botSettings.model];
-  }, [botSettings.model, modelReasoningSupport]);
-
   const requestCoach = async () => {
     if (!coachEnabled) {
       return;
@@ -350,13 +344,11 @@ function GamePageClient() {
         onOpenSettings={() => setSettingsOpen(true)}
         easyMode={easyMode}
         botSettings={botSettings}
-        reasoningTraceSupported={reasoningTraceSupported}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
         onBotModelChange={setBotModel}
         onBotTemperatureChange={setBotTemperature}
         onReasoningEffortChange={setReasoningEffort}
-        onShowReasoningTraceChange={setShowReasoningTrace}
         controlMode={controlMode}
         onControlModeChange={onControlModeChange}
         controlModeLocked={controlModeLocked}
@@ -401,10 +393,6 @@ function GamePageClient() {
           canDeclareRoyals={canDeclareRoyals}
           onDeclareRoyals={onDeclareRoyals}
           llmInUse={llmInUse}
-          llmReasoning={llmReasoning}
-          llmReasoningMeta={llmReasoningMeta}
-          showReasoningTrace={botSettings.showReasoningTrace}
-          reasoningTraceSupported={reasoningTraceSupported}
         />
       </main>
       <SettingsSheet

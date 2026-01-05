@@ -91,9 +91,6 @@ describe("GameTable", () => {
         canDeclareRoyals={false}
         onDeclareRoyals={vi.fn()}
         llmInUse={false}
-        llmReasoning={null}
-        llmReasoningMeta={null}
-        showReasoningTrace={false}
       />
     );
 

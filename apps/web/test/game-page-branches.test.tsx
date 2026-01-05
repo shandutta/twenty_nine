@@ -12,7 +12,6 @@ type SidebarProps = {
   gameState: GameState;
   legalMovesSummary: string;
   lastMoveSummary: string;
-  reasoningTraceSupported?: boolean | null;
   easyMode: boolean;
   onOpenSettings: () => void;
   onCoachEnabledChange: (enabled: boolean) => void;
@@ -228,11 +227,8 @@ const baseControllerState = (overrides: Partial<ReturnType<typeof useGameControl
     temperature: 0.2,
     usageHint: "Conservative: protects high-value points and plays safely.",
     reasoningEffort: "high",
-    showReasoningTrace: false,
   },
   llmInUse: false,
-  llmReasoning: null,
-  llmReasoningMeta: null,
   trickResolution: { pending: false, open: false, summary: null },
   onAcknowledgeTrickResolution: vi.fn(),
   setBotEnabled: vi.fn(),
@@ -240,7 +236,6 @@ const baseControllerState = (overrides: Partial<ReturnType<typeof useGameControl
   setBotModel: vi.fn(),
   setBotTemperature: vi.fn(),
   setReasoningEffort: vi.fn(),
-  setShowReasoningTrace: vi.fn(),
   controlMode: "standard",
   controlModeLocked: false,
   onControlModeChange: vi.fn(),
@@ -359,93 +354,6 @@ describe("GamePage logic branches", () => {
 
     await waitFor(() => {
       expect(getSettingsProps().open).toBe(true);
-    });
-  });
-
-  it("sets reasoningTraceSupported to null when models are missing", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
-      const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        return { ok: true, json: async () => ({}) } as Response;
-      }
-      return { ok: true, json: async () => ({ configured: true }) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
-
-    mockedUseGameController.mockReturnValue(baseControllerState());
-    const { default: GamePage } = await import("@/app/game/page");
-    render(<GamePage />);
-
-    await waitFor(() => {
-      expect(getSidebarProps().reasoningTraceSupported).toBeNull();
-    });
-  });
-
-  it("resolves reasoningTraceSupported for known models", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
-      const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        return {
-          ok: true,
-          json: async () => ({ models: [{ id: "openai/gpt-5.2-chat", supportsReasoning: false }] }),
-        } as Response;
-      }
-      return { ok: true, json: async () => ({ configured: true }) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
-
-    mockedUseGameController.mockReturnValue(baseControllerState());
-    const { default: GamePage } = await import("@/app/game/page");
-    render(<GamePage />);
-
-    await waitFor(() => {
-      expect(getSidebarProps().reasoningTraceSupported).toBe(false);
-    });
-  });
-
-  it("returns null when model support map lacks the current model", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
-      const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        return {
-          ok: true,
-          json: async () => ({ models: [{ id: "other-model", supportsReasoning: true }] }),
-        } as Response;
-      }
-      return { ok: true, json: async () => ({ configured: true }) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
-
-    mockedUseGameController.mockReturnValue(baseControllerState());
-    const { default: GamePage } = await import("@/app/game/page");
-    render(<GamePage />);
-
-    await waitFor(() => {
-      expect(getSidebarProps().reasoningTraceSupported).toBeNull();
-    });
-  });
-
-  it("handles invalid model entries and supports reasoning traces", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
-      const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        return {
-          ok: true,
-          json: async () => ({
-            models: [null, { id: 123 }, { id: "openai/gpt-5.2-chat", supportsReasoning: true }],
-          }),
-        } as Response;
-      }
-      return { ok: true, json: async () => ({ configured: true }) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
-
-    mockedUseGameController.mockReturnValue(baseControllerState());
-    const { default: GamePage } = await import("@/app/game/page");
-    render(<GamePage />);
-
-    await waitFor(() => {
-      expect(getSidebarProps().reasoningTraceSupported).toBe(true);
     });
   });
 
@@ -610,42 +518,10 @@ describe("GamePage logic branches", () => {
     });
   });
 
-  it("clears reasoning support when the model fetch fails", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-      const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        throw new Error("fail");
-      }
-      if (!init || init.method === "GET") {
-        return { ok: true, json: async () => ({ configured: true }) } as Response;
-      }
-      return { ok: true, json: async () => ({ message: { content: "OK" } }) } as Response;
-    });
-    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
-
-    mockedUseGameController.mockReturnValue(baseControllerState());
-    const { default: GamePage } = await import("@/app/game/page");
-    render(<GamePage />);
-
-    await waitFor(() => {
-      expect(getSidebarProps().reasoningTraceSupported).toBeNull();
-    });
-  });
-
   it("skips state updates after unmounting", async () => {
     let resolveConfig: ((value: unknown) => void) | null = null;
-    let resolveModels: ((value: unknown) => void) | null = null;
     const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
       const url = typeof input === "string" ? input : input.url;
-      if (url.includes("/api/openrouter/models")) {
-        return {
-          ok: true,
-          json: async () =>
-            new Promise((resolve) => {
-              resolveModels = resolve;
-            }),
-        } as Response;
-      }
       if (!init || init.method === "GET") {
         return {
           ok: true,
@@ -670,7 +546,6 @@ describe("GamePage logic branches", () => {
     unmount();
 
     resolveConfig?.({ configured: true });
-    resolveModels?.({ models: [] });
     await act(async () => {});
   });
 

@@ -29,13 +29,11 @@ interface GameSidebarProps {
   onOpenSettings: () => void;
   easyMode: boolean;
   botSettings: BotSettings;
-  reasoningTraceSupported?: boolean | null;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
   onBotModelChange: (model: string) => void;
   onBotTemperatureChange: (temperature: number) => void;
   onReasoningEffortChange: (effort: ReasoningEffort) => void;
-  onShowReasoningTraceChange: (enabled: boolean) => void;
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
   controlModeLocked: boolean;
@@ -116,13 +114,11 @@ export function GameSidebar({
   onOpenSettings,
   easyMode,
   botSettings,
-  reasoningTraceSupported = null,
   onBotEnabledChange,
   onBotDifficultyChange,
   onBotModelChange,
   onBotTemperatureChange,
   onReasoningEffortChange,
-  onShowReasoningTraceChange,
   controlMode,
   onControlModeChange,
   controlModeLocked,
@@ -153,13 +149,6 @@ export function GameSidebar({
   const fallbackLabels = botSettings.fallbackModels
     .map((model) => LLM_MODEL_OPTIONS.find((option) => option.value === model)?.label ?? model)
     .join(", ");
-  const reasoningTraceUnavailable = reasoningTraceSupported === false;
-  const traceStatus = reasoningTraceUnavailable ? "Unavailable" : botSettings.showReasoningTrace ? "Visible" : "Hidden";
-  const disableReasoningToggle = reasoningTraceUnavailable && !botSettings.showReasoningTrace;
-  const handleReasoningTraceToggle = (enabled: boolean) => {
-    if (reasoningTraceUnavailable && enabled) return;
-    onShowReasoningTraceChange(enabled);
-  };
 
   const teamA = gameState.teams.teamA;
   const teamB = gameState.teams.teamB;
@@ -626,10 +615,6 @@ export function GameSidebar({
                     <span>Reasoning</span>
                     <span className="text-emerald-50">{effortLabel}</span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                    <span>Trace</span>
-                    <span className="text-emerald-50">{traceStatus}</span>
-                  </div>
                 </div>
                 <Accordion type="single" collapsible className="rounded-lg border border-white/10 bg-black/30 px-3">
                   <AccordionItem value="advanced" className="border-none">
@@ -687,27 +672,6 @@ export function GameSidebar({
                             className="w-full"
                           />
                         </div>
-                        <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
-                          <div>
-                            <p className="text-[clamp(11px,0.85vw,13px)] font-semibold text-emerald-50">
-                              Show reasoning trace
-                            </p>
-                            <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">
-                              Displays the latest trace on the table.
-                            </p>
-                          </div>
-                          <Switch
-                            checked={botSettings.showReasoningTrace}
-                            onCheckedChange={handleReasoningTraceToggle}
-                            disabled={disableReasoningToggle}
-                          />
-                        </div>
-                        {reasoningTraceUnavailable && (
-                          <p className="text-[clamp(11px,0.85vw,13px)] text-amber-200/80">
-                            This model does not return reasoning traces on OpenRouter. Switch to a reasoning-capable
-                            model to view traces.
-                          </p>
-                        )}
                         <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">
                           Fallbacks: {fallbackLabels}
                         </p>

@@ -130,18 +130,16 @@ describe("useGameController", () => {
     }
   });
 
-  it("records reasoning trace when enabled", async () => {
+  it("sends reasoning effort in the LLM request", async () => {
     vi.useFakeTimers();
     vi.spyOn(Date, "now").mockReturnValue(3333);
 
-    const reasoningText = "Summary: Preserve trump control; avoid dumping points.";
     let chosen: Card | null = null;
     const fetchMock = vi.fn(async () => ({
       ok: true,
       json: async () => ({
         message: {
           content: chosen ? JSON.stringify({ rank: chosen.rank, suit: chosen.suit }) : '{"rank":"7","suit":"clubs"}',
-          reasoning: reasoningText,
         },
       }),
     }));
@@ -151,7 +149,6 @@ describe("useGameController", () => {
 
     act(() => {
       result.current.setBotEnabled(true);
-      result.current.setShowReasoningTrace(true);
     });
 
     let safety = 0;
@@ -192,8 +189,7 @@ describe("useGameController", () => {
     });
 
     const requestBody = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
-    expect(requestBody.reasoning).toMatchObject({ effort: "high", exclude: false });
-    expect(result.current.llmReasoning).toContain("Summary");
+    expect(requestBody.reasoning).toMatchObject({ effort: "high" });
   });
 
   it("hydrates from localStorage when a snapshot exists", async () => {
@@ -209,7 +205,6 @@ describe("useGameController", () => {
       botModel: "openai/gpt-5.2",
       botTemperature: 0.42,
       reasoningEffort: "minimal",
-      showReasoningTrace: true,
       controlMode: "single-hand",
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
@@ -225,7 +220,6 @@ describe("useGameController", () => {
     expect(result.current.botSettings.model).toBe("openai/gpt-5.2");
     expect(result.current.botSettings.temperature).toBe(0.42);
     expect(result.current.botSettings.reasoningEffort).toBe("minimal");
-    expect(result.current.botSettings.showReasoningTrace).toBe(true);
     expect(result.current.controlMode).toBe("single-hand");
     expect(result.current.controlModeLocked).toBe(true);
   });
@@ -243,7 +237,6 @@ describe("useGameController", () => {
       result.current.setBotEnabled(false);
       result.current.setBotDifficulty("medium");
       result.current.setReasoningEffort("low");
-      result.current.setShowReasoningTrace(true);
     });
 
     await waitFor(() => {
@@ -253,12 +246,10 @@ describe("useGameController", () => {
         botEnabled?: boolean;
         botDifficulty?: string;
         reasoningEffort?: string;
-        showReasoningTrace?: boolean;
       };
       expect(saved.botEnabled).toBe(false);
       expect(saved.botDifficulty).toBe("medium");
       expect(saved.reasoningEffort).toBe("low");
-      expect(saved.showReasoningTrace).toBe(true);
     });
   });
 

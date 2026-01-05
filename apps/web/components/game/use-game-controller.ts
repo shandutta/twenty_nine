@@ -38,6 +38,7 @@ export type BotSettings = {
   temperature: number;
   usageHint: string;
   reasoningEffort: ReasoningEffort;
+  showReasoningTrace: boolean;
 };
 
 const STORAGE_KEY = "twentynine:game-state:v1";
@@ -52,6 +53,7 @@ type PersistedGameState = {
   botModel: string;
   botTemperature: number;
   reasoningEffort: ReasoningEffort;
+  showReasoningTrace: boolean;
   controlMode: ControlMode;
 };
 
@@ -489,13 +491,17 @@ type LlmMetrics = {
 
 type LlmDecision = {
   card: Card | null;
+  reasoning: string | null;
   model: string | null;
+  hasTrace: boolean;
   metrics: LlmMetrics | null;
 };
 
 type LlmBidDecision = {
   bid: number | null | undefined;
+  reasoning: string | null;
   model: string | null;
+  hasTrace: boolean;
   metrics: LlmMetrics | null;
 };
 
@@ -563,6 +569,7 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
           },
           reasoning: {
             effort: settings.reasoningEffort,
+            exclude: !settings.showReasoningTrace,
           },
           messages: [
             {
@@ -579,7 +586,7 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
       }
 
       const data = (await response.json().catch(() => null)) as {
-        message?: { content?: string };
+        message?: { content?: string; reasoning?: unknown; reasoning_details?: unknown };
         metrics?: { durationMs?: number; usage?: LlmUsage; costUsd?: number | null };
       } | null;
       const message = data?.message ?? null;
@@ -589,9 +596,12 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
       }
       const parsed = parseBidFromText(content, legalBids);
       if (parsed !== undefined) {
+        const reasoning = extractReasoningTrace(message);
         return {
           bid: parsed,
+          reasoning: reasoning.text,
           model,
+          hasTrace: reasoning.hasTrace,
           metrics: {
             durationMs: typeof data?.metrics?.durationMs === "number" ? data.metrics.durationMs : null,
             usage: data?.metrics?.usage ?? null,
@@ -604,7 +614,7 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
     }
   }
 
-  return { bid: undefined, model: null, metrics: null };
+  return { bid: undefined, reasoning: null, model: null, hasTrace: false, metrics: null };
 };
 
 const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: BotSettings): Promise<LlmDecision> => {
@@ -672,6 +682,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
           },
           reasoning: {
             effort: settings.reasoningEffort,
+            exclude: !settings.showReasoningTrace,
           },
           messages: [
             {
@@ -688,7 +699,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
       }
 
       const data = (await response.json().catch(() => null)) as {
-        message?: { content?: string };
+        message?: { content?: string; reasoning?: unknown; reasoning_details?: unknown };
         metrics?: { durationMs?: number; usage?: LlmUsage; costUsd?: number | null };
       } | null;
       const message = data?.message ?? null;
@@ -698,9 +709,12 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
       }
       const parsed = parseCardFromText(content, legalMoves);
       if (parsed) {
+        const reasoning = extractReasoningTrace(message);
         return {
           card: parsed,
+          reasoning: reasoning.text,
           model,
+          hasTrace: reasoning.hasTrace,
           metrics: {
             durationMs: typeof data?.metrics?.durationMs === "number" ? data.metrics.durationMs : null,
             usage: data?.metrics?.usage ?? null,
@@ -713,7 +727,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     }
   }
 
-  return { card: null, model: null, metrics: null };
+  return { card: null, reasoning: null, model: null, hasTrace: false, metrics: null };
 };
 
 const createUiState = (state: EngineState, controlMode: ControlMode): GameState => {
@@ -808,6 +822,17 @@ export const useGameController = () => {
   const [botModel, setBotModel] = useState<string>(DEFAULT_LLM_MODEL);
   const [botTemperature, setBotTemperature] = useState<number>(BOT_PRESETS.easy.temperature);
   const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>("high");
+  const [showReasoningTrace, setShowReasoningTrace] = useState(false);
+  const [llmReasoning, setLlmReasoning] = useState<string | null>(null);
+  const [llmReasoningMeta, setLlmReasoningMeta] = useState<{
+    model: string;
+    effort: ReasoningEffort;
+    ts: number;
+    hasTrace: boolean;
+    latencyMs: number | null;
+    usage: LlmUsage;
+    costUsd: number | null;
+  } | null>(null);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
@@ -873,8 +898,9 @@ export const useGameController = () => {
       fallbackModels,
       temperature: botTemperature,
       reasoningEffort,
+      showReasoningTrace,
     }),
-    [botEnabled, preset, botModel, fallbackModels, botTemperature, reasoningEffort]
+    [botEnabled, preset, botModel, fallbackModels, botTemperature, reasoningEffort, showReasoningTrace]
   );
 
   useEffect(() => {
@@ -923,6 +949,9 @@ export const useGameController = () => {
         parsed.reasoningEffort === "none"
       ) {
         setReasoningEffort(parsed.reasoningEffort);
+      }
+      if (typeof parsed.showReasoningTrace === "boolean") {
+        setShowReasoningTrace(parsed.showReasoningTrace);
       }
       if (parsed.controlMode === "standard" || parsed.controlMode === "single-hand") {
         setControlMode(parsed.controlMode);
@@ -1320,6 +1349,18 @@ export const useGameController = () => {
             try {
               llmDecision = await requestLLMBid(snapshot, botSettings);
               bidDecision = llmDecision.bid;
+              if (llmDecision.model && bidDecision !== undefined) {
+                setLlmReasoning(llmDecision.reasoning);
+                setLlmReasoningMeta({
+                  model: llmDecision.model,
+                  effort: botSettings.reasoningEffort,
+                  ts: Date.now(),
+                  hasTrace: llmDecision.hasTrace,
+                  latencyMs: llmDecision.metrics?.durationMs ?? null,
+                  usage: llmDecision.metrics?.usage ?? null,
+                  costUsd: llmDecision.metrics?.costUsd ?? null,
+                });
+              }
             } finally {
               setLlmInUse(false);
             }
@@ -1354,6 +1395,7 @@ export const useGameController = () => {
             llm: llmDecision
               ? {
                   model: llmDecision.model,
+                  hasTrace: llmDecision.hasTrace,
                   bid: llmDecision.bid ?? null,
                   durationMs: llmDecision.metrics?.durationMs ?? null,
                   usage: llmDecision.metrics?.usage ?? null,
@@ -1414,6 +1456,18 @@ export const useGameController = () => {
             if (llmDecision.card) {
               chosen = llmDecision.card;
             }
+            if (llmDecision.model) {
+              setLlmReasoning(llmDecision.reasoning);
+              setLlmReasoningMeta({
+                model: llmDecision.model,
+                effort: botSettings.reasoningEffort,
+                ts: Date.now(),
+                hasTrace: llmDecision.hasTrace,
+                latencyMs: llmDecision.metrics?.durationMs ?? null,
+                usage: llmDecision.metrics?.usage ?? null,
+                costUsd: llmDecision.metrics?.costUsd ?? null,
+              });
+            }
           } finally {
             setLlmInUse(false);
           }
@@ -1434,6 +1488,7 @@ export const useGameController = () => {
           llm: llmDecision
             ? {
                 model: llmDecision.model,
+                hasTrace: llmDecision.hasTrace,
                 card: llmDecision.card ? cardShortLabel(llmDecision.card) : null,
                 durationMs: llmDecision.metrics?.durationMs ?? null,
                 usage: llmDecision.metrics?.usage ?? null,
@@ -1467,6 +1522,7 @@ export const useGameController = () => {
       botModel,
       botTemperature,
       reasoningEffort,
+      showReasoningTrace,
       controlMode,
     };
     try {
@@ -1484,6 +1540,7 @@ export const useGameController = () => {
     hydrated,
     lastMove,
     reasoningEffort,
+    showReasoningTrace,
   ]);
 
   const handleControlModeChange = useCallback(
@@ -1542,6 +1599,8 @@ export const useGameController = () => {
     lastMove,
     botSettings,
     llmInUse,
+    llmReasoning,
+    llmReasoningMeta,
     trickResolution,
     onAcknowledgeTrickResolution: acknowledgeTrickResolution,
     setBotEnabled,

@@ -78,7 +78,6 @@ const baseBotSettings = {
   temperature: 0.2,
   usageHint: "Conservative: protects high-value points and plays safely.",
   reasoningEffort: "high",
-  showReasoningTrace: false,
 } as const;
 
 const makeControllerState = (overrides: Partial<ControllerState> = {}): ControllerState =>
@@ -104,8 +103,6 @@ const makeControllerState = (overrides: Partial<ControllerState> = {}): Controll
     lastMove: null,
     botSettings: baseBotSettings,
     llmInUse: false,
-    llmReasoning: null,
-    llmReasoningMeta: null,
     trickResolution: { pending: false, open: false, summary: null },
     onAcknowledgeTrickResolution: vi.fn(),
     setBotEnabled: vi.fn(),
