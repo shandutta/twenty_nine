@@ -33,9 +33,50 @@ trap 'status=$?; if [ $status -eq 0 ]; then log_console "healthcheck: ok (log: '
 
 node scripts/verify-next-build.mjs
 
-if command -v curl >/dev/null 2>&1; then
-  curl -fsS "http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game" >/dev/null
-else
+if ! command -v curl >/dev/null 2>&1; then
   echo "healthcheck: curl not available" >&2
   exit 1
+fi
+
+extract_next_scripts() {
+  local html_file="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg -o "/_next/[^\"']+\\.js" "$html_file" 2>/dev/null | sort -u
+  else
+    grep -oE "/_next/[^\"']+\\.js" "$html_file" 2>/dev/null | sort -u
+  fi
+}
+
+check_game_bundle() {
+  local base_url="$1"
+  local curl_flags=("-fsS")
+  local tmp_html
+  tmp_html=$(mktemp)
+
+  if [ "${TWENTYNINE_HEALTH_INSECURE:-0}" = "1" ]; then
+    curl_flags+=("-k")
+  fi
+
+  curl "${curl_flags[@]}" -o "$tmp_html" "${base_url}/game"
+
+  mapfile -t next_scripts < <(extract_next_scripts "$tmp_html" || true)
+  rm -f "$tmp_html"
+
+  if [ "${#next_scripts[@]}" -eq 0 ]; then
+    echo "healthcheck: no _next scripts found at ${base_url}/game" >&2
+    exit 1
+  fi
+
+  for next_script in "${next_scripts[@]}"; do
+    if ! curl "${curl_flags[@]}" -o /dev/null "${base_url}${next_script}"; then
+      echo "healthcheck: failed to load ${base_url}${next_script}" >&2
+      exit 1
+    fi
+  done
+}
+
+check_game_bundle "http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}"
+
+if [ -n "${TWENTYNINE_HEALTH_PUBLIC_URL:-}" ]; then
+  check_game_bundle "${TWENTYNINE_HEALTH_PUBLIC_URL}"
 fi
