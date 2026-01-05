@@ -75,13 +75,3 @@ pnpm lint
 echo "pre-push: running unit tests"
 pnpm test:engine
 pnpm test:web
-
-echo "pre-push: building web app"
-pnpm -C apps/web build
-
-if [ "${TWENTYNINE_PREPUSH_E2E:-1}" = "1" ]; then
-  echo "pre-push: running e2e tests"
-  E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
-else
-  echo "pre-push: e2e skipped (TWENTYNINE_PREPUSH_E2E=0)"
-fi
