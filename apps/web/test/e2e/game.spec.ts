@@ -10,7 +10,8 @@ test("game page smoke flow", async ({ page }) => {
       const text = message.text();
       if (
         text.includes("React has detected a change in the order of Hooks called by") ||
-        text.includes("Should have a queue. You are likely calling Hooks conditionally")
+        text.includes("Should have a queue. You are likely calling Hooks conditionally") ||
+        (text.includes("WebSocket connection to") && text.includes("/_next/webpack-hmr"))
       ) {
         return;
       }
@@ -20,7 +21,10 @@ test("game page smoke flow", async ({ page }) => {
   page.on("requestfailed", (request) => {
     const failure = request.failure()?.errorText ?? "unknown failure";
     const url = request.url();
-    if (failure.includes("net::ERR_ABORTED") && url.includes("_rsc")) {
+    if (
+      (failure.includes("net::ERR_ABORTED") && url.includes("_rsc")) ||
+      (url.includes("/_next/webpack-hmr") && failure.includes("ERR_CONNECTION_REFUSED"))
+    ) {
       return;
     }
     errors.push(`Request failed: ${url} (${failure})`);

@@ -6,6 +6,7 @@ cd "$ROOT_DIR"
 
 mkdir -p "$ROOT_DIR/.logs"
 LOG_FILE="$ROOT_DIR/.logs/deploy.log"
+LOCK_FILE="$ROOT_DIR/.logs/deploy.lock"
 export TZ="America/Los_Angeles"
 RUN_TS=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
@@ -27,6 +28,22 @@ else
 fi
 
 trap 'status=$?; if [ $status -eq 0 ]; then log_console "deploy: ok (log: '"$LOG_FILE"')"; else log_console "deploy: failed (exit $status) (log: '"$LOG_FILE"')"; fi' EXIT
+
+if command -v flock >/dev/null 2>&1; then
+  exec 9>"$LOCK_FILE"
+  LOCK_WAIT="${TWENTYNINE_DEPLOY_LOCK_WAIT:-0}"
+  if [ "$LOCK_WAIT" = "0" ]; then
+    if ! flock -n 9; then
+      echo "deploy: another deploy is already running (lock: $LOCK_FILE)"
+      exit 1
+    fi
+  else
+    if ! flock -w "$LOCK_WAIT" 9; then
+      echo "deploy: timed out waiting for deploy lock (lock: $LOCK_FILE)"
+      exit 1
+    fi
+  fi
+fi
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$BRANCH" != "main" ]; then
@@ -70,6 +87,50 @@ if [ "${TWENTYNINE_DEPLOY_CHECKS:-1}" = "1" ]; then
     env -u NO_COLOR -u FORCE_COLOR E2E_PORT="${E2E_PORT:-3101}" E2E_SCREENSHOTS=0 pnpm -C apps/web test:e2e
   fi
 fi
+
+find_next_lock_pids() {
+  local lock_path="$1"
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -t "$lock_path" 2>/dev/null || true
+    return 0
+  fi
+  ps -eo pid=,args= | awk '
+    /(next dev|next build|next start|next-dev\.mjs|next-start\.mjs)/ {print $1}
+  '
+}
+
+clear_next_lock() {
+  local lock_path="apps/web/.next/lock"
+  if [ ! -f "$lock_path" ]; then
+    return 0
+  fi
+
+  local pids
+  pids=$(find_next_lock_pids "$lock_path" || true)
+  if [ -n "$pids" ]; then
+    if [ "${TWENTYNINE_DEPLOY_STOP_NEXT:-0}" = "1" ]; then
+      echo "deploy: stopping active next processes before build"
+      for pid in $pids; do
+        kill -TERM "$pid" 2>/dev/null || true
+      done
+      sleep 2
+      pids=$(find_next_lock_pids "$lock_path" || true)
+      if [ -n "$pids" ]; then
+        echo "deploy: next processes still running; aborting"
+        return 1
+      fi
+    else
+      echo "deploy: next process detected with existing .next/lock."
+      echo "deploy: stop dev/build or set TWENTYNINE_DEPLOY_STOP_NEXT=1 to auto-stop."
+      return 1
+    fi
+  fi
+
+  echo "deploy: removing stale .next/lock"
+  rm -f "$lock_path"
+}
+
+clear_next_lock
 
 echo "deploy: building web app"
 echo "deploy: cleaning previous build"
