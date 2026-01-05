@@ -128,6 +128,11 @@ const cardId = (card: Card) => `${card.suit}-${card.rank}`;
 const cardLabel = (card: Card) => `${card.rank} of ${card.suit}`;
 const cardShortLabel = (card: Card) => `${card.rank}${card.suit[0]?.toUpperCase() ?? ""}`;
 
+const RANK_ORDER: Card["rank"][] = ["J", "9", "A", "10", "K", "Q", "8", "7"];
+const RANK_ORDER_LABEL = RANK_ORDER.join(" > ");
+const TOTAL_HAND_POINTS = 29;
+const PLAY_LOG_RE = /played\s+(J|9|A|10|K|Q|8|7)\s+of\s+(hearts|diamonds|clubs|spades)\./i;
+
 const handShortLabels = (hand: Card[]) => hand.map(cardShortLabel);
 
 const trickShortLabels = (trick: EngineState["trick"]) =>
@@ -178,11 +183,107 @@ const buildGameLogContext = (state: EngineState) => ({
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
-const TEAM_LABELS = ["Team A (You & North)", "Team B (West & East)"] as const;
+const TEAM_LABELS = ["Team A (North & South)", "Team B (West & East)"] as const;
 
 const HUMAN_PLAYERS: Record<ControlMode, number[]> = {
   standard: [PRIMARY_HUMAN],
   "single-hand": [PRIMARY_HUMAN, PARTNER_HUMAN],
+};
+
+const parsePlayedCardsFromLog = (log: string[]): Card[] => {
+  const seen: Card[] = [];
+  for (const entry of log) {
+    const match = entry.match(PLAY_LOG_RE);
+    if (!match) continue;
+    const rank = match[1]?.toUpperCase() as Card["rank"];
+    const suit = match[2]?.toLowerCase() as Suit;
+    if (!rank || !suit) continue;
+    seen.push({ rank, suit });
+  }
+  return seen;
+};
+
+const collectSeenCards = (state: EngineState): Card[] => {
+  const seen: Card[] = [];
+  const seenIds = new Set<string>();
+  const pushCard = (card: Card) => {
+    const id = cardId(card);
+    if (seenIds.has(id)) return;
+    seenIds.add(id);
+    seen.push(card);
+  };
+
+  for (const card of parsePlayedCardsFromLog(state.log)) {
+    pushCard(card);
+  }
+  for (const play of state.trick.plays) {
+    pushCard(play.card);
+  }
+  if (state.lastTrick) {
+    for (const play of state.lastTrick.plays) {
+      pushCard(play.card);
+    }
+  }
+  return seen;
+};
+
+const sortRanks = (ranks: Card["rank"][]) =>
+  ranks.slice().sort((a, b) => RANK_ORDER.indexOf(a) - RANK_ORDER.indexOf(b));
+
+const formatSeenCardsBySuit = (cards: Card[]): string => {
+  const bySuit: Record<Suit, Card["rank"][]> = {
+    hearts: [],
+    diamonds: [],
+    clubs: [],
+    spades: [],
+  };
+  for (const card of cards) {
+    const list = bySuit[card.suit];
+    if (!list.includes(card.rank)) {
+      list.push(card.rank);
+    }
+  }
+  const parts = SUITS.map((suit) => {
+    const ranks = sortRanks(bySuit[suit]);
+    return ranks.length ? `${suit} [${ranks.join(", ")}]` : null;
+  }).filter(Boolean) as string[];
+  return parts.length ? parts.join("; ") : "none";
+};
+
+const formatSeenTrumpRanks = (cards: Card[], trumpSuit: Suit): string => {
+  const ranks: Card["rank"][] = [];
+  for (const card of cards) {
+    if (card.suit !== trumpSuit) continue;
+    if (!ranks.includes(card.rank)) {
+      ranks.push(card.rank);
+    }
+  }
+  const sorted = sortRanks(ranks);
+  return sorted.length ? sorted.join(", ") : "none";
+};
+
+const formatOutstandingTrumpRanks = (cards: Card[], hand: Card[], trumpSuit: Suit): string => {
+  const seenRanks = new Set(cards.filter((card) => card.suit === trumpSuit).map((card) => card.rank));
+  const handRanks = new Set(hand.filter((card) => card.suit === trumpSuit).map((card) => card.rank));
+  const remaining = RANK_ORDER.filter((rank) => !seenRanks.has(rank) && !handRanks.has(rank));
+  return remaining.length ? remaining.join(", ") : "none";
+};
+
+const isTrumpKnownToPlayer = (state: EngineState, player: number): boolean => {
+  if (state.trumpSuit === null) return true;
+  if (state.trumpRevealed) return true;
+  if (state.trumpFromSeventh) return false;
+  return state.bidderPlayer === player;
+};
+
+const formatTrumpLine = (state: EngineState, player: number): string => {
+  const trumpLabel = state.trumpSuit ?? "joker (no trump)";
+  if (state.trumpSuit === null) return `Trump: ${trumpLabel}.`;
+  if (state.trumpRevealed) return `Trump: ${trumpLabel}.`;
+  if (!state.trumpFromSeventh && state.bidderPlayer === player) {
+    return `Trump: ${trumpLabel} (known to you, not revealed).`;
+  }
+  return "Trump: hidden.";
 };
 
 const RANK_POWER_BID: Record<Card["rank"], number> = {
@@ -533,6 +634,7 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
     "- If the current bid is already high for that projection, pass.",
     "- Prefer a minimal raise when your hand is borderline.",
     strategy,
+    `Rules: Rank order ${RANK_ORDER_LABEL}. Last trick bonus: +1 (hand totals can sum to ${TOTAL_HAND_POINTS}).`,
     "",
     `Player: ${playerMeta.name} (${playerMeta.position}).`,
     `Your team: ${TEAM_LABELS[myTeam]}. Current bidder: ${bidderLabel}.`,
@@ -630,8 +732,14 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   const legalMovesWithPoints = legalMoves
     .map((card) => `{"rank":"${card.rank}","suit":"${card.suit}","points":${cardPoints(card)}}`)
     .join(", ");
+  const trumpKnown = isTrumpKnownToPlayer(state, player);
+  const trumpLine = formatTrumpLine(state, player);
+  const seenCards = collectSeenCards(state);
+  const seenBySuit = formatSeenCardsBySuit(seenCards);
+  const seenTrumpRanks = trumpKnown && state.trumpSuit ? formatSeenTrumpRanks(seenCards, state.trumpSuit) : null;
+  const outstandingTrumpRanks =
+    trumpKnown && state.trumpSuit ? formatOutstandingTrumpRanks(seenCards, hand, state.trumpSuit) : null;
 
-  const trumpLabel = state.trumpSuit ?? "joker (no trump)";
   const prompt = [
     'You are an expert 29 card game bot. Return JSON only with keys "rank" and "suit".',
     "Always choose from the provided legal moves.",
@@ -643,18 +751,25 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     "- If you are unlikely to win the current trick, favor the lowest-point legal card.",
     "- Prefer winning with the lowest necessary card; avoid overtrumping.",
     strategy,
+    `Rules: Rank order ${RANK_ORDER_LABEL}. Last trick bonus: +1 (hand totals can sum to ${TOTAL_HAND_POINTS}).`,
     "",
     `Player: ${playerMeta.name} (${playerMeta.position}).`,
     `Your team: ${TEAM_LABELS[myTeam]}. Bidder: ${bidderLabel} (target ${bidTarget}).`,
-    `Trick ${trickIndex} of 8. Lead suit: ${lead}. Trump: ${state.trumpRevealed ? trumpLabel : "hidden"}.`,
+    `Trick ${trickIndex} of 8. Lead suit: ${lead}.`,
+    trumpLine,
     `Early trick: ${state.trickNumber < 3 ? "yes" : "no"}.`,
     `Score: Team A ${state.points[0]} pts, Team B ${state.points[1]} pts.`,
     `Current trick plays: ${currentTrick}.`,
+    `Seen cards by suit: ${seenBySuit}.`,
+    seenTrumpRanks ? `Seen trump ranks: ${seenTrumpRanks}.` : null,
+    outstandingTrumpRanks ? `Outstanding trump ranks (excluding your hand): ${outstandingTrumpRanks}.` : null,
     `Your hand: ${hand.map(cardLabel).join(", ")}.`,
     `Legal moves: ${legalMovesWithPoints}.`,
     "",
     "Respond with JSON only.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const modelQueue = Array.from(new Set([settings.model, ...settings.fallbackModels].filter(Boolean)));
 
@@ -819,10 +934,10 @@ export const useGameController = () => {
   const [controlModeLocked, setControlModeLocked] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [showTrickResolution, setShowTrickResolution] = useState(false);
+  const [lastAckTrick, setLastAckTrick] = useState<number | null>(null);
 
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trickResolutionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastAckTrickRef = useRef<number | null>(null);
   const hydratedAckRef = useRef(false);
   const stateRef = useRef(engineState);
   const skipPresetRef = useRef(false);
@@ -835,7 +950,7 @@ export const useGameController = () => {
   const humanPlayers = useMemo(() => HUMAN_PLAYERS[controlMode], [controlMode]);
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
   const pendingTrickNumber = engineState.lastTrick?.number ?? null;
-  const trickResolutionPending = pendingTrickNumber !== null && pendingTrickNumber !== lastAckTrickRef.current;
+  const trickResolutionPending = pendingTrickNumber !== null && pendingTrickNumber !== lastAckTrick;
 
   const gameLoggingEnabled =
     typeof window !== "undefined" && process.env.NODE_ENV !== "test" && process.env.NEXT_PUBLIC_GAME_LOGGING !== "0";
@@ -950,7 +1065,7 @@ export const useGameController = () => {
   useEffect(() => {
     if (!hydrated || hydratedAckRef.current) return;
     hydratedAckRef.current = true;
-    lastAckTrickRef.current = engineState.lastTrick?.number ?? null;
+    setLastAckTrick(engineState.lastTrick?.number ?? null);
   }, [engineState.lastTrick?.number, hydrated]);
 
   useEffect(() => {
@@ -1128,7 +1243,7 @@ export const useGameController = () => {
 
   const acknowledgeTrickResolution = useCallback(() => {
     if (!trickResolutionPending || pendingTrickNumber === null) return;
-    lastAckTrickRef.current = pendingTrickNumber;
+    setLastAckTrick(pendingTrickNumber);
     if (trickResolutionTimer.current) {
       clearTimeout(trickResolutionTimer.current);
       trickResolutionTimer.current = null;
@@ -1142,7 +1257,7 @@ export const useGameController = () => {
       trickResolutionTimer.current = null;
     }
     setShowTrickResolution(false);
-    lastAckTrickRef.current = null;
+    setLastAckTrick(null);
   }, []);
 
   const legalCards = useMemo(() => {

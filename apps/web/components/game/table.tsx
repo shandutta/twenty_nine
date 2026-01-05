@@ -1417,7 +1417,7 @@ export function GameTable({
           </div>
           {canStartNextHand && (
             <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
-              <div className="pointer-events-auto mx-4 w-full max-w-3xl rounded-[32px] border border-white/15 bg-[#0b1612]/90 p-5 text-emerald-50 shadow-[0_28px_90px_rgba(0,0,0,0.6)] backdrop-blur">
+              <div className="pointer-events-auto mx-4 w-full max-w-3xl max-h-[85vh] overflow-y-auto rounded-[32px] border border-white/15 bg-[#0b1612]/90 p-5 text-emerald-50 shadow-[0_28px_90px_rgba(0,0,0,0.6)] backdrop-blur">
                 {renderFinalHandSummary("full")}
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Button onClick={onNextHand} className="flex-1 bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]">
