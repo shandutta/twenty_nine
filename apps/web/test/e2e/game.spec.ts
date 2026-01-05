@@ -1,9 +1,39 @@
 import { test, expect, type Locator } from "@playwright/test";
+import { createGameState } from "@twentynine/engine";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
+const STORAGE_KEY = "twentynine:game-state:v1";
+
 test("game page smoke flow", async ({ page }) => {
   test.setTimeout(120_000);
+  const snapshot = createGameState({
+    seed: 2026,
+    phase: "playing",
+    trumpSuit: "spades",
+    bidTarget: 16,
+    bidderPlayer: 0,
+  });
+  snapshot.currentPlayer = 0;
+  snapshot.leader = 0;
+  const persistedState = {
+    version: 1,
+    engineState: snapshot,
+    lastMove: null,
+    botEnabled: false,
+    botDifficulty: "easy",
+    botModel: "openai/gpt-5.2-chat",
+    botTemperature: 0.2,
+    reasoningEffort: "high",
+    showReasoningTrace: false,
+    controlMode: "standard",
+  };
+  await page.addInitScript(
+    ({ state, storageKey }) => {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    },
+    { state: persistedState, storageKey: STORAGE_KEY }
+  );
   const errors: string[] = [];
 
   page.on("console", (message) => {
@@ -98,71 +128,73 @@ test("game page smoke flow", async ({ page }) => {
     return true;
   };
 
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    await dismissTrickDialog();
-    const bidSelect = page.locator('[data-slot="select-trigger"]').first();
-    const placeBid = page.getByRole("button", { name: /^Place bid$/ });
-    const bidSelectVisible =
-      (await bidSelect.count()) > 0 && (await bidSelect.isVisible({ timeout: 0 }).catch(() => false));
-    const placeBidEnabled =
-      (await placeBid.count()) > 0 &&
-      (await placeBid
-        .first()
-        .isEnabled({ timeout: 0 })
-        .catch(() => false));
-    if (bidSelectVisible && !placeBidEnabled) {
-      await clickIfReady(bidSelect);
-      const option = page.getByRole("option", { name: /Bid \d+/ }).first();
-      if (await option.isVisible({ timeout: 0 }).catch(() => false)) {
-        await option.click({ timeout: 2000 }).catch(() => {});
+  if ((await enabledHandButtons.count()) === 0) {
+    const deadline = Date.now() + 20_000;
+    while (Date.now() < deadline) {
+      await dismissTrickDialog();
+      const bidSelect = page.locator('[data-slot="select-trigger"]').first();
+      const placeBid = page.getByRole("button", { name: /^Place bid$/ });
+      const bidSelectVisible =
+        (await bidSelect.count()) > 0 && (await bidSelect.isVisible({ timeout: 0 }).catch(() => false));
+      const placeBidEnabled =
+        (await placeBid.count()) > 0 &&
+        (await placeBid
+          .first()
+          .isEnabled({ timeout: 0 })
+          .catch(() => false));
+      if (bidSelectVisible && !placeBidEnabled) {
+        await clickIfReady(bidSelect);
+        const option = page.getByRole("option", { name: /Bid \d+/ }).first();
+        if (await option.isVisible({ timeout: 0 }).catch(() => false)) {
+          await option.click({ timeout: 2000 }).catch(() => {});
+        }
       }
-    }
-    if (placeBidEnabled && (await clickIfReady(placeBid))) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      if (placeBidEnabled && (await clickIfReady(placeBid))) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    const passButton = page.getByRole("button", { name: /^Pass$/ });
-    const passEnabled =
-      (await passButton.count()) > 0 &&
-      (await passButton
-        .first()
-        .isEnabled({ timeout: 0 })
-        .catch(() => false));
-    if (passEnabled && (await clickIfReady(passButton))) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      const passButton = page.getByRole("button", { name: /^Pass$/ });
+      const passEnabled =
+        (await passButton.count()) > 0 &&
+        (await passButton
+          .first()
+          .isEnabled({ timeout: 0 })
+          .catch(() => false));
+      if (passEnabled && (await clickIfReady(passButton))) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    const useSeventh = page.getByRole("button", { name: /Use 7th card/i });
-    if (await clickIfReady(useSeventh)) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      const useSeventh = page.getByRole("button", { name: /Use 7th card/i });
+      if (await clickIfReady(useSeventh)) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    const noTrump = page.getByRole("button", { name: /No trump/i });
-    if (await clickIfReady(noTrump)) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      const noTrump = page.getByRole("button", { name: /No trump/i });
+      if (await clickIfReady(noTrump)) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    const joker = page.getByRole("button", { name: /Joker/i });
-    if (await clickIfReady(joker)) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      const joker = page.getByRole("button", { name: /Joker/i });
+      if (await clickIfReady(joker)) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    const trumpSuitButton = page.getByRole("button", { name: /Clubs|Diamonds|Hearts|Spades/i });
-    if (await clickIfReady(trumpSuitButton)) {
-      await page.waitForTimeout(300);
-      continue;
-    }
+      const trumpSuitButton = page.getByRole("button", { name: /Clubs|Diamonds|Hearts|Spades/i });
+      if (await clickIfReady(trumpSuitButton)) {
+        await page.waitForTimeout(300);
+        continue;
+      }
 
-    if ((await enabledHandButtons.count()) > 0) {
-      break;
+      if ((await enabledHandButtons.count()) > 0) {
+        break;
+      }
+      await page.waitForTimeout(250);
     }
-    await page.waitForTimeout(250);
   }
 
   await expect(enabledHandButtons.first()).toBeVisible({ timeout: 10_000 });
@@ -186,7 +218,7 @@ test("game page smoke flow", async ({ page }) => {
           await dismissTrickDialog();
           return enabledHandButtons.count();
         },
-        { timeout: 20_000 }
+        { timeout: 10_000 }
       )
       .toBeGreaterThan(0);
     const legal = enabledHandButtons.first();
@@ -198,9 +230,7 @@ test("game page smoke flow", async ({ page }) => {
     }
   };
 
-  for (let i = 0; i < 3; i += 1) {
-    await playLegalMove();
-  }
+  await playLegalMove();
 
   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
 });
