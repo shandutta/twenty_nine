@@ -12,7 +12,14 @@ const makeCard = (suit: PlayingCard["suit"], rank: PlayingCard["rank"]): Playing
 
 const makeGameState = (log: string[] = []): GameState => ({
   players: [
-    { id: "player1", name: "You", position: "bottom", cards: [makeCard("hearts", "7")], isCurrentPlayer: true, teamId: "teamA" },
+    {
+      id: "player1",
+      name: "You",
+      position: "bottom",
+      cards: [makeCard("hearts", "7")],
+      isCurrentPlayer: true,
+      teamId: "teamA",
+    },
     { id: "player2", name: "West", position: "left", cards: [], isCurrentPlayer: false, teamId: "teamB" },
     { id: "player3", name: "North", position: "top", cards: [], isCurrentPlayer: false, teamId: "teamA" },
     { id: "player4", name: "East", position: "right", cards: [], isCurrentPlayer: false, teamId: "teamB" },
