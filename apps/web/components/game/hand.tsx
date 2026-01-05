@@ -347,17 +347,17 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
   const handLabelTestId = player.name === "You" ? "player-hand-label" : undefined;
 
   return (
-    <div className="flex flex-col items-center gap-3 pb-2">
-      <div className="flex w-full items-center justify-between px-4 md:px-12">
+    <div className="flex flex-col items-center gap-2.5 pb-2">
+      <div className="flex w-full max-w-[min(92vw,980px)] items-center justify-between rounded-full border border-white/10 bg-black/35 px-4 py-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur md:px-8 md:py-1">
         <span
           data-testid={handLabelTestId}
-          className="text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.32em] text-emerald-100/60"
+          className="text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.28em] text-emerald-100/70"
         >
           {handLabel}
         </span>
         <span
           className={cn(
-            "text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.32em]",
+            "text-[clamp(11px,0.8vw,13px)] uppercase tracking-[0.28em]",
             isCurrentTurn ? "text-[#f2c879]" : "text-emerald-100/40"
           )}
         >

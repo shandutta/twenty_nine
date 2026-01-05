@@ -262,16 +262,25 @@ export function GameSidebar({
 
       <Tabs defaultValue="overview" className="flex-1 min-h-0">
         <TabsList className="mx-4 mt-3 grid h-9 grid-cols-3 text-[clamp(12px,0.95vw,14px)]">
-          <TabsTrigger value="overview" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
-            <Trophy className="h-4 w-4" />
+          <TabsTrigger
+            value="overview"
+            className="gap-2 text-[clamp(12px,0.95vw,14px)] data-[state=active]:bg-emerald-300/20 data-[state=active]:text-emerald-100 data-[state=active]:shadow-[inset_0_0_16px_rgba(16,185,129,0.28)] data-[state=active]:font-semibold"
+          >
+            <Trophy className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="ai" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
-            <Sparkles className="h-4 w-4" />
+          <TabsTrigger
+            value="ai"
+            className="gap-2 text-[clamp(12px,0.95vw,14px)] data-[state=active]:bg-emerald-300/20 data-[state=active]:text-emerald-100 data-[state=active]:shadow-[inset_0_0_16px_rgba(16,185,129,0.28)] data-[state=active]:font-semibold"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="log" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
-            <ScrollText className="h-4 w-4" />
+          <TabsTrigger
+            value="log"
+            className="gap-2 text-[clamp(12px,0.95vw,14px)] data-[state=active]:bg-emerald-300/20 data-[state=active]:text-emerald-100 data-[state=active]:shadow-[inset_0_0_16px_rgba(16,185,129,0.28)] data-[state=active]:font-semibold"
+          >
+            <ScrollText className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only">Log</span>
           </TabsTrigger>
         </TabsList>
@@ -341,9 +350,9 @@ export function GameSidebar({
                   {isBidding && bidOptions.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
-                        <SelectTrigger className="h-8 xl:h-9 min-w-[140px] rounded-full border-white/15 bg-white/5 text-[clamp(11px,0.85vw,13px)] text-emerald-50">
-                          <SelectValue placeholder="Choose bid" />
-                        </SelectTrigger>
+                      <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/20 bg-white/5 text-[clamp(12px,0.95vw,14px)] text-emerald-50 shadow-[0_0_0_1px_rgba(242,200,121,0.15)]">
+                        <SelectValue placeholder="Choose bid" />
+                      </SelectTrigger>
                         <SelectContent>
                           {bidOptions.map((bid) => (
                             <SelectItem key={bid} value={String(bid)}>
@@ -356,7 +365,7 @@ export function GameSidebar({
                         size="sm"
                         disabled={!canBid || !effectiveSelectedBid}
                         onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
-                        className="h-8 xl:h-9 rounded-full bg-[#f2c879] px-4 text-[clamp(11px,0.85vw,13px)] font-semibold text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                        className="h-9 xl:h-10 rounded-full bg-[#f2c879] px-5 text-[clamp(12px,0.95vw,14px)] font-semibold text-[#2b1c07] shadow-[0_10px_24px_rgba(0,0,0,0.35)] hover:bg-[#f8d690] disabled:opacity-50"
                       >
                         Place bid
                       </Button>
@@ -368,7 +377,7 @@ export function GameSidebar({
                         onClick={onPassBid}
                         size="sm"
                         disabled={!canBid}
-                        className="h-8 xl:h-9 rounded-full border border-white/15 bg-white/5 px-4 text-[clamp(11px,0.85vw,13px)] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                        className="h-9 xl:h-10 rounded-full border border-white/15 bg-white/5 px-4 text-[clamp(11px,0.85vw,13px)] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
                       >
                         Pass
                       </Button>

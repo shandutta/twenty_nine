@@ -431,14 +431,14 @@ function OpponentArea({
 }) {
   const cardCount = player.cards.length;
   const stackClass = cn(
-    "flex items-center -space-x-6 md:-space-x-8 xl:-space-x-10 md:scale-[1.05] xl:scale-[1.1]",
+    "flex items-center -space-x-6 md:-space-x-8 xl:-space-x-10 md:scale-[1.05] xl:scale-[1.1] xl:mt-1",
     isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
   );
   const topStackClass = cn(stackClass, "md:scale-[1.08] xl:scale-[1.12]");
 
   if (position === "top") {
     return (
-      <div className="flex flex-col items-center gap-2">
+      <div className="flex flex-col items-center gap-3 md:gap-4">
         <div className="flex items-center gap-2">
           <span
             className={cn(
@@ -475,7 +475,7 @@ function OpponentArea({
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3 md:gap-4">
       <span
         className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
       >
@@ -891,9 +891,9 @@ export function GameTable({
                   {bidOptions.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
                       <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
-                        <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/15 bg-white/5 text-emerald-50">
-                          <SelectValue placeholder="Choose bid" />
-                        </SelectTrigger>
+                      <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/20 bg-white/5 text-[clamp(12px,0.95vw,14px)] text-emerald-50 shadow-[0_0_0_1px_rgba(242,200,121,0.15)]">
+                        <SelectValue placeholder="Choose bid" />
+                      </SelectTrigger>
                         <SelectContent>
                           {bidOptions.map((bid) => (
                             <SelectItem key={bid} value={String(bid)}>
@@ -906,7 +906,7 @@ export function GameTable({
                         onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
                         size="sm"
                         disabled={!canBid || !effectiveSelectedBid}
-                        className="h-9 xl:h-10 rounded-full bg-[#f2c879] px-5 text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                        className="h-9 xl:h-10 rounded-full bg-[#f2c879] px-5 text-[clamp(12px,0.95vw,14px)] font-semibold text-[#2b1c07] shadow-[0_10px_24px_rgba(0,0,0,0.35)] hover:bg-[#f8d690] disabled:opacity-50"
                       >
                         Place bid
                       </Button>
@@ -917,7 +917,7 @@ export function GameTable({
                       onClick={onPassBid}
                       size="sm"
                       disabled={!canBid}
-                      className="h-9 xl:h-10 rounded-full border border-white/15 bg-white/5 px-5 text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                      className="h-9 xl:h-10 rounded-full border border-white/15 bg-white/5 px-5 text-[clamp(11px,0.85vw,13px)] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
                     >
                       Pass
                     </Button>
@@ -985,10 +985,10 @@ export function GameTable({
             </div>
           </div>
         )}
-        <div className="absolute inset-4 md:inset-8 xl:inset-10 2xl:inset-12 rounded-[28px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
+        <div className="absolute inset-4 md:inset-8 xl:inset-10 2xl:inset-12 rounded-[22px] border border-white/10 bg-[var(--color-felt)] shadow-[0_30px_90px_rgba(0,0,0,0.55)] overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.12),_transparent_60%),radial-gradient(circle_at_bottom,_rgba(0,0,0,0.5),_transparent_70%)]" />
-          <div className="absolute inset-6 xl:inset-8 rounded-[22px] border border-white/10" />
-          <div className="absolute inset-6 xl:inset-8 rounded-[22px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
+          <div className="absolute inset-6 xl:inset-8 rounded-[18px] border border-white/10" />
+          <div className="absolute inset-6 xl:inset-8 rounded-[18px] border border-white/5 [background-image:repeating-linear-gradient(120deg,rgba(255,255,255,0.06)_0,rgba(255,255,255,0.06)_1px,transparent_1px,transparent_7px)]" />
         </div>
 
         <div className="relative h-full flex flex-col px-4 md:px-6 xl:px-10 py-4 xl:py-6">
