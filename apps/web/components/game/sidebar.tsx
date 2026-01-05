@@ -45,7 +45,7 @@ interface GameSidebarProps {
   coachResponse: string | null;
   onRequestCoach: () => void;
   lastMoveSummary: string;
-  legalAlternatives: string;
+  legalMovesSummary: string;
   canRequestCoach: boolean;
   bidOptions: number[];
   canBid: boolean;
@@ -131,7 +131,7 @@ export function GameSidebar({
   coachResponse,
   onRequestCoach,
   lastMoveSummary,
-  legalAlternatives,
+  legalMovesSummary,
   canRequestCoach,
   bidOptions,
   canBid,
@@ -709,9 +709,9 @@ export function GameSidebar({
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Explain last move</p>
+                    <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Coach my turn</p>
                     <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
-                      Get a quick critique and alternatives.
+                      Get a quick recap and a play suggestion.
                     </p>
                   </div>
                   <Switch checked={coachEnabled} onCheckedChange={onCoachEnabledChange} />
@@ -721,11 +721,11 @@ export function GameSidebar({
                     <span className="font-medium text-emerald-50">Last move:</span> {lastMoveSummary}
                   </p>
                   <p>
-                    <span className="font-medium text-emerald-50">Legal alternatives:</span> {legalAlternatives}
+                    <span className="font-medium text-emerald-50">Your legal moves:</span> {legalMovesSummary}
                   </p>
                 </div>
                 <Button onClick={onRequestCoach} disabled={!canRequestCoach} className="w-full">
-                  {coachLoading ? "Analyzing..." : "Explain last move"}
+                  {coachLoading ? "Analyzing..." : "Coach my turn"}
                 </Button>
                 {coachError && <p className="text-[clamp(11px,0.85vw,13px)] text-rose-300">{coachError}</p>}
                 {coachResponse && (

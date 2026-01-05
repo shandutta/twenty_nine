@@ -120,6 +120,8 @@ describe("/game UI", () => {
       llmInUse: false,
       llmReasoning: null,
       llmReasoningMeta: null,
+      trickResolution: { pending: false, open: false, summary: null },
+      onAcknowledgeTrickResolution: vi.fn(),
       setBotEnabled: vi.fn(),
       setBotDifficulty: vi.fn(),
       setBotModel: vi.fn(),

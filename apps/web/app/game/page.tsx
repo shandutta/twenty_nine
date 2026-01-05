@@ -26,9 +26,11 @@ const suitSymbols: Record<Suit, string> = {
   spades: "♠",
 };
 
-const formatCard = (card: Card): string => `${card.rank}${suitSymbols[card.suit]}`;
+type CardLike = { rank: Card["rank"]; suit: Suit };
 
-const formatCardList = (cards: Card[]): string => (cards.length === 0 ? "--" : cards.map(formatCard).join(", "));
+const formatCard = (card: CardLike): string => `${card.rank}${suitSymbols[card.suit]}`;
+
+const formatCardList = (cards: CardLike[]): string => (cards.length === 0 ? "--" : cards.map(formatCard).join(", "));
 
 function GameShell({ children, hydrated }: { children: ReactNode; hydrated: boolean }) {
   return (
@@ -97,6 +99,8 @@ function GamePageClient() {
     setBotTemperature,
     setReasoningEffort,
     setShowReasoningTrace,
+    trickResolution,
+    onAcknowledgeTrickResolution,
     controlMode,
     controlModeLocked,
     onControlModeChange,
@@ -125,13 +129,57 @@ function GamePageClient() {
     return (player: number) => gameState.players[player]?.name ?? `P${player + 1}`;
   }, [gameState.players]);
 
+  const playerNameById = useMemo(() => {
+    const lookup = new Map(gameState.players.map((player) => [player.id, player.name]));
+    return (id: string) => lookup.get(id) ?? "Player";
+  }, [gameState.players]);
+
+  const bottomPlayer = gameState.players.find((player) => player.position === "bottom") ?? gameState.players[0];
+  const topPlayer = gameState.players.find((player) => player.position === "top") ?? gameState.players[2];
+  const coachPlayerIds = useMemo(() => {
+    if (!bottomPlayer) return [];
+    if (controlMode === "single-hand" && topPlayer) {
+      return [bottomPlayer.id, topPlayer.id];
+    }
+    return [bottomPlayer.id];
+  }, [bottomPlayer, topPlayer, controlMode]);
+  const isCoachTurn = coachPlayerIds.includes(gameState.currentPlayerId);
+  const currentPlayer = gameState.players.find((player) => player.id === gameState.currentPlayerId) ?? bottomPlayer;
+  const currentPlayerLegalMoves = currentPlayer
+    ? currentPlayer.cards.filter((card) => legalCardIds.includes(card.id))
+    : [];
+  const legalMovesSummary = formatCardList(currentPlayerLegalMoves);
+  const isNoTrump = gameState.trumpSuit === null && (gameState.phase === "playing" || gameState.phase === "finished");
+  const visibleTrumpLabel = gameState.trumpSuit
+    ? gameState.trumpRevealed
+      ? suitSymbols[gameState.trumpSuit]
+      : "Hidden"
+    : isNoTrump
+      ? "Joker (no trump)"
+      : "Pending";
+
   const lastMoveSummary = lastMove
     ? `${playerLabel(lastMove.action.player)} played ${formatCard(lastMove.action.card)}`
     : "No moves yet.";
 
-  const legalAlternatives = lastMove ? formatCardList(lastMove.legalMoves) : "--";
+  const trickSummary = trickResolution.summary;
+  const trickWinnerName = trickSummary ? playerNameById(trickSummary.winnerPlayerId) : "Player";
+  const trickTeamName = trickSummary
+    ? trickSummary.winnerTeamId === "teamA"
+      ? gameState.teams.teamA.name
+      : gameState.teams.teamB.name
+    : "Team";
+  const trickWinningCard = trickSummary ? formatCard(trickSummary.winningCard) : "--";
+  const trickPoints = trickSummary?.points ?? 0;
+  const trickNextLead = trickSummary ? playerNameById(gameState.currentPlayerId) : null;
+  const trickDialogOpen = trickResolution.open && Boolean(trickSummary);
 
-  const canRequestCoach = coachEnabled && Boolean(lastMove) && !coachLoading && openRouterConfigured !== false;
+  const canRequestCoach =
+    coachEnabled &&
+    isCoachTurn &&
+    gameState.phase === "playing" &&
+    !coachLoading &&
+    openRouterConfigured !== false;
   const requestNewGame = () => setConfirmNewGameOpen(true);
 
   const confirmNewGame = () => {
@@ -182,10 +230,14 @@ function GamePageClient() {
   useEffect(() => {
     setCoachResponse(null);
     setCoachError(null);
-  }, [lastMove?.action, coachEnabled]);
+  }, [gameState.currentPlayerId, gameState.trickNumber, gameState.phase, coachEnabled]);
 
   const requestCoach = async () => {
-    if (!coachEnabled || !lastMove) {
+    if (!coachEnabled) {
+      return;
+    }
+    if (!isCoachTurn || gameState.phase !== "playing") {
+      setCoachError("Coach guidance is only available on your turn during play.");
       return;
     }
     if (openRouterConfigured === false) {
@@ -196,19 +248,39 @@ function GamePageClient() {
     setCoachError(null);
     setCoachResponse(null);
 
+    const currentPlayerName = currentPlayer?.name ?? "You";
+    const currentPlayerHand = currentPlayer?.cards.map(formatCard) ?? [];
+    const visibleHands = {
+      you: bottomPlayer?.cards.map(formatCard) ?? [],
+      partner: controlMode === "single-hand" && topPlayer ? topPlayer.cards.map(formatCard) : undefined,
+    };
     const message = {
-      trump: engineState.trumpRevealed ? (engineState.trumpSuit ?? "joker (no trump)") : "hidden",
-      currentTrick: engineState.trick.plays.map((play) => ({
-        player: playerLabel(play.player),
+      phase: gameState.phase,
+      trump: visibleTrumpLabel,
+      score: {
+        teamA: gameState.teams.teamA.handPoints,
+        teamB: gameState.teams.teamB.handPoints,
+      },
+      trickNumber: gameState.trickNumber + 1,
+      currentTrick: gameState.currentTrick.map((play) => ({
+        player: playerNameById(play.playerId),
         card: formatCard(play.card),
       })),
-      completedTricks: engineState.trickNumber,
-      score: { team0: engineState.points[0], team1: engineState.points[1] },
-      lastMove: {
-        player: playerLabel(lastMove.action.player),
-        card: formatCard(lastMove.action.card),
-      },
-      legalAlternatives: lastMove.legalMoves.map(formatCard),
+      lastTrick: gameState.lastTrick
+        ? {
+            trickNumber: gameState.lastTrick.trickNumber,
+            winner: playerNameById(gameState.lastTrick.winnerPlayerId),
+            points: gameState.lastTrick.points,
+            plays: gameState.lastTrick.plays.map((play) => ({
+              player: playerNameById(play.playerId),
+              card: formatCard(play.card),
+            })),
+          }
+        : null,
+      visibleHands,
+      currentPlayer: currentPlayerName,
+      currentPlayerHand,
+      legalMoves: currentPlayerLegalMoves.map(formatCard),
     };
 
     try {
@@ -223,8 +295,8 @@ function GamePageClient() {
             matchRound: engineState.matchRound,
             trickNumber: engineState.trickNumber + 1,
             phase: engineState.phase,
-            playerId: lastMove.action.player.toString(),
-            playerName: playerLabel(lastMove.action.player),
+            playerId: gameState.currentPlayerId,
+            playerName: currentPlayerName,
             gameSeed: engineState.seed,
             turnId: engineState.log.length,
           },
@@ -232,11 +304,11 @@ function GamePageClient() {
             {
               role: "system",
               content:
-                "You are a 29 card game coach. Briefly evaluate the last move and suggest 1-2 alternatives. Be concise.",
+                "You are a 29 card game coach for the human player. Use ONLY the visible info provided (current trick, last trick, score, trump visibility, and the player's visible hand[s]). Do NOT mention or infer hidden cards, unrevealed trump, or speculate about opponents' hands. When it is the player's turn, give a 1-2 sentence recap plus 1-2 legal card suggestions from legalMoves. Be concise.",
             },
             {
               role: "user",
-              content: `Analyze this state and last move:\n${JSON.stringify(message, null, 2)}`,
+              content: `Analyze this visible state for the current player's turn:\n${JSON.stringify(message, null, 2)}`,
             },
           ],
         }),
@@ -289,7 +361,7 @@ function GamePageClient() {
         coachResponse={coachResponse}
         onRequestCoach={requestCoach}
         lastMoveSummary={lastMoveSummary}
-        legalAlternatives={legalAlternatives}
+        legalMovesSummary={legalMovesSummary}
         canRequestCoach={canRequestCoach}
         bidOptions={bidOptions}
         canBid={canBid}
@@ -343,6 +415,50 @@ function GamePageClient() {
         onEasyModeChange={setEasyMode}
         onNewGame={requestNewGame}
       />
+      <AlertDialog
+        open={trickDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            onAcknowledgeTrickResolution();
+          }
+        }}
+      >
+        <AlertDialogContent className="border-white/10 bg-[#0c1813] text-emerald-50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Trick {trickSummary?.trickNumber} resolved</AlertDialogTitle>
+            <AlertDialogDescription className="text-emerald-100/70">
+              {trickWinnerName} won for {trickTeamName}. +{trickPoints} pts. Winning card: {trickWinningCard}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {trickSummary && (
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/80">
+                {trickSummary.plays.map((play) => (
+                  <span
+                    key={`${play.playerId}-${play.card.id}`}
+                    className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-emerald-50"
+                  >
+                    {playerNameById(play.playerId)}: {formatCard(play.card)}
+                  </span>
+                ))}
+              </div>
+              {trickNextLead && (
+                <div className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                  Next lead: <span className="text-emerald-50">{trickNextLead}</span>
+                </div>
+              )}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={onAcknowledgeTrickResolution}
+              className="bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
+            >
+              OK - Next trick
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>
         <AlertDialogContent className="border-white/10 bg-[#0c1813] text-emerald-50">
           <AlertDialogHeader>

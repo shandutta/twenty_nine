@@ -223,7 +223,7 @@ function PlayedCard({ card }: { card: PlayingCard }) {
                 <span
                   key={i}
                   className={cn(
-                    "absolute text-[clamp(13px,1.2vw,18px)] transform -translate-x-1/2 -translate-y-1/2",
+                    "absolute text-[length:var(--trick-pip-size)] transform -translate-x-1/2 -translate-y-1/2",
                     suitColor,
                     pos.inverted && "rotate-180"
                   )}
@@ -812,9 +812,11 @@ export function GameTable({
   const cardSizing: CSSVars = {
     "--hand-card-w": "clamp(76px,7.5vw,132px)",
     "--hand-card-h": "clamp(110px,10.5vw,196px)",
-    "--trick-card-w": "calc(var(--hand-card-w) * 0.9)",
-    "--trick-card-h": "calc(var(--hand-card-h) * 0.9)",
+    "--trick-card-w": "calc(var(--hand-card-w) * 0.94)",
+    "--trick-card-h": "calc(var(--hand-card-h) * 0.94)",
     "--trick-card-radius": "clamp(10px,1vw,14px)",
+    "--hand-pip-size": "clamp(14px, calc(var(--hand-card-w) * 0.18), 22px)",
+    "--trick-pip-size": "clamp(12px, calc(var(--trick-card-w) * 0.18), 20px)",
   };
 
   return (
@@ -1091,10 +1093,10 @@ export function GameTable({
             </div>
 
             <div className="flex-1 flex items-center justify-center">
-              <div className="relative w-[clamp(17rem,26vw,26rem)] h-[clamp(13rem,20vw,20rem)]">
+              <div className="relative w-[clamp(14.5rem,78vw,18rem)] h-[clamp(11rem,60vw,14.5rem)] sm:w-[clamp(17rem,26vw,26rem)] sm:h-[clamp(13rem,20vw,20rem)]">
                 <div className="absolute inset-0 rounded-3xl border border-white/20 bg-black/25 shadow-[inset_0_0_22px_rgba(0,0,0,0.35)]" />
                 <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.08),transparent_58%)] opacity-70" />
-                <div className="absolute top-3 left-1/2 -translate-x-1/2">
+                <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-3">
                   {getPlayedCard(topPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-top-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(topPlayer.id)!} />
@@ -1104,7 +1106,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 sm:left-3">
                   {getPlayedCard(leftPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-left-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(leftPlayer.id)!} />
@@ -1114,7 +1116,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 sm:right-3">
                   {getPlayedCard(rightPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-right-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(rightPlayer.id)!} />
@@ -1124,7 +1126,7 @@ export function GameTable({
                   )}
                 </div>
 
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 sm:bottom-3">
                   {getPlayedCard(bottomPlayer.id) ? (
                     <div className={cn(animationsEnabled && "animate-in fade-in slide-in-from-bottom-4 duration-300")}>
                       <PlayedCard card={getPlayedCard(bottomPlayer.id)!} />

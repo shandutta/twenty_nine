@@ -256,7 +256,7 @@ function PlayableCard({
                       <span
                         key={i}
                         className={cn(
-                          "absolute text-[clamp(16px,1.6vw,22px)] transform -translate-x-1/2 -translate-y-1/2",
+                          "absolute text-[length:var(--hand-pip-size)] transform -translate-x-1/2 -translate-y-1/2",
                           suitColor,
                           pos.inverted && "rotate-180"
                         )}

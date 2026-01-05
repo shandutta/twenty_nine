@@ -709,13 +709,18 @@ export const useGameController = () => {
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [showTrickResolution, setShowTrickResolution] = useState(false);
 
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trickResolutionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAckTrickRef = useRef<number | null>(null);
   const stateRef = useRef(engineState);
   const skipPresetRef = useRef(false);
 
   const humanPlayers = useMemo(() => HUMAN_PLAYERS[controlMode], [controlMode]);
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
+  const pendingTrickNumber = engineState.lastTrick?.number ?? null;
+  const trickResolutionPending = pendingTrickNumber !== null && pendingTrickNumber !== lastAckTrickRef.current;
 
   const preset = BOT_PRESETS[botDifficulty];
   const fallbackModels = useMemo(() => LLM_MODEL_POOL.filter((model) => model !== botModel), [botModel]);
@@ -793,8 +798,41 @@ export const useGameController = () => {
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
+    lastAckTrickRef.current = engineState.lastTrick?.number ?? null;
+  }, [hydrated]);
+
+  useEffect(() => {
     stateRef.current = engineState;
   }, [engineState]);
+
+  useEffect(() => {
+    if (!trickResolutionPending || pendingTrickNumber === null) {
+      if (trickResolutionTimer.current) {
+        clearTimeout(trickResolutionTimer.current);
+        trickResolutionTimer.current = null;
+      }
+      setShowTrickResolution(false);
+      return;
+    }
+
+    if (trickResolutionTimer.current) {
+      clearTimeout(trickResolutionTimer.current);
+      trickResolutionTimer.current = null;
+    }
+    setShowTrickResolution(false);
+    trickResolutionTimer.current = setTimeout(() => {
+      setShowTrickResolution(true);
+      trickResolutionTimer.current = null;
+    }, TRICK_RESOLUTION_DELAY_MS);
+
+    return () => {
+      if (trickResolutionTimer.current) {
+        clearTimeout(trickResolutionTimer.current);
+        trickResolutionTimer.current = null;
+      }
+    };
+  }, [pendingTrickNumber, trickResolutionPending]);
 
   useEffect(() => {
     if (engineState.phase === "playing" || engineState.phase === "hand-complete") {
@@ -825,10 +863,30 @@ export const useGameController = () => {
     });
   }, []);
 
+  const acknowledgeTrickResolution = useCallback(() => {
+    if (!trickResolutionPending || pendingTrickNumber === null) return;
+    lastAckTrickRef.current = pendingTrickNumber;
+    if (trickResolutionTimer.current) {
+      clearTimeout(trickResolutionTimer.current);
+      trickResolutionTimer.current = null;
+    }
+    setShowTrickResolution(false);
+  }, [pendingTrickNumber, trickResolutionPending]);
+
+  const resetTrickResolution = useCallback(() => {
+    if (trickResolutionTimer.current) {
+      clearTimeout(trickResolutionTimer.current);
+      trickResolutionTimer.current = null;
+    }
+    setShowTrickResolution(false);
+    lastAckTrickRef.current = null;
+  }, []);
+
   const legalCards = useMemo(() => {
     if (engineState.phase !== "playing") {
       return [];
     }
+    if (trickResolutionPending) return [];
     if (engineState.matchWinner !== null) return [];
     if (!isHumanTurn) return [];
     const hand = engineState.hands[engineState.currentPlayer] ?? [];
@@ -837,11 +895,12 @@ export const useGameController = () => {
       trumpRevealed: engineState.trumpRevealed,
       trumpFromSeventh: engineState.trumpFromSeventh,
     }).map(cardId);
-  }, [engineState, isHumanTurn]);
+  }, [engineState, isHumanTurn, trickResolutionPending]);
 
   const handlePlayCard = useCallback(
     (card: PlayingCard) => {
       if (engineState.phase !== "playing") return;
+      if (trickResolutionPending) return;
       if (engineState.matchWinner !== null) return;
       if (!isHumanTurn) return;
       if (!legalCards.includes(card.id)) return;
@@ -852,7 +911,7 @@ export const useGameController = () => {
         card: { suit: card.suit, rank: card.rank },
       });
     },
-    [dispatch, engineState, isHumanTurn, legalCards]
+    [dispatch, engineState, isHumanTurn, legalCards, trickResolutionPending]
   );
 
   const canBid = useMemo(
@@ -906,6 +965,7 @@ export const useGameController = () => {
       clearTimeout(botTimeout.current);
       botTimeout.current = null;
     }
+    resetTrickResolution();
     setLlmInUse(false);
     setEngineState((prev) =>
       createGameState({
@@ -918,23 +978,26 @@ export const useGameController = () => {
     setLlmReasoning(null);
     setLlmReasoningMeta(null);
     setControlModeLocked(false);
-  }, []);
-  const canStartNextHand = engineState.phase === "hand-complete" && engineState.matchWinner === null;
+  }, [resetTrickResolution]);
+  const canStartNextHand =
+    engineState.phase === "hand-complete" && engineState.matchWinner === null && !trickResolutionPending;
   const handleNextHand = useCallback(() => {
     if (!canStartNextHand) return;
     if (botTimeout.current) {
       clearTimeout(botTimeout.current);
       botTimeout.current = null;
     }
+    resetTrickResolution();
     setLlmInUse(false);
     setLastMove(null);
     setLlmReasoning(null);
     setLlmReasoningMeta(null);
     dispatch({ type: "startNextHand" });
-  }, [canStartNextHand, dispatch]);
+  }, [canStartNextHand, dispatch, resetTrickResolution]);
 
   const canRevealTrump = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (trickResolutionPending) return false;
     if (engineState.matchWinner !== null) return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.trumpRevealed) return false;
@@ -942,7 +1005,7 @@ export const useGameController = () => {
     if (!isHumanTurn) return false;
     const hand = engineState.hands[engineState.currentPlayer] ?? [];
     return shouldRevealTrump(hand, engineState.trick);
-  }, [engineState, isHumanTurn]);
+  }, [engineState, isHumanTurn, trickResolutionPending]);
 
   const handleRevealTrump = useCallback(() => {
     if (!canRevealTrump) return;
@@ -951,6 +1014,7 @@ export const useGameController = () => {
 
   const canDeclareRoyalsForHuman = useMemo(() => {
     if (engineState.phase !== "playing") return false;
+    if (trickResolutionPending) return false;
     if (engineState.matchWinner !== null) return false;
     if (engineState.trumpSuit === null) return false;
     if (engineState.royalsDeclaredBy !== null) return false;
@@ -965,7 +1029,7 @@ export const useGameController = () => {
       lastTrickWinnerTeam: engineState.lastTrickWinnerTeam,
       declarerTeam,
     });
-  }, [engineState, isHumanTurn]);
+  }, [engineState, isHumanTurn, trickResolutionPending]);
 
   const handleDeclareRoyals = useCallback(() => {
     if (!canDeclareRoyalsForHuman) return;
@@ -974,6 +1038,7 @@ export const useGameController = () => {
 
   useEffect(() => {
     if (!hydrated) return;
+    if (trickResolutionPending) return;
     if (engineState.phase !== "playing") {
       setLlmInUse(false);
     }
@@ -1105,7 +1170,7 @@ export const useGameController = () => {
       }
       botTimeout.current = null;
     };
-  }, [botSettings, dispatch, engineState, hydrated, isHumanTurn]);
+  }, [botSettings, dispatch, engineState, hydrated, isHumanTurn, trickResolutionPending]);
 
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;
@@ -1149,6 +1214,7 @@ export const useGameController = () => {
         clearTimeout(botTimeout.current);
         botTimeout.current = null;
       }
+      resetTrickResolution();
       setLlmInUse(false);
       setEngineState((prev) =>
         createGameState({
@@ -1161,10 +1227,16 @@ export const useGameController = () => {
       setLlmReasoning(null);
       setLlmReasoningMeta(null);
     },
-    [controlMode, controlModeLocked]
+    [controlMode, controlModeLocked, resetTrickResolution]
   );
 
   const gameState = useMemo(() => createUiState(engineState, controlMode), [engineState, controlMode]);
+  const trickResolutionSummary = trickResolutionPending ? gameState.lastTrick : null;
+  const trickResolution = {
+    pending: trickResolutionPending,
+    open: showTrickResolution && trickResolutionPending,
+    summary: trickResolutionSummary,
+  };
 
   return {
     gameState,
@@ -1190,6 +1262,8 @@ export const useGameController = () => {
     llmInUse,
     llmReasoning,
     llmReasoningMeta,
+    trickResolution,
+    onAcknowledgeTrickResolution: acknowledgeTrickResolution,
     setBotEnabled,
     setBotDifficulty,
     setBotModel,
