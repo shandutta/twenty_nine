@@ -20,6 +20,8 @@ interface SettingsSheetProps {
   onAnimationsChange: (enabled: boolean) => void;
   autoPlay: boolean;
   onAutoPlayChange: (enabled: boolean) => void;
+  easyMode: boolean;
+  onEasyModeChange: (enabled: boolean) => void;
   onNewGame: () => void;
 }
 
@@ -34,6 +36,8 @@ export function SettingsSheet({
   onAnimationsChange,
   autoPlay,
   onAutoPlayChange,
+  easyMode,
+  onEasyModeChange,
   onNewGame,
 }: SettingsSheetProps) {
   const [cardSpeed, setCardSpeed] = useState("normal");
@@ -150,6 +154,15 @@ export function SettingsSheet({
                     <p className="text-xs text-muted-foreground">Highlight valid moves</p>
                   </div>
                   <Switch id="autoplay" checked={autoPlay} onCheckedChange={onAutoPlayChange} />
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="easy-mode" className="text-sm text-sidebar-foreground">
+                      Easy Mode
+                    </Label>
+                    <p className="text-xs text-muted-foreground">Show the full trick log with every completed trick.</p>
+                  </div>
+                  <Switch id="easy-mode" checked={easyMode} onCheckedChange={onEasyModeChange} />
                 </div>
                 <div className="border-sidebar-border/60 bg-sidebar/60 space-y-3 rounded-xl border p-3">
                   <p className="text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-muted-foreground">

@@ -45,6 +45,9 @@ interface GameTableProps {
     effort: ReasoningEffort;
     ts: number;
     hasTrace: boolean;
+    latencyMs: number | null;
+    usage: Record<string, unknown> | null;
+    costUsd: number | null;
   } | null;
   showReasoningTrace: boolean;
 }
@@ -66,7 +69,7 @@ const TRUMP_CHOICES: Array<{ suit: Suit; label: string; symbol: string }> = [
 ];
 
 const MATCH_CARD_BASE =
-  "relative h-9 w-7 rounded-[0.6rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
+  "relative h-9 xl:h-10 w-7 xl:w-8 rounded-[0.6rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
 
 const MATCH_PIP_STYLES = {
   red: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
@@ -313,7 +316,7 @@ function LiveAiIndicator({ active }: { active: boolean }) {
       role="status"
       aria-live="polite"
       title="AI is thinking. Reasoning stays private."
-      className="flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70 shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
+      className="flex items-center gap-2 rounded-full border border-white/15 bg-black/60 px-2.5 py-1 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.22em] text-emerald-100/70 shadow-[0_12px_30px_rgba(0,0,0,0.35)]"
     >
       <Cog className="h-3 w-3 animate-[spin_3s_linear_infinite] text-[#f2c879]" />
       <span className="text-emerald-100/80">AI thinking</span>
@@ -331,29 +334,80 @@ const formatModelLabel = (value: string) => LLM_MODEL_OPTIONS.find((option) => o
 const formatEffortLabel = (value: ReasoningEffort) =>
   REASONING_EFFORT_OPTIONS.find((option) => option.value === value)?.label ?? value;
 
+const readNumber = (value: unknown): number | null =>
+  typeof value === "number" && Number.isFinite(value) ? value : null;
+
+const getUsageNumber = (usage: Record<string, unknown> | null, key: string): number | null => {
+  if (!usage) return null;
+  return readNumber(usage[key]);
+};
+
+const formatLatency = (value: number | null) => (value === null ? "—" : `${Math.round(value)}ms`);
+
+const formatUsd = (value: number | null) => (value === null ? "—" : `$${value.toFixed(6)}`);
+
 function ReasoningTracePanel({
   trace,
   meta,
   show,
 }: {
   trace: string | null;
-  meta: { model: string; effort: ReasoningEffort; ts: number; hasTrace: boolean } | null;
+  meta: {
+    model: string;
+    effort: ReasoningEffort;
+    ts: number;
+    hasTrace: boolean;
+    latencyMs: number | null;
+    usage: Record<string, unknown> | null;
+    costUsd: number | null;
+  } | null;
   show: boolean;
 }) {
   if (!show) return null;
   const modelLabel = meta ? formatModelLabel(meta.model) : "—";
   const effortLabel = meta ? formatEffortLabel(meta.effort) : "—";
   const body = trace?.trim() ? trace : meta?.hasTrace ? "Trace unavailable for this model." : "No trace yet.";
+  const promptTokens = meta?.usage ? getUsageNumber(meta.usage, "prompt_tokens") : null;
+  const completionTokens = meta?.usage ? getUsageNumber(meta.usage, "completion_tokens") : null;
+  const totalTokensDirect = meta?.usage ? getUsageNumber(meta.usage, "total_tokens") : null;
+  const totalTokens =
+    totalTokensDirect !== null
+      ? totalTokensDirect
+      : promptTokens !== null || completionTokens !== null
+        ? (promptTokens ?? 0) + (completionTokens ?? 0)
+        : null;
+  const promptLabel = promptTokens === null ? "—" : String(promptTokens);
+  const completionLabel = completionTokens === null ? "—" : String(completionTokens);
+  const tokenLabel =
+    totalTokens !== null
+      ? `${totalTokens}${promptTokens !== null || completionTokens !== null ? ` (P${promptLabel}/C${completionLabel})` : ""}`
+      : promptTokens !== null || completionTokens !== null
+        ? `P${promptLabel}/C${completionLabel}`
+        : "—";
 
   return (
-    <div className="pointer-events-auto w-[min(22rem,78vw)] rounded-2xl border border-white/10 bg-black/70 p-3 text-[11px] text-emerald-100/70 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
-      <div className="flex items-center justify-between gap-3 text-[10px] uppercase tracking-[0.3em] text-emerald-100/50">
+    <div className="pointer-events-auto w-[min(22rem,78vw)] rounded-2xl border border-white/10 bg-black/70 p-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 shadow-[0_18px_50px_rgba(0,0,0,0.45)] backdrop-blur">
+      <div className="flex items-center justify-between gap-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/50">
         <span>Reasoning Trace</span>
         <span className="text-emerald-50">{effortLabel}</span>
       </div>
-      <div className="mt-1 flex items-center justify-between gap-3 text-[10px] text-emerald-100/60">
+      <div className="mt-1 flex items-center justify-between gap-3 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
         <span className="uppercase tracking-[0.24em]">Model</span>
         <span className="text-emerald-50">{modelLabel}</span>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-3 text-[clamp(10px,0.75vw,12px)]">
+        <div>
+          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Latency</div>
+          <div className="text-emerald-50">{formatLatency(meta?.latencyMs ?? null)}</div>
+        </div>
+        <div>
+          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Tokens</div>
+          <div className="text-emerald-50">{tokenLabel}</div>
+        </div>
+        <div>
+          <div className="uppercase tracking-[0.24em] text-emerald-100/50">Cost</div>
+          <div className="text-emerald-50">{formatUsd(meta?.costUsd ?? null)}</div>
+        </div>
       </div>
       <div className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/40 p-2 text-emerald-100/70">
         {body}
@@ -385,7 +439,10 @@ function OpponentArea({
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2">
           <span
-            className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
+            className={cn(
+              "text-[clamp(12px,0.95vw,15px)] font-medium",
+              isTeammate ? "text-emerald-200" : "text-rose-200"
+            )}
           >
             {player.name}
           </span>
@@ -417,7 +474,9 @@ function OpponentArea({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}>
+      <span
+        className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
+      >
         {player.name}
       </span>
       <div className={stackClass}>
@@ -780,18 +839,18 @@ export function GameTable({
           >
             <div className="flex items-center gap-4 rounded-3xl border border-white/15 bg-[#0b1612]/95 px-4 py-3 shadow-[0_18px_50px_rgba(0,0,0,0.45)]">
               <div className="flex flex-col gap-1">
-                <span className="text-[10px] uppercase tracking-[0.35em] text-emerald-100/60">
+                <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.35em] text-emerald-100/60">
                   Trick {lastTrick.trickNumber} resolved
                 </span>
-                <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-emerald-50">
+                <div className="flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] font-semibold text-emerald-50">
                   <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
                   <span className="text-emerald-100/70">won</span>
-                  <Badge className={cn("border text-[10px] uppercase tracking-[0.18em]", lastTrickBadge)}>
+                  <Badge className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}>
                     {lastTrickTeam?.name ?? "Team"}
                   </Badge>
                   <span className="text-emerald-50">+{lastTrick.points} pts</span>
                 </div>
-                <div className="text-xs text-emerald-100/70">
+                <div className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   Winning card: <span className="text-emerald-50">{lastTrickCardLabel}</span>
                 </div>
               </div>
@@ -809,26 +868,26 @@ export function GameTable({
               {isBidding ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-emerald-50">Bidding</h2>
+                    <h2 className="text-[clamp(16px,1.25vw,20px)] font-semibold text-emerald-50">Bidding</h2>
                     <Badge className="border-white/10 bg-white/5 text-emerald-100">
                       Min {gameState.royalsMinTarget} · Max {gameState.royalsMaxTarget}
                     </Badge>
                   </div>
-                  <p className="text-xs text-emerald-100/70">
+                  <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                     Bidding is based on the first four cards. The winner names trump or uses the 7th card before the
                     final deal.
                   </p>
-                  <div className="text-sm text-emerald-100/70">
+                  <div className="text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">
                     Current bid: <span className="text-emerald-50">{gameState.currentBid ?? "--"}</span>
                     {bidderName !== "--" && <span className="text-emerald-100/70"> · {bidderName}</span>}
                   </div>
-                  <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                  <div className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     {canBid ? "Your turn to bid" : `Waiting for ${currentPlayerName}`}
                   </div>
                   {bidOptions.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2">
                       <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
-                        <SelectTrigger className="h-9 min-w-[150px] rounded-full border-white/15 bg-white/5 text-emerald-50">
+                        <SelectTrigger className="h-9 xl:h-10 min-w-[150px] rounded-full border-white/15 bg-white/5 text-emerald-50">
                           <SelectValue placeholder="Choose bid" />
                         </SelectTrigger>
                         <SelectContent>
@@ -843,7 +902,7 @@ export function GameTable({
                         onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
                         size="sm"
                         disabled={!canBid || !effectiveSelectedBid}
-                        className="h-9 rounded-full bg-[#f2c879] px-5 text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                        className="h-9 xl:h-10 rounded-full bg-[#f2c879] px-5 text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
                       >
                         Place bid
                       </Button>
@@ -854,28 +913,28 @@ export function GameTable({
                       onClick={onPassBid}
                       size="sm"
                       disabled={!canBid}
-                      className="h-9 rounded-full border border-white/15 bg-white/5 px-5 text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                      className="h-9 xl:h-10 rounded-full border border-white/15 bg-white/5 px-5 text-emerald-50 hover:bg-white/10 disabled:opacity-50"
                     >
                       Pass
                     </Button>
-                    {!canBid && <span className="text-xs text-emerald-100/60">Bots are bidding…</span>}
+                    {!canBid && <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>}
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold text-emerald-50">Choose Trump</h2>
+                    <h2 className="text-[clamp(16px,1.25vw,20px)] font-semibold text-emerald-50">Choose Trump</h2>
                     <Badge className="border-white/10 bg-white/5 text-emerald-100">
                       Bid / Contract {gameState.currentBid ?? "--"}
                     </Badge>
                   </div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                  <p className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     Bidding is based on the first four cards · Winner names trump, picks Joker, or uses the 7th card
                   </p>
-                  <div className="text-sm text-emerald-100/70">
+                  <div className="text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">
                     Bid winner: <span className="text-emerald-50">{bidderName}</span>
                   </div>
-                  <div className="text-xs uppercase tracking-[0.3em] text-emerald-100/60">
+                  <div className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     {canChooseTrump
                       ? "Pick the trump suit, Joker (no trump), or use the 7th card"
                       : `Waiting for ${currentPlayerName}`}
@@ -888,20 +947,20 @@ export function GameTable({
                             key={choice.suit}
                             onClick={() => onChooseTrump(choice.suit)}
                             size="sm"
-                            className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                            className="h-10 xl:h-11 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                           >
-                            <span className="mr-2 text-base">{choice.symbol}</span>
+                            <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{choice.symbol}</span>
                             {choice.label}
                           </Button>
                         ))}
                         <Button
                           onClick={() => onChooseTrump(null)}
                           size="sm"
-                          className="col-span-2 h-10 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
+                          className="col-span-2 h-10 xl:h-11 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
                         >
-                          <span className="mr-2 text-base">{JOKER_SYMBOL}</span>
+                          <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{JOKER_SYMBOL}</span>
                           Joker
-                          <span className="ml-2 text-[10px] uppercase tracking-[0.28em] text-[#f6d38b]/70">
+                          <span className="ml-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-[#f6d38b]/70">
                             No trump
                           </span>
                         </Button>
@@ -909,7 +968,7 @@ export function GameTable({
                       <Button
                         onClick={onChooseTrumpFromSeventh}
                         size="sm"
-                        className="h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                        className="h-10 xl:h-11 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                       >
                         Use 7th card (hidden trump)
                       </Button>
@@ -967,7 +1026,7 @@ export function GameTable({
                     onClick={onRevealTrump}
                     size="sm"
                     title="Reveal trump (void in lead suit)"
-                    className="h-9 rounded-full border border-[#f2c879]/50 bg-[#1a1306]/70 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:bg-[#f2c879]/20"
+                    className="h-9 xl:h-10 rounded-full border border-[#f2c879]/50 bg-[#1a1306]/70 px-4 text-[clamp(11px,0.85vw,13px)] font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:bg-[#f2c879]/20"
                   >
                     Reveal Trump
                   </Button>
@@ -977,14 +1036,14 @@ export function GameTable({
                     onClick={onDeclareRoyals}
                     size="sm"
                     title={royalsTitle}
-                    className="h-9 rounded-full border border-[#f2c879]/60 bg-[#2a1a06]/80 px-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_10px_28px_rgba(0,0,0,0.4)] hover:bg-[#f2c879]/20"
+                    className="h-9 xl:h-10 rounded-full border border-[#f2c879]/60 bg-[#2a1a06]/80 px-4 text-[clamp(11px,0.85vw,13px)] font-semibold uppercase tracking-[0.2em] text-[#f6d38b] shadow-[0_10px_28px_rgba(0,0,0,0.4)] hover:bg-[#f2c879]/20"
                   >
                     Declare Royals
                   </Button>
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1410]/70 via-black/40 to-[#123324]/40 px-4 py-2 text-xs text-emerald-100/70 shadow-[inset_0_0_18px_rgba(0,0,0,0.35)]">
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1410]/70 via-black/40 to-[#123324]/40 px-4 py-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 shadow-[inset_0_0_18px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-6">
                     <span className="text-emerald-200">{teamA.name}</span>
                     <span className="text-emerald-50">
@@ -1103,14 +1162,14 @@ export function GameTable({
               <div className="pointer-events-auto mx-4 w-full max-w-md rounded-3xl border border-white/15 bg-[#0b1612]/95 p-6 text-emerald-50 shadow-[0_25px_80px_rgba(0,0,0,0.55)] backdrop-blur">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.34em] text-emerald-100/60">Hand complete</p>
-                    <h3 className="mt-1 text-xl font-semibold text-emerald-50">Ready for the next deal?</h3>
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.34em] text-emerald-100/60">Hand complete</p>
+                    <h3 className="mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold text-emerald-50">Ready for the next deal?</h3>
                   </div>
                   <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
                     Round {gameState.matchRound}
                   </Badge>
                 </div>
-                <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-3 text-xs text-emerald-100/70">
+                <div className="mt-4 rounded-2xl border border-white/10 bg-black/40 p-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   <div className="flex items-center justify-between">
                     <span>{teamA.name}</span>
                     <span>{teamA.handPoints} pts</span>
@@ -1139,7 +1198,7 @@ export function GameTable({
       </div>
       <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center sm:hidden">
         <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur">
-          <span className="text-[10px] uppercase tracking-[0.32em] text-emerald-100/60">
+          <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.32em] text-emerald-100/60">
             Round {gameState.matchRound}
           </span>
           <div className="flex items-center gap-1 rounded-full border border-white/15 bg-white/5 p-1">
@@ -1149,7 +1208,7 @@ export function GameTable({
                 type="button"
                 onClick={() => onControlModeChange(mode)}
                 className={cn(
-                  "rounded-full px-3.5 py-1.5 text-[9px] uppercase tracking-[0.22em] transition",
+                  "rounded-full px-3.5 py-1.5 text-[clamp(9px,0.7vw,11px)] uppercase tracking-[0.22em] transition",
                   controlMode === mode ? "bg-[#f2c879] text-[#2b1c07]" : "text-emerald-100/70 hover:text-emerald-50",
                   controlModeLocked && "cursor-not-allowed",
                   controlModeLocked && (controlMode === mode ? "opacity-100" : "opacity-40")
@@ -1193,14 +1252,14 @@ export function GameTable({
                     <Trophy className="size-5" />
                   </span>
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.38em] text-emerald-100/60">Match Complete</p>
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.38em] text-emerald-100/60">Match Complete</p>
                     <h2 className="mt-1 text-2xl font-semibold text-emerald-50 md:text-3xl">
                       {matchWinnerTeam?.name ?? "Team"} wins the table
                     </h2>
-                    <p className="mt-2 text-sm text-emerald-100/70">{matchReasonLine}</p>
+                    <p className="mt-2 text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">{matchReasonLine}</p>
                   </div>
                 </div>
-                <div className="rounded-full border border-[#f2c879]/30 bg-[#1a1306]/80 px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[#f6d38b] shadow-[inset_0_0_10px_rgba(242,200,121,0.2)]">
+                <div className="rounded-full border border-[#f2c879]/30 bg-[#1a1306]/80 px-3 py-1 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-[#f6d38b] shadow-[inset_0_0_10px_rgba(242,200,121,0.2)]">
                   {matchEndReason === "red" ? "Red pips" : "Black pips"}
                 </div>
               </div>
@@ -1211,9 +1270,9 @@ export function GameTable({
                     <span className="text-emerald-200">{teamA.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamA")}</span>
                   </div>
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
                   {renderMatchRow("teamA", "red")}
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
                   {renderMatchRow("teamA", "black")}
                 </div>
                 <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
@@ -1221,15 +1280,15 @@ export function GameTable({
                     <span className="text-rose-200">{teamB.name}</span>
                     <span className="text-emerald-50">{formatMatchScore("teamB")}</span>
                   </div>
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Red pips</div>
                   {renderMatchRow("teamB", "red")}
-                  <div className="mt-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
+                  <div className="mt-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Black pips</div>
                   {renderMatchRow("teamB", "black")}
                 </div>
               </div>
 
               {actionMessage && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-emerald-100/70">
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/50 px-3 py-1 text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.28em] text-emerald-100/70">
                   <Sparkles className="size-3 text-[#f2c879]" />
                   {actionMessage}
                 </div>

@@ -106,6 +106,7 @@ function GamePageClient() {
   const [soundVolume, setSoundVolume] = useState(75);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [autoPlay, setAutoPlay] = useState(false);
+  const [easyMode, setEasyMode] = useState(false);
   const [coachEnabled, setCoachEnabled] = useState(false);
   const [coachLoading, setCoachLoading] = useState(false);
   const [coachError, setCoachError] = useState<string | null>(null);
@@ -160,6 +161,25 @@ function GamePageClient() {
   }, []);
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem("twentynine.easyMode");
+      if (stored !== null) {
+        setEasyMode(stored === "true");
+      }
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("twentynine.easyMode", String(easyMode));
+    } catch {
+      // Ignore storage access errors.
+    }
+  }, [easyMode]);
+
+  useEffect(() => {
     setCoachResponse(null);
     setCoachError(null);
   }, [lastMove?.action, coachEnabled]);
@@ -198,6 +218,16 @@ function GamePageClient() {
         body: JSON.stringify({
           model: "openai/gpt-4o-mini",
           temperature: 0.3,
+          trace: {
+            source: "coach",
+            matchRound: engineState.matchRound,
+            trickNumber: engineState.trickNumber + 1,
+            phase: engineState.phase,
+            playerId: lastMove.action.player.toString(),
+            playerName: playerLabel(lastMove.action.player),
+            gameSeed: engineState.seed,
+            turnId: engineState.log.length,
+          },
           messages: [
             {
               role: "system",
@@ -241,6 +271,7 @@ function GamePageClient() {
         gameState={gameState}
         onNewGame={requestNewGame}
         onOpenSettings={() => setSettingsOpen(true)}
+        easyMode={easyMode}
         botSettings={botSettings}
         onBotEnabledChange={setBotEnabled}
         onBotDifficultyChange={setBotDifficulty}
@@ -308,6 +339,8 @@ function GamePageClient() {
         onAnimationsChange={setAnimationsEnabled}
         autoPlay={autoPlay}
         onAutoPlayChange={setAutoPlay}
+        easyMode={easyMode}
+        onEasyModeChange={setEasyMode}
         onNewGame={requestNewGame}
       />
       <AlertDialog open={confirmNewGameOpen} onOpenChange={setConfirmNewGameOpen}>
@@ -315,7 +348,7 @@ function GamePageClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Start a new match?</AlertDialogTitle>
             <AlertDialogDescription className="text-emerald-100/70">
-              This resets the match, clears all pips, and starts the round count back at 0.
+              This resets the match, clears all pips, and starts the round count back at 1.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

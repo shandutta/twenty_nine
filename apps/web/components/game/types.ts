@@ -35,6 +35,7 @@ export interface LastTrickSummary {
   winnerTeamId: "teamA" | "teamB";
   winningCard: PlayingCard;
   points: number;
+  plays: { playerId: string; card: PlayingCard }[];
 }
 
 export interface GameState {

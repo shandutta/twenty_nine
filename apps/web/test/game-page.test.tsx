@@ -110,7 +110,7 @@ describe("/game UI", () => {
       botSettings: {
         enabled: false,
         difficulty: "easy",
-        model: "openai/gpt-5.2-pro",
+        model: "openai/gpt-5.2-chat",
         fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
         temperature: 0.2,
         usageHint: "Conservative: protects high-value points and plays safely.",

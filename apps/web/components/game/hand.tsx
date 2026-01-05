@@ -247,9 +247,7 @@ function PlayableCard({
                       suitColorBg
                     )}
                   >
-                    <span className={cn("text-[clamp(22px,2.3vw,32px)] font-semibold", suitColor)}>
-                      {card.rank}
-                    </span>
+                    <span className={cn("text-[clamp(22px,2.3vw,32px)] font-semibold", suitColor)}>{card.rank}</span>
                     <span className={cn("text-[clamp(22px,2.3vw,32px)]", suitColor)}>{suitSymbols[card.suit]}</span>
                   </div>
                 ) : (

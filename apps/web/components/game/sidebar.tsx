@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Slider } from "@/components/ui/slider";
 import { MATCH_PIPS } from "@twentynine/engine";
-import type { ControlMode, GameState, Suit } from "@/components/game/types";
+import type { ControlMode, GameState, PlayingCard, Suit } from "@/components/game/types";
 import {
   LLM_MODEL_OPTIONS,
   REASONING_EFFORT_OPTIONS,
@@ -27,6 +27,7 @@ interface GameSidebarProps {
   gameState: GameState;
   onNewGame: () => void;
   onOpenSettings: () => void;
+  easyMode: boolean;
   botSettings: BotSettings;
   onBotEnabledChange: (enabled: boolean) => void;
   onBotDifficultyChange: (difficulty: BotDifficulty) => void;
@@ -72,7 +73,7 @@ const TRUMP_CHOICES: Array<{ suit: Suit; label: string; symbol: string }> = [
 ];
 
 const MATCH_CARD_BASE =
-  "relative h-8 w-6 rounded-[0.5rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
+  "relative h-8 xl:h-9 w-6 xl:w-7 rounded-[0.5rem] border bg-gradient-to-br from-[#162820] via-[#0d1913] to-[#0a120e] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_6px_12px_rgba(0,0,0,0.35)]";
 
 const MATCH_PIP_STYLES = {
   red: "bg-[#e85b5b] ring-1 ring-rose-200/60 shadow-[0_0_10px_rgba(232,91,91,0.45)]",
@@ -80,10 +81,39 @@ const MATCH_PIP_STYLES = {
   empty: "bg-white/10 ring-1 ring-white/10",
 } as const;
 
+const isRedSuit = (suit: Suit) => suit === "hearts" || suit === "diamonds";
+
+function TrickCard({ card, isWinner }: { card: PlayingCard; isWinner?: boolean }) {
+  const suitTone = isRedSuit(card.suit) ? "text-rose-500" : "text-slate-900";
+  const borderTone = isRedSuit(card.suit) ? "border-rose-200/70" : "border-slate-200/70";
+
+  return (
+    <div
+      className={cn(
+        "relative h-[clamp(56px,5vw,84px)] w-[clamp(40px,3.6vw,60px)] rounded-md border bg-white/95 bg-gradient-to-br from-white/98 via-white/94 to-white/86 shadow-[0_10px_20px_rgba(0,0,0,0.25)] backdrop-blur-[2px]",
+        borderTone,
+        isWinner && "ring-2 ring-[#f2c879]/80 shadow-[0_0_18px_rgba(242,200,121,0.55)]"
+      )}
+      aria-label={`${card.rank} of ${card.suit}`}
+    >
+      <div className={cn("absolute left-1 top-0.5 text-[clamp(10px,0.75vw,12px)] font-semibold", suitTone)}>
+        {card.rank}
+      </div>
+      <div className={cn("absolute right-1 bottom-0.5 text-[clamp(10px,0.75vw,12px)] font-semibold", suitTone)}>
+        {card.rank}
+      </div>
+      <div className={cn("absolute inset-0 flex items-center justify-center text-[clamp(16px,1.35vw,22px)]", suitTone)}>
+        {suitSymbols[card.suit]}
+      </div>
+    </div>
+  );
+}
+
 export function GameSidebar({
   gameState,
   onNewGame,
   onOpenSettings,
+  easyMode,
   botSettings,
   onBotEnabledChange,
   onBotDifficultyChange,
@@ -168,13 +198,20 @@ export function GameSidebar({
   const teamBRed = gameState.matchRedPips[1];
   const teamBBlack = gameState.matchBlackPips[1];
   const playerLabels = useMemo(() => gameState.players.map((player) => player.name), [gameState.players]);
-  const displayLog = useMemo(
+  const fullLog = useMemo(
     () =>
-      gameState.log
-        .slice(-10)
-        .map((entry) => entry.replace(/\bP([1-4])\b/g, (_, index) => playerLabels[Number(index) - 1] ?? `P${index}`)),
+      gameState.log.map((entry) =>
+        entry.replace(/\bP([1-4])\b/g, (_, index) => playerLabels[Number(index) - 1] ?? `P${index}`)
+      ),
     [gameState.log, playerLabels]
   );
+  const displayLog = easyMode ? fullLog : [];
+  const lastTrick = gameState.lastTrick;
+  const lastTrickWinner = lastTrick
+    ? gameState.players.find((player) => player.id === lastTrick.winnerPlayerId)
+    : null;
+  const lastTrickTeam = lastTrick ? (lastTrick.winnerTeamId === "teamA" ? teamA : teamB) : null;
+  const lastTrickPlays = lastTrick?.plays ?? [];
 
   const formatMatchScore = (red: number, black: number) => {
     return `R${red}/${MATCH_PIPS} · B${black}/${MATCH_PIPS}`;
@@ -210,12 +247,12 @@ export function GameSidebar({
   };
 
   return (
-    <aside className="hidden md:flex w-80 shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
-      <div className="p-5 border-b border-white/10">
+    <aside className="hidden md:flex w-80 xl:w-96 2xl:w-[26rem] shrink-0 flex-col border-r border-white/10 bg-[#0c1813]">
+      <div className="p-5 xl:p-6 border-b border-white/10">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
-            <h1 className="text-xl font-serif text-emerald-50">Solo Table</h1>
-            <p className="text-xs uppercase tracking-[0.35em] text-emerald-100/60">Round {gameState.matchRound}</p>
+            <h1 className="text-[clamp(18px,1.6vw,24px)] font-serif text-emerald-50">Solo Table</h1>
+            <p className="text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.35em] text-emerald-100/60">Round {gameState.matchRound}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onOpenSettings} className="text-emerald-100/70">
             <Settings className="h-5 w-5" />
@@ -224,29 +261,29 @@ export function GameSidebar({
       </div>
 
       <Tabs defaultValue="overview" className="flex-1 min-h-0">
-        <TabsList className="mx-4 mt-3 grid grid-cols-3">
-          <TabsTrigger value="overview" className="gap-2">
+        <TabsList className="mx-4 mt-3 grid grid-cols-3 text-[clamp(11px,0.85vw,13px)]">
+          <TabsTrigger value="overview" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
             <Trophy className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="ai" className="gap-2">
+          <TabsTrigger value="ai" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
             <Sparkles className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="log" className="gap-2">
+          <TabsTrigger value="log" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
             <ScrollText className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Log</span>
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="flex-1 min-h-0 px-4">
+        <ScrollArea className="flex-1 min-h-0 px-4 xl:px-5">
           <TabsContent value="overview" className="mt-3 space-y-2">
             <Card className="gap-2 py-3 bg-[#0a1712]/90 border border-emerald-500/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
               <CardHeader className="pb-0 gap-1">
-                <CardTitle className="text-sm text-emerald-50">Control Mode</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Control Mode</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 space-y-2">
-                <p className="text-[11px] text-emerald-100/70">{controlDescription}</p>
+                <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">{controlDescription}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {(["standard", "single-hand"] as const).map((mode) => (
                     <Button
@@ -254,7 +291,7 @@ export function GameSidebar({
                       size="sm"
                       onClick={() => onControlModeChange(mode)}
                       className={cn(
-                        "h-9 rounded-full border px-4 text-[11px] uppercase tracking-[0.2em]",
+                        "h-9 xl:h-10 rounded-full border px-4 text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.2em]",
                         controlMode === mode
                           ? "border-[#f2c879] bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
                           : "border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10",
@@ -267,30 +304,30 @@ export function GameSidebar({
                     </Button>
                   ))}
                 </div>
-                <p className="text-[11px] text-emerald-100/60 leading-snug">{controlModeNote}</p>
+                <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60 leading-snug">{controlModeNote}</p>
               </CardContent>
             </Card>
 
             {(isBidding || isChoosingTrump) && (
               <Card className="gap-2 py-3 bg-[#08120e]/80 border border-emerald-400/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
                 <CardHeader className="pb-0 gap-1">
-                  <CardTitle className="text-sm text-emerald-50">{isBidding ? "Bidding" : "Choose Trump"}</CardTitle>
+                  <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">{isBidding ? "Bidding" : "Choose Trump"}</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0 space-y-1.5 text-xs text-emerald-100/70">
+                <CardContent className="pt-0 space-y-1.5 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   {isBidding && (
-                    <p className="text-[11px] text-emerald-100/65">
+                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/65">
                       Bidding is based on the first four cards. The winner names trump, picks Joker (no trump), or uses
                       the 7th card before the final deal.
                     </p>
                   )}
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-[clamp(11px,0.85vw,13px)]">
                     <span className="text-emerald-100/70">Current bid</span>
                     <span className="text-emerald-50">
                       {gameState.currentBid ?? "--"}
                       {bidderName !== "--" && ` · ${bidderName}`}
                     </span>
                   </div>
-                  <div className="text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                  <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     {isBidding
                       ? canBid
                         ? "Your turn to bid"
@@ -302,7 +339,7 @@ export function GameSidebar({
                   {isBidding && bidOptions.length > 0 && (
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       <Select value={effectiveSelectedBid} onValueChange={setSelectedBid} disabled={!canBid}>
-                        <SelectTrigger className="h-8 min-w-[140px] rounded-full border-white/15 bg-white/5 text-[11px] text-emerald-50">
+                        <SelectTrigger className="h-8 xl:h-9 min-w-[140px] rounded-full border-white/15 bg-white/5 text-[clamp(11px,0.85vw,13px)] text-emerald-50">
                           <SelectValue placeholder="Choose bid" />
                         </SelectTrigger>
                         <SelectContent>
@@ -317,7 +354,7 @@ export function GameSidebar({
                         size="sm"
                         disabled={!canBid || !effectiveSelectedBid}
                         onClick={() => effectiveSelectedBid && onPlaceBid(Number(effectiveSelectedBid))}
-                        className="h-8 rounded-full bg-[#f2c879] px-4 text-[11px] font-semibold text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
+                        className="h-8 xl:h-9 rounded-full bg-[#f2c879] px-4 text-[clamp(11px,0.85vw,13px)] font-semibold text-[#2b1c07] hover:bg-[#f8d690] disabled:opacity-50"
                       >
                         Place bid
                       </Button>
@@ -329,11 +366,11 @@ export function GameSidebar({
                         onClick={onPassBid}
                         size="sm"
                         disabled={!canBid}
-                        className="h-8 rounded-full border border-white/15 bg-white/5 px-4 text-[11px] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
+                        className="h-8 xl:h-9 rounded-full border border-white/15 bg-white/5 px-4 text-[clamp(11px,0.85vw,13px)] text-emerald-50 hover:bg-white/10 disabled:opacity-50"
                       >
                         Pass
                       </Button>
-                      {!canBid && <span className="text-[11px] text-emerald-100/60">Bots are bidding…</span>}
+                      {!canBid && <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Bots are bidding…</span>}
                     </div>
                   )}
                   {isChoosingTrump && canChooseTrump && (
@@ -344,20 +381,20 @@ export function GameSidebar({
                             key={choice.suit}
                             size="sm"
                             onClick={() => onChooseTrump(choice.suit)}
-                            className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                            className="h-9 xl:h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                           >
-                            <span className="mr-2 text-base">{choice.symbol}</span>
+                            <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{choice.symbol}</span>
                             {choice.label}
                           </Button>
                         ))}
                         <Button
                           size="sm"
                           onClick={() => onChooseTrump(null)}
-                          className="col-span-2 h-9 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
+                          className="col-span-2 h-9 xl:h-10 rounded-full border border-[#f2c879]/40 bg-gradient-to-r from-[#1a1306]/80 via-[#2a1a06]/70 to-[#1a1306]/80 text-[#f6d38b] shadow-[inset_0_0_18px_rgba(242,200,121,0.2)] hover:bg-[#f2c879]/10"
                         >
-                          <span className="mr-2 text-base">{JOKER_SYMBOL}</span>
+                          <span className="mr-2 text-[clamp(14px,1.1vw,16px)]">{JOKER_SYMBOL}</span>
                           Joker
-                          <span className="ml-2 text-[10px] uppercase tracking-[0.28em] text-[#f6d38b]/70">
+                          <span className="ml-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-[#f6d38b]/70">
                             No trump
                           </span>
                         </Button>
@@ -365,7 +402,7 @@ export function GameSidebar({
                       <Button
                         size="sm"
                         onClick={onChooseTrumpFromSeventh}
-                        className="h-9 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
+                        className="h-9 xl:h-10 rounded-full border border-white/10 bg-white/5 text-emerald-50 hover:bg-white/10"
                       >
                         Use 7th card (hidden trump)
                       </Button>
@@ -377,9 +414,9 @@ export function GameSidebar({
 
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-0 gap-1">
-                <CardTitle className="text-sm text-emerald-50">Round Snapshot</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Round Snapshot</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-1.5 text-sm text-emerald-100/70">
+              <CardContent className="pt-0 space-y-1.5 text-[clamp(12px,0.95vw,14px)] text-emerald-100/70">
                 <div className="flex items-center justify-between">
                   <span>Phase</span>
                   <Badge className="border-white/10 bg-white/5 text-emerald-50">{phaseLabel}</Badge>
@@ -418,9 +455,9 @@ export function GameSidebar({
 
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-0 gap-1">
-                <CardTitle className="text-sm text-emerald-50">Key Rules</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Key Rules</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 text-[11px] leading-relaxed text-emerald-100/70 space-y-1.5">
+              <CardContent className="pt-0 text-[clamp(11px,0.85vw,13px)] leading-relaxed text-emerald-100/70 space-y-1.5">
                 <p>
                   • Bidding is based on the first four cards; the winner names trump, picks Joker, or uses the 7th card.
                 </p>
@@ -436,9 +473,9 @@ export function GameSidebar({
 
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-0 gap-1">
-                <CardTitle className="text-sm text-emerald-50">Teams</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Teams</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 space-y-2 text-sm">
+              <CardContent className="pt-0 space-y-2 text-[clamp(12px,0.95vw,14px)]">
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2.5">
                   <div className="flex items-center justify-between">
                     <span className="text-emerald-200">{teamA.name}</span>
@@ -446,12 +483,12 @@ export function GameSidebar({
                       {teamA.tricksWon} tricks · {teamA.handPoints} pts
                     </span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                  <div className="mt-2 flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     <span>Match Pips</span>
                     <span className="text-emerald-50">{formatMatchScore(teamARed, teamABlack)}</span>
                   </div>
                   <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
                       <span className="flex items-center gap-2">
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                         Red pips
@@ -461,7 +498,7 @@ export function GameSidebar({
                       </span>
                     </div>
                     {renderMatchRow("teamA", "red")}
-                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
                       <span className="flex items-center gap-2">
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
                         Black pips
@@ -480,12 +517,12 @@ export function GameSidebar({
                       {teamB.tricksWon} tricks · {teamB.handPoints} pts
                     </span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-emerald-100/60">
+                  <div className="mt-2 flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                     <span>Match Pips</span>
                     <span className="text-emerald-50">{formatMatchScore(teamBRed, teamBBlack)}</span>
                   </div>
                   <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
                       <span className="flex items-center gap-2">
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                         Red pips
@@ -495,7 +532,7 @@ export function GameSidebar({
                       </span>
                     </div>
                     {renderMatchRow("teamB", "red")}
-                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.28em] text-emerald-100/60">
+                    <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
                       <span className="flex items-center gap-2">
                         <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.black)} />
                         Black pips
@@ -507,7 +544,7 @@ export function GameSidebar({
                     {renderMatchRow("teamB", "black")}
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">
+                <div className="flex flex-wrap items-center gap-3 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/50">
                   <span className="inline-flex items-center gap-1">
                     <span className={cn("size-1.5 rounded-full", MATCH_PIP_STYLES.red)} />
                     made bid
@@ -524,7 +561,7 @@ export function GameSidebar({
           <TabsContent value="ai" className="mt-3 space-y-2">
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-1 gap-1">
-                <CardTitle className="text-sm flex items-center gap-2 text-emerald-50">
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] flex items-center gap-2 text-emerald-50">
                   <Sparkles className="h-4 w-4 text-[#f2c879]" />
                   LLM Bots
                 </CardTitle>
@@ -532,13 +569,13 @@ export function GameSidebar({
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-emerald-50">Play against AI bots</p>
-                    <p className="text-xs text-emerald-100/60">Let bots consult an advanced model for every move.</p>
+                    <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Play against AI bots</p>
+                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Let bots consult an advanced model for every move.</p>
                   </div>
                   <Switch checked={botSettings.enabled} onCheckedChange={onBotEnabledChange} />
                 </div>
                 <div className="space-y-1.5">
-                  <p className="text-xs text-emerald-100/60">Difficulty</p>
+                  <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Difficulty</p>
                   <Select
                     value={botSettings.difficulty}
                     onValueChange={(value) => onBotDifficultyChange(value as BotDifficulty)}
@@ -552,33 +589,33 @@ export function GameSidebar({
                       <SelectItem value="hard">Hard</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-[11px] text-emerald-100/60">{botSettings.usageHint}</p>
+                  <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">{botSettings.usageHint}</p>
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-emerald-100/60">
+                <div className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-[0.28em] text-emerald-100/50">Model</span>
+                    <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/50">Model</span>
                     <span className="text-emerald-50">{modelLabel}</span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-emerald-100/70">
+                  <div className="mt-1 flex items-center justify-between text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                     <span>Reasoning</span>
                     <span className="text-emerald-50">{effortLabel}</span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-emerald-100/70">
+                  <div className="mt-1 flex items-center justify-between text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                     <span>Trace</span>
                     <span className="text-emerald-50">{botSettings.showReasoningTrace ? "Visible" : "Hidden"}</span>
                   </div>
                 </div>
                 <Accordion type="single" collapsible className="rounded-lg border border-white/10 bg-black/30 px-3">
                   <AccordionItem value="advanced" className="border-none">
-                    <AccordionTrigger className="py-2 text-[10px] uppercase tracking-[0.32em] text-emerald-100/50 hover:no-underline">
+                    <AccordionTrigger className="py-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.32em] text-emerald-100/50 hover:no-underline">
                       Advanced AI
                     </AccordionTrigger>
-                    <AccordionContent className="pt-2 text-xs text-emerald-100/70">
+                    <AccordionContent className="pt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                       <div className="space-y-3">
                         <div className="space-y-1.5">
-                          <p className="text-xs text-emerald-100/60">Model</p>
+                          <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Model</p>
                           <Select value={botSettings.model} onValueChange={onBotModelChange}>
-                            <SelectTrigger className="h-9 border-white/15 bg-white/5 text-emerald-50">
+                            <SelectTrigger className="h-9 xl:h-10 border-white/15 bg-white/5 text-emerald-50">
                               <SelectValue placeholder="Select model" />
                             </SelectTrigger>
                             <SelectContent>
@@ -591,12 +628,12 @@ export function GameSidebar({
                           </Select>
                         </div>
                         <div className="space-y-1.5">
-                          <p className="text-xs text-emerald-100/60">Reasoning effort</p>
+                          <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Reasoning effort</p>
                           <Select
                             value={botSettings.reasoningEffort}
                             onValueChange={(value) => onReasoningEffortChange(value as ReasoningEffort)}
                           >
-                            <SelectTrigger className="h-9 border-white/15 bg-white/5 text-emerald-50">
+                            <SelectTrigger className="h-9 xl:h-10 border-white/15 bg-white/5 text-emerald-50">
                               <SelectValue placeholder="Select effort" />
                             </SelectTrigger>
                             <SelectContent>
@@ -607,12 +644,12 @@ export function GameSidebar({
                               ))}
                             </SelectContent>
                           </Select>
-                          <p className="text-[11px] text-emerald-100/55">
+                          <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">
                             Higher effort spends more tokens to evaluate lines of play.
                           </p>
                         </div>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between text-[11px] text-emerald-100/60">
+                          <div className="flex items-center justify-between text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
                             <span>Temperature</span>
                             <span className="text-emerald-50">{botSettings.temperature.toFixed(2)}</span>
                           </div>
@@ -626,15 +663,15 @@ export function GameSidebar({
                         </div>
                         <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-black/40 px-3 py-2">
                           <div>
-                            <p className="text-[11px] font-semibold text-emerald-50">Show reasoning trace</p>
-                            <p className="text-[11px] text-emerald-100/55">Displays the latest trace on the table.</p>
+                            <p className="text-[clamp(11px,0.85vw,13px)] font-semibold text-emerald-50">Show reasoning trace</p>
+                            <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">Displays the latest trace on the table.</p>
                           </div>
                           <Switch
                             checked={botSettings.showReasoningTrace}
                             onCheckedChange={onShowReasoningTraceChange}
                           />
                         </div>
-                        <p className="text-[11px] text-emerald-100/55">Fallbacks: {fallbackLabels}</p>
+                        <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/55">Fallbacks: {fallbackLabels}</p>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -644,17 +681,17 @@ export function GameSidebar({
 
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-1 gap-1">
-                <CardTitle className="text-sm text-emerald-50">AI Coach</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">AI Coach</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-sm font-medium text-emerald-50">Explain last move</p>
-                    <p className="text-xs text-emerald-100/60">Get a quick critique and alternatives.</p>
+                    <p className="text-[clamp(12px,0.95vw,14px)] font-medium text-emerald-50">Explain last move</p>
+                    <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">Get a quick critique and alternatives.</p>
                   </div>
                   <Switch checked={coachEnabled} onCheckedChange={onCoachEnabledChange} />
                 </div>
-                <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-xs text-emerald-100/60 space-y-1">
+                <div className="rounded-lg border border-white/10 bg-white/5 p-2.5 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60 space-y-1">
                   <p>
                     <span className="font-medium text-emerald-50">Last move:</span> {lastMoveSummary}
                   </p>
@@ -665,9 +702,9 @@ export function GameSidebar({
                 <Button onClick={onRequestCoach} disabled={!canRequestCoach} className="w-full">
                   {coachLoading ? "Analyzing..." : "Explain last move"}
                 </Button>
-                {coachError && <p className="text-xs text-rose-300">{coachError}</p>}
+                {coachError && <p className="text-[clamp(11px,0.85vw,13px)] text-rose-300">{coachError}</p>}
                 {coachResponse && (
-                  <div className="rounded-lg border border-white/10 bg-white/90 p-2.5 text-xs text-slate-900 leading-relaxed whitespace-pre-wrap">
+                  <div className="rounded-lg border border-white/10 bg-white/90 p-2.5 text-[clamp(11px,0.85vw,13px)] text-slate-900 leading-relaxed whitespace-pre-wrap">
                     {coachResponse}
                   </div>
                 )}
@@ -678,16 +715,56 @@ export function GameSidebar({
           <TabsContent value="log" className="mt-3 space-y-2">
             <Card className="gap-2 py-3 bg-black/40 border-white/10">
               <CardHeader className="pb-1 gap-1">
-                <CardTitle className="text-sm text-emerald-50">Trick Log</CardTitle>
+                <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Trick Log</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-xs text-emerald-100/70">
-                  {displayLog.length === 0 ? (
-                    <p>No actions yet.</p>
-                  ) : (
-                    displayLog.map((entry, index) => <p key={index}>• {entry}</p>)
-                  )}
-                </div>
+              <CardContent className="space-y-3">
+                {lastTrick ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">
+                          Trick {lastTrick.trickNumber}
+                        </p>
+                        <p className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">{lastTrickWinner?.name ?? "Player"} won</p>
+                        <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                          {lastTrickTeam?.name ?? "Team"} · +{lastTrick.points} pts
+                        </p>
+                      </div>
+                      <Badge className="border-white/10 bg-white/5 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em] text-emerald-100">
+                        +{lastTrick.points}
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {lastTrickPlays.map((play) => {
+                        const playerName =
+                          gameState.players.find((player) => player.id === play.playerId)?.name ?? "Player";
+                        return (
+                          <div
+                            key={`${play.playerId}-${play.card.id}`}
+                            className="flex flex-col items-center gap-1 rounded-lg border border-white/10 bg-white/5 p-2"
+                          >
+                            <TrickCard card={play.card} isWinner={play.playerId === lastTrick.winnerPlayerId} />
+                            <span className="text-[clamp(10px,0.75vw,12px)] text-emerald-100/70">{playerName}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">No tricks yet.</p>
+                )}
+                {easyMode && (
+                  <div className="space-y-2 border-t border-white/10 pt-3">
+                    <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/60">Full trick log</p>
+                    <div className="space-y-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                      {displayLog.length === 0 ? (
+                        <p>No actions yet.</p>
+                      ) : (
+                        displayLog.map((entry, index) => <p key={index}>• {entry}</p>)
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

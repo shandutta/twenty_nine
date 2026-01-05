@@ -1,7 +1,7 @@
 import { cardPoints, compareRanks, createDeck } from "./cards";
 import type { Card, Suit } from "./cards";
 import { createTrick, getLegalPlays, playCard, shouldRevealTrump, winningPlay } from "./trick";
-import type { TrickState } from "./trick";
+import type { TrickPlay, TrickState } from "./trick";
 import { adjustBidTargetForRoyals, canDeclareRoyals } from "./royals";
 import type { TeamId } from "./royals";
 import type { EngineConfig } from "./config";
@@ -34,6 +34,7 @@ export type GameState = {
     card: Card;
     points: number;
     team: TeamId;
+    plays: TrickPlay[];
   } | null;
   royalsDeclaredBy: TeamId | null;
   phase: GamePhase;
@@ -116,7 +117,7 @@ export const createGameState = ({
   trumpSuit = null,
   trumpFromSeventh = false,
   config = DEFAULT_CONFIG,
-  matchRound = 0,
+  matchRound = 1,
   matchRedPips = [0, 0],
   matchBlackPips = [0, 0],
   matchWinner = null,
@@ -565,6 +566,7 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
       card: winner.card,
       points: totalScore,
       team: winnerTeam,
+      plays: trick.plays.map((play) => ({ ...play })),
     },
     phase,
     matchRound,

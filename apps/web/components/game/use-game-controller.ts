@@ -41,6 +41,35 @@ export type BotSettings = {
   showReasoningTrace: boolean;
 };
 
+const STORAGE_KEY = "twentynine:game-state:v1";
+const STORAGE_VERSION = 1;
+
+type PersistedGameState = {
+  version: typeof STORAGE_VERSION;
+  engineState: EngineState;
+  lastMove: LastMoveInfo;
+  botEnabled: boolean;
+  botDifficulty: BotDifficulty;
+  botModel: string;
+  botTemperature: number;
+  reasoningEffort: ReasoningEffort;
+  showReasoningTrace: boolean;
+  controlMode: ControlMode;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
+
+const isPersistedState = (value: unknown): value is PersistedGameState => {
+  if (!isRecord(value)) return false;
+  if (value.version !== STORAGE_VERSION) return false;
+  const engineState = value.engineState;
+  if (!isRecord(engineState)) return false;
+  if (!Array.isArray(engineState.hands)) return false;
+  if (typeof engineState.currentPlayer !== "number") return false;
+  if (typeof engineState.phase !== "string") return false;
+  return true;
+};
+
 const PLAYER_META: PlayerMeta[] = [
   { id: "player1", name: "You", position: "bottom", teamId: "teamA" },
   { id: "player2", name: "West", position: "left", teamId: "teamB" },
@@ -53,7 +82,8 @@ const PARTNER_HUMAN = 2;
 const BOT_THINK_TIME_MS = 450;
 
 export const LLM_MODEL_OPTIONS = [
-  { value: "openai/gpt-5.2-pro", label: "GPT-5.2 Pro" },
+  { value: "openai/gpt-5.2-chat", label: "GPT-5.2 Chat" },
+  { value: "openai/gpt-5.2", label: "GPT-5.2" },
   { value: "anthropic/claude-opus-4.5", label: "Claude Opus 4.5" },
   { value: "google/gemini-3-pro-preview", label: "Gemini 3 Pro (Preview)" },
 ] as const;
@@ -267,11 +297,20 @@ const extractReasoningTrace = (
 
 const shouldUseLLM = () => true;
 
+type LlmUsage = Record<string, unknown> | null;
+
+type LlmMetrics = {
+  durationMs: number | null;
+  usage: LlmUsage;
+  costUsd: number | null;
+};
+
 type LlmDecision = {
   card: Card | null;
   reasoning: string | null;
   model: string | null;
   hasTrace: boolean;
+  metrics: LlmMetrics | null;
 };
 
 const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: BotSettings): Promise<LlmDecision> => {
@@ -327,6 +366,16 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
         body: JSON.stringify({
           model,
           temperature: settings.temperature,
+          trace: {
+            source: "bot",
+            matchRound: state.matchRound,
+            trickNumber: state.trickNumber + 1,
+            phase: state.phase,
+            playerId: playerMeta.id,
+            playerName: playerMeta.name,
+            gameSeed: state.seed,
+            turnId: state.log.length,
+          },
           reasoning: {
             effort: settings.reasoningEffort,
             exclude: !settings.showReasoningTrace,
@@ -347,6 +396,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
 
       const data = (await response.json().catch(() => null)) as {
         message?: { content?: string; reasoning?: unknown; reasoning_details?: unknown };
+        metrics?: { durationMs?: number; usage?: LlmUsage; costUsd?: number | null };
       } | null;
       const message = data?.message ?? null;
       const content = message?.content;
@@ -361,6 +411,11 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
           reasoning: reasoning.text,
           model,
           hasTrace: reasoning.hasTrace,
+          metrics: {
+            durationMs: typeof data?.metrics?.durationMs === "number" ? data.metrics.durationMs : null,
+            usage: data?.metrics?.usage ?? null,
+            costUsd: typeof data?.metrics?.costUsd === "number" ? data.metrics.costUsd : null,
+          },
         };
       }
     } catch {
@@ -368,7 +423,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     }
   }
 
-  return { card: null, reasoning: null, model: null, hasTrace: false };
+  return { card: null, reasoning: null, model: null, hasTrace: false, metrics: null };
 };
 
 const createUiState = (state: EngineState, controlMode: ControlMode): GameState => {
@@ -422,6 +477,10 @@ const createUiState = (state: EngineState, controlMode: ControlMode): GameState 
         winnerTeamId: state.lastTrick.team === 0 ? "teamA" : "teamB",
         winningCard: toPlayingCard(state.lastTrick.card),
         points: state.lastTrick.points,
+        plays: state.lastTrick.plays.map((play) => ({
+          playerId: resolvedMeta[play.player].id,
+          card: toPlayingCard(play.card),
+        })),
       }
     : null;
 
@@ -466,13 +525,18 @@ export const useGameController = () => {
     effort: ReasoningEffort;
     ts: number;
     hasTrace: boolean;
+    latencyMs: number | null;
+    usage: LlmUsage;
+    costUsd: number | null;
   } | null>(null);
   const [llmInUse, setLlmInUse] = useState(false);
   const [controlMode, setControlMode] = useState<ControlMode>("standard");
   const [controlModeLocked, setControlModeLocked] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   const botTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(engineState);
+  const skipPresetRef = useRef(false);
 
   const humanPlayers = useMemo(() => HUMAN_PLAYERS[controlMode], [controlMode]);
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
@@ -493,8 +557,64 @@ export const useGameController = () => {
   );
 
   useEffect(() => {
+    if (skipPresetRef.current) {
+      skipPresetRef.current = false;
+      return;
+    }
     setBotTemperature(BOT_PRESETS[botDifficulty].temperature);
   }, [botDifficulty]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        setHydrated(true);
+        return;
+      }
+      const parsed = JSON.parse(raw) as unknown;
+      if (!isPersistedState(parsed)) {
+        window.localStorage.removeItem(STORAGE_KEY);
+        setHydrated(true);
+        return;
+      }
+      setEngineState(parsed.engineState);
+      setLastMove(parsed.lastMove ?? null);
+      if (typeof parsed.botEnabled === "boolean") {
+        setBotEnabled(parsed.botEnabled);
+      }
+      if (parsed.botDifficulty === "easy" || parsed.botDifficulty === "medium" || parsed.botDifficulty === "hard") {
+        skipPresetRef.current = true;
+        setBotDifficulty(parsed.botDifficulty);
+      }
+      if (typeof parsed.botModel === "string" && parsed.botModel.length > 0) {
+        setBotModel(parsed.botModel);
+      }
+      if (typeof parsed.botTemperature === "number" && Number.isFinite(parsed.botTemperature)) {
+        setBotTemperature(parsed.botTemperature);
+      }
+      if (
+        parsed.reasoningEffort === "xhigh" ||
+        parsed.reasoningEffort === "high" ||
+        parsed.reasoningEffort === "medium" ||
+        parsed.reasoningEffort === "low" ||
+        parsed.reasoningEffort === "minimal" ||
+        parsed.reasoningEffort === "none"
+      ) {
+        setReasoningEffort(parsed.reasoningEffort);
+      }
+      if (typeof parsed.showReasoningTrace === "boolean") {
+        setShowReasoningTrace(parsed.showReasoningTrace);
+      }
+      if (parsed.controlMode === "standard" || parsed.controlMode === "single-hand") {
+        setControlMode(parsed.controlMode);
+      }
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setHydrated(true);
+    }
+  }, []);
 
   useEffect(() => {
     stateRef.current = engineState;
@@ -677,6 +797,7 @@ export const useGameController = () => {
   }, [canDeclareRoyalsForHuman, dispatch, engineState.currentPlayer]);
 
   useEffect(() => {
+    if (!hydrated) return;
     if (engineState.phase !== "playing") {
       setLlmInUse(false);
     }
@@ -756,6 +877,9 @@ export const useGameController = () => {
                 effort: botSettings.reasoningEffort,
                 ts: Date.now(),
                 hasTrace: llmDecision.hasTrace,
+                latencyMs: llmDecision.metrics?.durationMs ?? null,
+                usage: llmDecision.metrics?.usage ?? null,
+                costUsd: llmDecision.metrics?.costUsd ?? null,
               });
             }
           } finally {
@@ -779,7 +903,39 @@ export const useGameController = () => {
       }
       botTimeout.current = null;
     };
-  }, [botSettings, dispatch, engineState, isHumanTurn]);
+  }, [botSettings, dispatch, engineState, hydrated, isHumanTurn]);
+
+  useEffect(() => {
+    if (!hydrated || typeof window === "undefined") return;
+    const payload: PersistedGameState = {
+      version: STORAGE_VERSION,
+      engineState,
+      lastMove,
+      botEnabled,
+      botDifficulty,
+      botModel,
+      botTemperature,
+      reasoningEffort,
+      showReasoningTrace,
+      controlMode,
+    };
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Ignore write errors (quota, privacy mode).
+    }
+  }, [
+    botDifficulty,
+    botEnabled,
+    botModel,
+    botTemperature,
+    controlMode,
+    engineState,
+    hydrated,
+    lastMove,
+    reasoningEffort,
+    showReasoningTrace,
+  ]);
 
   const handleControlModeChange = useCallback(
     (mode: ControlMode) => {
