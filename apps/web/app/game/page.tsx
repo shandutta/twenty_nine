@@ -35,7 +35,7 @@ const formatCardList = (cards: CardLike[]): string => (cards.length === 0 ? "--"
 function GameShell({ children, hydrated }: { children: ReactNode; hydrated: boolean }) {
   return (
     <div
-      className="relative flex h-screen w-full overflow-hidden bg-[#0b1511]"
+      className="relative flex h-[100svh] w-full overflow-hidden bg-[#0b1511] md:h-screen"
       data-hydrated={hydrated ? "true" : "false"}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,197,94,0.16),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(15,118,110,0.2),_transparent_50%)]" />
@@ -415,7 +415,7 @@ function GamePageClient() {
         onChooseTrump={onChooseTrump}
         onChooseTrumpFromSeventh={onChooseTrumpFromSeventh}
       />
-      <main className="relative flex-1 overflow-hidden">
+      <main className="relative flex-1 min-h-0 overflow-x-hidden overflow-y-auto md:overflow-hidden">
         <GameTable
           gameState={gameState}
           onPlayCard={onPlayCard}

@@ -344,8 +344,8 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
   };
 
   return (
-    <div className="flex flex-col items-center gap-2.5 pb-2">
-      <div className="flex justify-center items-end px-10 md:px-16 xl:px-24 py-2">
+    <div className="flex flex-col items-center gap-2 sm:gap-2.5 pb-2">
+      <div className="flex justify-center items-end px-4 sm:px-8 md:px-16 xl:px-24 py-1.5 sm:py-2">
         {orderedCards.map((card, index) => (
           <PlayableCard
             key={card.id}
@@ -365,7 +365,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         ))}
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Badge
           variant="outline"
           className="border-white/20 bg-[#0b1512]/85 text-emerald-50 shadow-[0_6px_18px_rgba(0,0,0,0.35)] backdrop-blur"
@@ -374,7 +374,7 @@ export function Hand({ player, onPlayCard, isCurrentTurn, legalCardIds, animatio
         </Badge>
         <div
           data-testid="player-hand-status"
-          className="flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 backdrop-blur"
+          className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-black/35 px-3 py-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 backdrop-blur"
         >
           {isCurrentTurn ? (
             <>

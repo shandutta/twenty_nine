@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Hand } from "./hand";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { MATCH_PIPS } from "@twentynine/engine";
 import type { ControlMode, GameState, PlayingCard, Player, Suit } from "@/components/game/types";
 import { Download, Share2, Sparkles, Trophy, Cog, RotateCcw } from "lucide-react";
@@ -280,7 +281,7 @@ function StatusChip({
     <div
       title={title}
       className={cn(
-        "rounded-2xl border px-3 py-1.5 xl:px-4 xl:py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
+        "rounded-2xl border px-2.5 py-1 sm:px-3 sm:py-1.5 xl:px-4 xl:py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
         highlight
           ? "border-[#f2c879]/70 bg-gradient-to-br from-[#f2c879] to-[#d9a74e] text-[#2b1c07]"
           : "border-white/12 bg-black/30 text-emerald-50",
@@ -333,14 +334,14 @@ function OpponentArea({
 }) {
   const cardCount = player.cards.length;
   const stackClass = cn(
-    "flex items-center -space-x-6 md:-space-x-8 xl:-space-x-10 md:scale-[1.05] xl:scale-[1.1] xl:mt-1",
+    "flex items-center -space-x-5 sm:-space-x-6 md:-space-x-8 xl:-space-x-10 md:scale-[1.05] xl:scale-[1.1] xl:mt-1",
     isActive && "ring-2 ring-[#f2c879]/40 rounded-2xl p-2 shadow-[0_0_18px_rgba(242,200,121,0.2)]"
   );
   const topStackClass = cn(stackClass, "md:scale-[1.08] xl:scale-[1.12]");
 
   if (position === "top") {
     return (
-      <div className="flex flex-col items-center gap-3 md:gap-4">
+      <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
         <div className="flex items-center gap-2">
           <span
             className={cn(
@@ -377,7 +378,7 @@ function OpponentArea({
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 md:gap-4">
+  <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
       <span
         className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
       >
@@ -421,6 +422,7 @@ export function GameTable({
   const topPlayer = gameState.players.find((p) => p.position === "top")!;
   const rightPlayer = gameState.players.find((p) => p.position === "right")!;
   const isSingleHand = controlMode === "single-hand";
+  const isMobile = useIsMobile();
 
   const getPlayedCard = (playerId: string) => gameState.currentTrick.find((t) => t.playerId === playerId)?.card;
 
@@ -976,22 +978,25 @@ export function GameTable({
     );
   };
 
-  const cardSizing: CSSVars = {
-    "--hand-card-w": "clamp(76px,7.5vw,132px)",
-    "--hand-card-h": "clamp(110px,10.5vw,196px)",
-    "--trick-card-w": "calc(var(--hand-card-w) * 0.94)",
-    "--trick-card-h": "calc(var(--hand-card-h) * 0.94)",
-    "--trick-card-radius": "clamp(10px,1vw,14px)",
-    "--hand-pip-size": "clamp(14px, calc(var(--hand-card-w) * 0.18), 22px)",
-    "--trick-pip-size": "clamp(12px, calc(var(--trick-card-w) * 0.18), 20px)",
-  };
+  const cardSizing: CSSVars = useMemo(
+    () => ({
+      "--hand-card-w": isMobile ? "clamp(60px, 18vw, 100px)" : "clamp(76px,7.5vw,132px)",
+      "--hand-card-h": isMobile ? "clamp(88px, 26vw, 146px)" : "clamp(110px,10.5vw,196px)",
+      "--trick-card-w": "calc(var(--hand-card-w) * 0.94)",
+      "--trick-card-h": "calc(var(--hand-card-h) * 0.94)",
+      "--trick-card-radius": "clamp(10px,1vw,14px)",
+      "--hand-pip-size": "clamp(14px, calc(var(--hand-card-w) * 0.18), 22px)",
+      "--trick-pip-size": "clamp(12px, calc(var(--trick-card-w) * 0.18), 20px)",
+    }),
+    [isMobile]
+  );
 
   return (
     <TooltipProvider>
       <div
         style={cardSizing}
         className={cn(
-          "relative h-full w-full p-4 md:p-8 xl:p-10 2xl:p-12",
+          "relative h-full w-full px-3 pt-3 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] sm:px-4 sm:pt-4 sm:pb-8 md:p-8 xl:p-10 2xl:p-12",
           matchFinished && "pointer-events-none opacity-40"
         )}
       >
@@ -1090,7 +1095,7 @@ export function GameTable({
           </div>
         )}
         {(isBidding || isChoosingTrump) && (
-          <div className="pointer-events-none absolute left-1/2 top-6 z-30 w-[min(92vw,520px)] -translate-x-1/2 sm:top-10 md:hidden">
+          <div className="pointer-events-none absolute left-1/2 top-[calc(env(safe-area-inset-top)+0.75rem)] z-30 w-[min(92vw,520px)] -translate-x-1/2 sm:top-10 md:hidden">
             <div className="pointer-events-auto rounded-[28px] border border-white/10 bg-[#0b1612]/95 p-5 shadow-[0_22px_60px_rgba(0,0,0,0.55)] backdrop-blur">
               {isBidding ? (
                 <div className="space-y-4">
@@ -1244,9 +1249,9 @@ export function GameTable({
         </div>
 
         <div className="relative h-full flex flex-col px-4 md:px-6 xl:px-10 py-4 xl:py-6">
-          <div className="relative mt-2 px-3 py-2">
+          <div className="relative mt-1 px-2.5 py-1.5 sm:mt-2 sm:px-3 sm:py-2">
             <div className="pointer-events-none absolute inset-x-12 bottom-0 h-px bg-black/50" />
-            <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div className="relative flex flex-wrap items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3">
                 <Badge className="gap-2 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-emerald-50 shadow-[inset_0_0_12px_rgba(34,197,94,0.15)]">
                   <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.65)]" />
@@ -1257,7 +1262,7 @@ export function GameTable({
                   <span className="text-emerald-50">{gameState.matchRound}</span>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <StatusChip label="Bid / Contract" value={`${gameState.currentBid ?? "--"} · ${bidderName}`} />
                 {showRoyalsStatus && (
                   <StatusChip
@@ -1300,7 +1305,7 @@ export function GameTable({
                   </Button>
                 )}
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#0a1410]/70 via-black/40 to-[#123324]/40 px-4 py-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70 shadow-[inset_0_0_18px_rgba(0,0,0,0.35)]">
                   <div className="flex items-center justify-between gap-6">
                     <span className="text-emerald-200">{teamA.name}</span>
@@ -1327,11 +1332,11 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="flex justify-center pt-6 pb-8 xl:pt-8 xl:pb-10">
+          <div className="flex justify-center pt-4 pb-6 sm:pt-6 sm:pb-8 xl:pt-8 xl:pb-10">
             <OpponentArea player={topPlayer} position="top" isTeammate={true} isActive={topPlayer.isCurrentPlayer} />
           </div>
 
-          <div className="flex-1 flex flex-wrap items-center justify-center gap-6 px-6 sm:px-8 lg:flex-nowrap lg:justify-between lg:px-16 xl:px-28">
+          <div className="flex-1 flex flex-wrap items-center justify-center gap-4 px-3 sm:gap-6 sm:px-6 lg:flex-nowrap lg:justify-between lg:px-16 xl:px-28">
             <div className="flex-shrink-0 order-2 lg:order-none">
               <OpponentArea
                 player={leftPlayer}
@@ -1342,7 +1347,7 @@ export function GameTable({
             </div>
 
             <div className="order-1 flex w-full items-center justify-center lg:order-none lg:w-auto">
-              <div className="relative w-[clamp(14.5rem,78vw,18rem)] h-[clamp(11rem,60vw,14.5rem)] sm:w-[clamp(17rem,26vw,26rem)] sm:h-[clamp(13rem,20vw,20rem)]">
+              <div className="relative w-[clamp(12.5rem,72vw,17rem)] h-[clamp(9.5rem,54vw,13rem)] sm:w-[clamp(17rem,26vw,26rem)] sm:h-[clamp(13rem,20vw,20rem)]">
                 <div className="absolute inset-0 rounded-3xl border border-white/20 bg-black/25 shadow-[inset_0_0_22px_rgba(0,0,0,0.35)]" />
                 <div className="absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.08),transparent_58%)] opacity-70" />
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 sm:top-3">
@@ -1397,7 +1402,7 @@ export function GameTable({
             </div>
           </div>
 
-          <div className="pt-4 pb-12 md:pb-14 xl:pb-16 space-y-6">
+          <div className="pt-3 pb-10 sm:pt-4 sm:pb-12 md:pb-14 xl:pb-16 space-y-6">
             {isSingleHand && (
               <Hand
                 player={topPlayer}
@@ -1436,8 +1441,8 @@ export function GameTable({
           )}
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center sm:hidden">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3 sm:hidden">
+        <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-2 shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur">
           <span className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.32em] text-emerald-100/60">
             Round {gameState.matchRound}
           </span>
