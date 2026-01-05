@@ -818,44 +818,39 @@ describe("GamePage logic branches", () => {
     });
   });
 
-  it("falls back to default labels when the current player is missing", async () => {
-    const originalIncludes = Array.prototype.includes;
-    Array.prototype.includes = function () {
-      return true;
-    };
+  it("shows a coach error when the current player is missing", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/openrouter/models")) {
+        return { ok: true, json: async () => ({ models: [] }) } as Response;
+      }
+      if (!init || init.method === "GET") {
+        return { ok: true, json: async () => ({ configured: true }) } as Response;
+      }
+      return { ok: true, json: async () => ({ message: { content: "OK" } }) } as Response;
+    });
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
 
-    try {
-      const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-        const url = typeof input === "string" ? input : input.url;
-        if (url.includes("/api/openrouter/models")) {
-          return { ok: true, json: async () => ({ models: [] }) } as Response;
-        }
-        if (!init || init.method === "GET") {
-          return { ok: true, json: async () => ({ configured: true }) } as Response;
-        }
-        return { ok: true, json: async () => ({ message: { content: "OK" } }) } as Response;
-      });
-      vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
+    mockedUseGameController.mockReturnValue(
+      baseControllerState({
+        gameState: makeGameState({ players: [], currentPlayerId: "missing" }),
+      })
+    );
 
-      mockedUseGameController.mockReturnValue(
-        baseControllerState({
-          gameState: makeGameState({ players: [], currentPlayerId: "missing" }),
-        })
-      );
+    const { default: GamePage } = await import("@/app/game/page");
+    render(<GamePage />);
 
-      const { default: GamePage } = await import("@/app/game/page");
-      render(<GamePage />);
+    act(() => {
+      getSidebarProps().onCoachEnabledChange(true);
+    });
 
-      act(() => {
-        getSidebarProps().onCoachEnabledChange(true);
-      });
+    await act(async () => {
+      await getSidebarProps().onRequestCoach();
+    });
 
-      await act(async () => {
-        await getSidebarProps().onRequestCoach();
-      });
-    } finally {
-      Array.prototype.includes = originalIncludes;
-    }
+    await waitFor(() => {
+      expect(getSidebarProps().coachError).toContain("only available on your turn");
+    });
   });
 
   it("includes last trick details in the coach request payload", async () => {

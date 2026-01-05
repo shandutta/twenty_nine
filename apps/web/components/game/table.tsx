@@ -968,35 +968,37 @@ export function GameTable({
         ? `${handWinnerTeam.name} won by ${pointMargin} pts · ${scoreLine}`
         : `Score ${scoreLine}`;
 
+    const panelPadding = compact ? "p-3" : "p-4";
+
     return (
       <div
         className={cn(
           "relative overflow-hidden rounded-[28px] border border-white/15 bg-[#0b1612]/95 shadow-[0_28px_80px_rgba(0,0,0,0.6)]",
-          compact ? "p-4" : "p-5"
+          compact ? "p-5" : "p-6"
         )}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(242,200,121,0.18),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(10,20,16,0.8),_transparent_70%)]" />
-        <div className="relative space-y-4">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className={cn("relative", compact ? "space-y-4" : "space-y-5")}>
+          <div className="flex flex-wrap items-start justify-between gap-6">
             <div>
               <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.36em] text-emerald-100/60">
                 Final Trick · Hand Resolution
               </p>
-              <h3 className={cn("mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold", handWinnerTone)}>{handHeader}</h3>
-              <p className="mt-1 text-[clamp(11px,0.9vw,13px)] text-emerald-100/70">{handOutcomeLine}</p>
+              <h3 className={cn("mt-2 text-[clamp(18px,1.6vw,24px)] font-semibold", handWinnerTone)}>{handHeader}</h3>
+              <p className="mt-1.5 text-[clamp(11px,0.9vw,13px)] text-emerald-100/70">{handOutcomeLine}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               <Badge className="border-white/20 bg-white/5 text-emerald-100">Trick 8</Badge>
               <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">+{lastTrick.points} pts</Badge>
             </div>
           </div>
 
-          <div className={cn("grid gap-3", compact ? "md:grid-cols-2" : "md:grid-cols-3")}>
-            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+          <div className={cn("grid gap-4", compact ? "md:grid-cols-2" : "md:grid-cols-3")}>
+            <div className={cn("rounded-2xl border border-white/10 bg-black/40", panelPadding)}>
               <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                 Trick 8 recap
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+              <div className="mt-3 flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
                 <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
                 <span className="text-emerald-100/70">won for</span>
                 <Badge
@@ -1005,7 +1007,7 @@ export function GameTable({
                   {lastTrickTeam?.name ?? "Team"}
                 </Badge>
               </div>
-              <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+              <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                 Winning card <span className="text-emerald-50">{lastTrickCardLabel}</span>
                 <span className="ml-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70">
                   Last trick bonus +1
@@ -1023,11 +1025,11 @@ export function GameTable({
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+            <div className={cn("rounded-2xl border border-white/10 bg-black/40", panelPadding)}>
               <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                 Hand result
               </div>
-              <div className="mt-2 flex items-baseline gap-2">
+              <div className="mt-3 flex items-baseline gap-2">
                 <span className={cn("text-[clamp(16px,1.25vw,18px)] font-semibold", handWinnerTone)}>
                   {handWinnerTeam?.name ?? "Team"}
                 </span>
@@ -1035,19 +1037,19 @@ export function GameTable({
               </div>
               <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Score {scoreLine}</div>
               {bidderTeam && bidTarget !== null && (
-                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                <div className="mt-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
                   Contract {bidTarget} · {bidderTeam.name} {madeBid ? "made" : "missed"}
                   {bidDeltaText ? ` (${bidDeltaText})` : ""}
                 </div>
               )}
               {handLoserTeam && (
-                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
+                <div className="mt-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/60">
                   {handLoserTeam.name} finishes with {handLoserPoints ?? 0} pts
                 </div>
               )}
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-black/40 p-3">
+            <div className={cn("rounded-2xl border border-white/10 bg-black/40", panelPadding)}>
               <div className="flex items-center justify-between text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
                 <span>Pip impact</span>
                 {pipType && pipTeamIndex !== null && pipCount !== null && (
@@ -1058,7 +1060,7 @@ export function GameTable({
               </div>
               {pipType && bidderTeam && pipCount !== null ? (
                 <>
-                  <div className="mt-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
+                  <div className="mt-3 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
                     {bidderTeam.name} gains 1 {pipType} pip
                   </div>
                   <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
@@ -1066,14 +1068,14 @@ export function GameTable({
                   </div>
                 </>
               ) : (
-                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Pip change unavailable.</div>
+                <div className="mt-3 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Pip change unavailable.</div>
               )}
-              <div className="mt-2 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
+              <div className="mt-3 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
                 {teamA.name}: R{gameState.matchRedPips[0]}/B{gameState.matchBlackPips[0]} · {teamB.name}: R
                 {gameState.matchRedPips[1]}/B{gameState.matchBlackPips[1]}
               </div>
               {matchFinished && matchWinnerTeam && matchEndReason && (
-                <div className="mt-2 text-[clamp(10px,0.75vw,12px)] text-emerald-100/70">
+                <div className="mt-3 text-[clamp(10px,0.75vw,12px)] text-emerald-100/70">
                   Match over — {matchReasonLine}
                 </div>
               )}
@@ -1081,7 +1083,7 @@ export function GameTable({
           </div>
 
           {!matchFinished && (
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/70">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/70">
               <span>Ready for next round</span>
               <span className="text-emerald-50">Round {gameState.matchRound}</span>
             </div>
