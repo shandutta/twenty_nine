@@ -6,9 +6,15 @@ const ROOT = process.cwd();
 const NEXT_DIR = path.join(ROOT, "apps/web/.next");
 const MANIFESTS = ["build-manifest.json", "app-build-manifest.json"];
 const FILE_PATTERN = /\.(js|css|map|woff2?|ttf|png|svg|jpg|jpeg|webp)$/i;
+const BUILD_ID_PATH = path.join(NEXT_DIR, "BUILD_ID");
 
 if (!fs.existsSync(NEXT_DIR)) {
   console.error(`verify-next-build: missing ${NEXT_DIR}`);
+  process.exit(1);
+}
+
+if (!fs.existsSync(BUILD_ID_PATH)) {
+  console.error(`verify-next-build: missing ${BUILD_ID_PATH}`);
   process.exit(1);
 }
 

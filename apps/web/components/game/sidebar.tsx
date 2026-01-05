@@ -261,16 +261,16 @@ export function GameSidebar({
       </div>
 
       <Tabs defaultValue="overview" className="flex-1 min-h-0">
-        <TabsList className="mx-4 mt-3 grid grid-cols-3 text-[clamp(11px,0.85vw,13px)]">
-          <TabsTrigger value="overview" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
+        <TabsList className="mx-4 mt-3 grid h-9 grid-cols-3 text-[clamp(12px,0.95vw,14px)]">
+          <TabsTrigger value="overview" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
             <Trophy className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Overview</span>
           </TabsTrigger>
-          <TabsTrigger value="ai" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
+          <TabsTrigger value="ai" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
             <Sparkles className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">AI</span>
           </TabsTrigger>
-          <TabsTrigger value="log" className="gap-2 text-[clamp(11px,0.85vw,13px)]">
+          <TabsTrigger value="log" className="gap-2 text-[clamp(12px,0.95vw,14px)]">
             <ScrollText className="h-4 w-4" />
             <span className="sr-only sm:not-sr-only">Log</span>
           </TabsTrigger>
@@ -278,7 +278,7 @@ export function GameSidebar({
 
         <ScrollArea className="flex-1 min-h-0 px-4 xl:px-5">
           <TabsContent value="overview" className="mt-3 space-y-2">
-            <Card className="gap-2 py-3 bg-[#0a1712]/90 border border-emerald-500/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
+            <Card className="gap-2 py-2.5 bg-[#0a1712]/90 border border-emerald-500/20 shadow-[0_18px_50px_rgba(0,0,0,0.35)]">
               <CardHeader className="pb-0 gap-1">
                 <CardTitle className="text-[clamp(12px,0.95vw,14px)] text-emerald-50">Control Mode</CardTitle>
               </CardHeader>
@@ -291,7 +291,7 @@ export function GameSidebar({
                       size="sm"
                       onClick={() => onControlModeChange(mode)}
                       className={cn(
-                        "h-9 xl:h-10 rounded-full border px-4 text-[clamp(11px,0.85vw,13px)] uppercase tracking-[0.2em]",
+                        "h-8 xl:h-9 rounded-full border px-3.5 text-[clamp(10px,0.8vw,12px)] uppercase tracking-[0.16em]",
                         controlMode === mode
                           ? "border-[#f2c879] bg-[#f2c879] text-[#2b1c07] hover:bg-[#f8d690]"
                           : "border-white/15 bg-white/5 text-emerald-50 hover:bg-white/10",

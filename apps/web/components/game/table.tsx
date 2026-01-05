@@ -240,8 +240,10 @@ function PlayedCard({ card }: { card: PlayingCard }) {
   );
 }
 
+type CSSVars = CSSProperties & Record<`--${string}`, string>;
+
 function CardBack({ size = "small" }: { size?: "small" | "medium" }) {
-  const sizeStyles: CSSProperties =
+  const sizeStyles: CSSVars =
     size === "small"
       ? {
           "--back-card-w": "clamp(52px,4.6vw,78px)",
@@ -807,7 +809,7 @@ export function GameTable({
     return () => clearTimeout(timer);
   }, [actionMessage]);
 
-  const cardSizing: CSSProperties = {
+  const cardSizing: CSSVars = {
     "--hand-card-w": "clamp(76px,7.5vw,132px)",
     "--hand-card-h": "clamp(110px,10.5vw,196px)",
     "--trick-card-w": "clamp(68px,5.6vw,112px)",

@@ -35,9 +35,19 @@ if [ "$BRANCH" != "main" ]; then
 fi
 
 CHANGED=$(printf "%s\n%s\n" "$(git diff-tree --no-commit-id --name-only -r HEAD)" "$(git diff --name-only HEAD)" | sort -u)
+FORCE_DEPLOY="${TWENTYNINE_FORCE_DEPLOY:-0}"
+BUILD_ID_PATH="apps/web/.next/BUILD_ID"
+if [ ! -f "$BUILD_ID_PATH" ]; then
+  echo "deploy: missing $BUILD_ID_PATH; forcing build"
+  FORCE_DEPLOY=1
+fi
+
 if ! echo "$CHANGED" | grep -Eq '^(apps/web/|packages/engine/|package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml)'; then
-  echo "deploy: no relevant changes; skipping"
-  exit 0
+  if [ "$FORCE_DEPLOY" != "1" ]; then
+    echo "deploy: no relevant changes; skipping"
+    exit 0
+  fi
+  echo "deploy: no relevant changes, but forced build requested"
 fi
 
 if echo "$CHANGED" | grep -Eq '(^pnpm-lock\.yaml|^package\.json|^apps/web/package\.json|^packages/engine/package\.json|^pnpm-workspace\.yaml)'; then
@@ -63,8 +73,22 @@ fi
 
 echo "deploy: building web app"
 echo "deploy: cleaning previous build"
-rm -rf apps/web/.next
-pnpm -C apps/web build
+BACKUP_DIR="apps/web/.next.backup"
+if [ -d apps/web/.next ]; then
+  rm -rf "$BACKUP_DIR"
+  mv apps/web/.next "$BACKUP_DIR"
+fi
+
+if ! pnpm -C apps/web build; then
+  echo "deploy: build failed"
+  rm -rf apps/web/.next
+  if [ -d "$BACKUP_DIR" ]; then
+    mv "$BACKUP_DIR" apps/web/.next
+  fi
+  exit 1
+fi
+
+rm -rf "$BACKUP_DIR"
 node scripts/verify-next-build.mjs
 
 if ! sudo -n true 2>/dev/null; then
