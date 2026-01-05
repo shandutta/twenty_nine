@@ -378,7 +378,7 @@ function OpponentArea({
   }
 
   return (
-  <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
+    <div className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
       <span
         className={cn("text-[clamp(12px,0.95vw,15px)] font-medium", isTeammate ? "text-emerald-200" : "text-rose-200")}
       >
