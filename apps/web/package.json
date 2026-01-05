@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "test:e2e": "E2E_SCREENSHOTS=0 playwright test",
+    "test:e2e": "env -u FORCE_COLOR E2E_SCREENSHOTS=0 playwright test",
     "audit:lighthouse": "node scripts/lighthouse.mjs"
   },
   "dependencies": {

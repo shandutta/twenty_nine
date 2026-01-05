@@ -114,7 +114,7 @@ export const createGameState = ({
   bidderPlayer = null,
   bidderTeam = null,
   bidTarget = null,
-  trumpSuit = null,
+  trumpSuit,
   trumpFromSeventh = false,
   config = DEFAULT_CONFIG,
   matchRound = 1,

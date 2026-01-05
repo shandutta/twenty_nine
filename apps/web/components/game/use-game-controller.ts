@@ -122,6 +122,57 @@ const BOT_PRESETS: Record<BotDifficulty, Pick<BotSettings, "difficulty" | "tempe
 
 const cardId = (card: Card) => `${card.suit}-${card.rank}`;
 const cardLabel = (card: Card) => `${card.rank} of ${card.suit}`;
+const cardShortLabel = (card: Card) => `${card.rank}${card.suit[0]?.toUpperCase() ?? ""}`;
+
+const handShortLabels = (hand: Card[]) => hand.map(cardShortLabel);
+
+const trickShortLabels = (trick: EngineState["trick"]) =>
+  trick.plays.map((play) => ({
+    player: play.player,
+    card: cardShortLabel(play.card),
+  }));
+
+const lastTrickSummary = (lastTrick: EngineState["lastTrick"]) => {
+  if (!lastTrick) return null;
+  return {
+    number: lastTrick.number,
+    winner: lastTrick.winner,
+    team: lastTrick.team,
+    points: lastTrick.points,
+    card: cardShortLabel(lastTrick.card),
+    plays: lastTrick.plays.map((play) => ({
+      player: play.player,
+      card: cardShortLabel(play.card),
+    })),
+  };
+};
+
+const buildGameLogContext = (state: EngineState) => ({
+  matchRound: state.matchRound,
+  phase: state.phase,
+  seed: state.seed,
+  dealer: state.dealer,
+  leader: state.leader,
+  currentPlayer: state.currentPlayer,
+  trickNumber: state.trickNumber,
+  bidTarget: state.bidTarget,
+  bidPasses: state.bidPasses,
+  bidderPlayer: state.bidderPlayer,
+  bidderTeam: state.bidderTeam,
+  bidHistory: state.bidHistory,
+  trumpSuit: state.trumpSuit,
+  trumpRevealed: state.trumpRevealed,
+  trumpFromSeventh: state.trumpFromSeventh,
+  points: state.points,
+  tricksWon: state.tricksWon,
+  matchRedPips: state.matchRedPips,
+  matchBlackPips: state.matchBlackPips,
+  matchWinner: state.matchWinner,
+  matchEndReason: state.matchEndReason,
+  trickPlays: trickShortLabels(state.trick),
+});
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
 
 const TEAM_LABELS = ["Team A (You & North)", "Team B (West & East)"] as const;
 
@@ -130,10 +181,106 @@ const HUMAN_PLAYERS: Record<ControlMode, number[]> = {
   "single-hand": [PRIMARY_HUMAN, PARTNER_HUMAN],
 };
 
-const estimateHandStrength = (hand: Card[]): number => {
-  const basePoints = hand.reduce((sum, card) => sum + cardPoints(card), 0);
-  const highCards = hand.filter((card) => card.rank === "J" || card.rank === "9").length;
-  return basePoints + highCards * 0.6;
+const RANK_POWER_BID: Record<Card["rank"], number> = {
+  J: 7,
+  "9": 6,
+  A: 5,
+  "10": 4,
+  K: 3,
+  Q: 2,
+  "8": 1,
+  "7": 0,
+};
+
+const BID_THRESHOLD_BASE = [11.5, 13, 14.5, 16, 17.5, 19];
+const BID_THRESHOLD_OFFSET: Record<BotDifficulty, number> = {
+  easy: 1,
+  medium: 0,
+  hard: -1,
+};
+const BID_STRETCH: Record<BotDifficulty, number> = {
+  easy: 0,
+  medium: 1,
+  hard: 1,
+};
+
+type BidProjection = {
+  bestSuit: Suit;
+  trumpScore: number;
+  sidePoints: number;
+  strength: number;
+  desiredBid: number | null;
+  thresholds: number[];
+  stretch: number;
+};
+
+const scoreTrumpSuit = (hand: Card[], suit: Suit): number => {
+  const suited = hand.filter((card) => card.suit === suit);
+  if (suited.length === 0) return Number.NEGATIVE_INFINITY;
+  const count = suited.length;
+  const points = suited.reduce((sum, card) => sum + cardPoints(card), 0);
+  const power = suited.reduce((sum, card) => sum + RANK_POWER_BID[card.rank], 0);
+  const has = (rank: Card["rank"]) => suited.some((card) => card.rank === rank);
+
+  let score = points * 1.6 + power * 0.4 + count * 1.2;
+  if (has("J")) score += 2.5;
+  if (has("9")) score += 2.0;
+  if (has("A")) score += 1.0;
+  if (has("10")) score += 0.8;
+  if (has("K")) score += 0.3;
+  if (has("Q")) score += 0.2;
+  if (has("J") && has("9")) score += 2.5;
+  if (has("J") && (has("A") || has("10"))) score += 1.0;
+  if (has("9") && (has("A") || has("10"))) score += 0.6;
+  if (count >= 3) score += 1.5;
+  if (count === 4) score += 2.5;
+
+  return score;
+};
+
+const projectBidStrength = (hand: Card[], difficulty: BotDifficulty, config: EngineState["config"]): BidProjection => {
+  let bestSuit: Suit = SUITS[0];
+  let bestScore = Number.NEGATIVE_INFINITY;
+
+  for (const suit of SUITS) {
+    const score = scoreTrumpSuit(hand, suit);
+    if (score > bestScore) {
+      bestScore = score;
+      bestSuit = suit;
+    }
+  }
+
+  const sidePoints = hand.filter((card) => card.suit !== bestSuit).reduce((sum, card) => sum + cardPoints(card), 0);
+  const strength = bestScore + sidePoints * 0.6;
+
+  const offset = BID_THRESHOLD_OFFSET[difficulty];
+  const thresholds = BID_THRESHOLD_BASE.map((value) => value + offset);
+  const minBid = config.minBid;
+  const maxBid = config.maxBidTarget;
+  const ladderSize = Math.min(maxBid - minBid + 1, thresholds.length);
+  const ladder = Array.from({ length: Math.max(0, ladderSize) }, (_, i) => minBid + i);
+  const effectiveThresholds = thresholds.slice(0, ladder.length);
+
+  let desiredBid: number | null = null;
+  if (ladder.length > 0 && strength >= effectiveThresholds[0]) {
+    desiredBid = ladder[ladder.length - 1];
+    for (let i = 1; i < effectiveThresholds.length; i += 1) {
+      if (strength < effectiveThresholds[i]) {
+        desiredBid = ladder[i - 1];
+        break;
+      }
+    }
+  }
+
+  return {
+    bestSuit,
+    trumpScore: bestScore,
+    sidePoints,
+    strength,
+    desiredBid,
+    thresholds: effectiveThresholds,
+    stretch: BID_STRETCH[difficulty],
+  };
 };
 
 const getLegalBidOptions = (state: EngineState): number[] => {
@@ -145,18 +292,40 @@ const getLegalBidOptions = (state: EngineState): number[] => {
   return Array.from({ length: maxBid - start + 1 }, (_, i) => start + i);
 };
 
-const chooseBotBidAmount = (hand: Card[], currentBid: number | null, config: EngineState["config"]): number | null => {
-  const strength = estimateHandStrength(hand);
+const chooseBotBidAmount = (
+  hand: Card[],
+  currentBid: number | null,
+  config: EngineState["config"],
+  difficulty: BotDifficulty
+): { bid: number | null; evaluation: BidProjection; minRaise: number } => {
+  const evaluation = projectBidStrength(hand, difficulty, config);
   const minBid = config.minBid;
   const maxBid = config.maxBidTarget;
   const minRaise = currentBid !== null ? currentBid + 1 : minBid;
-  const desired = Math.min(maxBid, Math.max(minBid, Math.round(strength)));
 
-  if (desired < minRaise) {
-    return null;
+  if (minRaise > maxBid) {
+    return { bid: null, evaluation, minRaise };
   }
 
-  return Math.min(desired, maxBid);
+  let bid = evaluation.desiredBid;
+  if (bid === null) {
+    return { bid: null, evaluation, minRaise };
+  }
+
+  if (bid < minRaise) {
+    if (minRaise - bid <= evaluation.stretch) {
+      bid = minRaise;
+    } else {
+      return { bid: null, evaluation, minRaise };
+    }
+  }
+
+  bid = Math.min(maxBid, bid);
+  if (bid < minBid) {
+    return { bid: null, evaluation, minRaise };
+  }
+
+  return { bid, evaluation, minRaise };
 };
 
 const chooseBotTrumpSuit = (hand: Card[]): Suit => {
@@ -401,8 +570,9 @@ const requestLLMBid = async (state: EngineState, settings: BotSettings): Promise
     "Passing is always allowed.",
     "",
     "Strategy guardrails:",
-    "- Bid only when your 4-card hand has enough trump potential or high points to justify the contract.",
-    "- If the current bid is already high for your hand, pass.",
+    "- Bidding is a gamble with only 4 cards; project likely trump suit strength and expected points after the final 4 cards.",
+    "- Favor bidding when you have strong trump indicators (J/9, suit length, high ranks) plus some outside points.",
+    "- If the current bid is already high for that projection, pass.",
     "- Prefer a minimal raise when your hand is borderline.",
     strategy,
     "",
@@ -717,11 +887,48 @@ export const useGameController = () => {
   const hydratedAckRef = useRef(false);
   const stateRef = useRef(engineState);
   const skipPresetRef = useRef(false);
+  const logSessionIdRef = useRef<string | null>(null);
+  const logSeqRef = useRef(0);
+  const lastLogIndexRef = useRef<number | null>(null);
+  const lastPhaseRef = useRef<EngineState["phase"] | null>(null);
+  const lastTrickNumberRef = useRef<number | null>(null);
 
   const humanPlayers = useMemo(() => HUMAN_PLAYERS[controlMode], [controlMode]);
   const isHumanTurn = humanPlayers.includes(engineState.currentPlayer);
   const pendingTrickNumber = engineState.lastTrick?.number ?? null;
   const trickResolutionPending = pendingTrickNumber !== null && pendingTrickNumber !== lastAckTrickRef.current;
+
+  const gameLoggingEnabled =
+    typeof window !== "undefined" && process.env.NODE_ENV !== "test" && process.env.NEXT_PUBLIC_GAME_LOGGING !== "0";
+
+  const getLogSessionId = useCallback(() => {
+    if (logSessionIdRef.current) return logSessionIdRef.current;
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      logSessionIdRef.current = crypto.randomUUID();
+      return logSessionIdRef.current;
+    }
+    const fallback = `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    logSessionIdRef.current = fallback;
+    return fallback;
+  }, []);
+
+  const logGameEvent = useCallback(
+    (event: Record<string, unknown>) => {
+      if (!gameLoggingEnabled) return;
+      const payload = {
+        sessionId: getLogSessionId(),
+        seq: logSeqRef.current++,
+        ...event,
+      };
+      void fetch("/api/game-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {});
+    },
+    [gameLoggingEnabled, getLogSessionId]
+  );
 
   const preset = BOT_PRESETS[botDifficulty];
   const fallbackModels = useMemo(() => LLM_MODEL_POOL.filter((model) => model !== botModel), [botModel]);
@@ -807,6 +1014,113 @@ export const useGameController = () => {
   useEffect(() => {
     stateRef.current = engineState;
   }, [engineState]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    if (!gameLoggingEnabled) {
+      lastLogIndexRef.current = engineState.log.length;
+      lastPhaseRef.current = engineState.phase;
+      lastTrickNumberRef.current = engineState.trickNumber;
+      return;
+    }
+
+    const context = buildGameLogContext(engineState);
+
+    if (lastLogIndexRef.current === null) {
+      lastLogIndexRef.current = engineState.log.length;
+      lastPhaseRef.current = engineState.phase;
+      lastTrickNumberRef.current = engineState.trickNumber;
+      logGameEvent({
+        type: "session-start",
+        resumed: engineState.log.length > 0,
+        hands: engineState.hands.map(handShortLabels),
+        undealtCount: engineState.undealt.length,
+        lastTrick: lastTrickSummary(engineState.lastTrick),
+        ...context,
+      });
+      return;
+    }
+
+    let startIndex = lastLogIndexRef.current;
+    if (engineState.log.length < startIndex) {
+      logGameEvent({
+        type: "log-reset",
+        previousIndex: startIndex,
+        newLength: engineState.log.length,
+        ...context,
+      });
+      startIndex = 0;
+      lastLogIndexRef.current = 0;
+    }
+    if (engineState.log.length > startIndex) {
+      const newEntries = engineState.log.slice(startIndex);
+      newEntries.forEach((message, idx) => {
+        logGameEvent({
+          type: "log",
+          logIndex: startIndex + idx,
+          message,
+          ...context,
+        });
+
+        if (message.startsWith("Hand start.")) {
+          logGameEvent({
+            type: "hand-start",
+            hands: engineState.hands.map(handShortLabels),
+            undealtCount: engineState.undealt.length,
+            ...context,
+          });
+        }
+
+        if (message.startsWith("Bidding begins")) {
+          logGameEvent({
+            type: "bidding-start",
+            hands: engineState.hands.map(handShortLabels),
+            ...context,
+          });
+        }
+
+        if (message.startsWith("Trick ") && engineState.lastTrick) {
+          logGameEvent({
+            type: "trick-end",
+            lastTrick: lastTrickSummary(engineState.lastTrick),
+            ...context,
+          });
+        }
+      });
+      lastLogIndexRef.current = engineState.log.length;
+    }
+
+    if (lastPhaseRef.current && lastPhaseRef.current !== engineState.phase) {
+      logGameEvent({
+        type: "phase-change",
+        from: lastPhaseRef.current,
+        to: engineState.phase,
+        ...context,
+      });
+    }
+    lastPhaseRef.current = engineState.phase;
+
+    if (lastTrickNumberRef.current !== null && engineState.trickNumber !== lastTrickNumberRef.current) {
+      if (engineState.phase === "playing") {
+        logGameEvent({
+          type: "trick-start",
+          trickNumber: engineState.trickNumber + 1,
+          leader: engineState.currentPlayer,
+          trumpSuit: engineState.trumpSuit,
+          trumpRevealed: engineState.trumpRevealed,
+          ...context,
+        });
+      }
+      if (engineState.phase === "hand-complete") {
+        logGameEvent({
+          type: "hand-complete",
+          lastTrick: lastTrickSummary(engineState.lastTrick),
+          ...context,
+        });
+      }
+    }
+    lastTrickNumberRef.current = engineState.trickNumber;
+  }, [engineState, gameLoggingEnabled, hydrated, logGameEvent]);
 
   useEffect(() => {
     if (!trickResolutionPending || pendingTrickNumber === null) {
@@ -1065,11 +1379,12 @@ export const useGameController = () => {
         if (snapshot.phase === "bidding") {
           const hand = snapshot.hands[botPlayer] ?? [];
           let bidDecision: number | null | undefined = undefined;
+          let llmDecision: LlmBidDecision | null = null;
 
           if (botSettings.enabled && shouldUseLLM()) {
             setLlmInUse(true);
             try {
-              const llmDecision = await requestLLMBid(snapshot, botSettings);
+              llmDecision = await requestLLMBid(snapshot, botSettings);
               bidDecision = llmDecision.bid;
               if (llmDecision.model && bidDecision !== undefined) {
                 setLlmReasoning(llmDecision.reasoning);
@@ -1088,13 +1403,44 @@ export const useGameController = () => {
             }
           }
 
-          const fallbackBid = chooseBotBidAmount(hand, snapshot.bidTarget, snapshot.config);
-          const bid = bidDecision === undefined ? fallbackBid : bidDecision;
+          const fallback = chooseBotBidAmount(hand, snapshot.bidTarget, snapshot.config, botSettings.difficulty);
+          const bid = bidDecision === undefined ? fallback.bid : bidDecision;
+          const legalRaises = getLegalBidOptions(snapshot);
 
           const latest = stateRef.current;
           if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
             return;
           }
+          logGameEvent({
+            type: "bot-bid",
+            source: bidDecision === undefined ? "fallback" : "llm",
+            player: botPlayer,
+            hand: handShortLabels(hand),
+            currentBid: snapshot.bidTarget,
+            minRaise: fallback.minRaise,
+            legalRaises,
+            decision: bid,
+            fallbackProjection: {
+              bestSuit: fallback.evaluation.bestSuit,
+              trumpScore: round2(fallback.evaluation.trumpScore),
+              sidePoints: round2(fallback.evaluation.sidePoints),
+              strength: round2(fallback.evaluation.strength),
+              desiredBid: fallback.evaluation.desiredBid,
+              thresholds: fallback.evaluation.thresholds,
+              stretch: fallback.evaluation.stretch,
+            },
+            llm: llmDecision
+              ? {
+                  model: llmDecision.model,
+                  hasTrace: llmDecision.hasTrace,
+                  bid: llmDecision.bid ?? null,
+                  durationMs: llmDecision.metrics?.durationMs ?? null,
+                  usage: llmDecision.metrics?.usage ?? null,
+                  costUsd: llmDecision.metrics?.costUsd ?? null,
+                }
+              : null,
+            ...buildGameLogContext(latest),
+          });
           if (bid === null) {
             dispatch({ type: "passBid", player: botPlayer });
           } else {
@@ -1110,6 +1456,13 @@ export const useGameController = () => {
           if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
             return;
           }
+          logGameEvent({
+            type: "bot-trump",
+            player: botPlayer,
+            hand: handShortLabels(hand),
+            suit,
+            ...buildGameLogContext(latest),
+          });
           dispatch({ type: "chooseTrump", player: botPlayer, suit });
           return;
         }
@@ -1131,11 +1484,12 @@ export const useGameController = () => {
           trumpRevealed: snapshot.trumpRevealed,
           trumpFromSeventh: snapshot.trumpFromSeventh,
         });
+        let llmDecision: LlmDecision | null = null;
 
         if (botSettings.enabled && shouldUseLLM()) {
           setLlmInUse(true);
           try {
-            const llmDecision = await requestLLMMove(snapshot, moves, botSettings);
+            llmDecision = await requestLLMMove(snapshot, moves, botSettings);
             if (llmDecision.card) {
               chosen = llmDecision.card;
             }
@@ -1160,6 +1514,26 @@ export const useGameController = () => {
         if (latest.currentPlayer !== botPlayer || latest.log.length !== turnId) {
           return;
         }
+        logGameEvent({
+          type: "bot-play",
+          source: llmDecision?.card ? "llm" : "fallback",
+          player: botPlayer,
+          hand: handShortLabels(hand),
+          chosen: cardShortLabel(chosen),
+          legalMoves: moves.map(cardShortLabel),
+          trick: trickShortLabels(snapshot.trick),
+          llm: llmDecision
+            ? {
+                model: llmDecision.model,
+                hasTrace: llmDecision.hasTrace,
+                card: llmDecision.card ? cardShortLabel(llmDecision.card) : null,
+                durationMs: llmDecision.metrics?.durationMs ?? null,
+                usage: llmDecision.metrics?.usage ?? null,
+                costUsd: llmDecision.metrics?.costUsd ?? null,
+              }
+            : null,
+          ...buildGameLogContext(latest),
+        });
         dispatch({ type: "playCard", player: botPlayer, card: chosen });
       };
 
@@ -1172,7 +1546,7 @@ export const useGameController = () => {
       }
       botTimeout.current = null;
     };
-  }, [botSettings, dispatch, engineState, hydrated, isHumanTurn, trickResolutionPending]);
+  }, [botSettings, dispatch, engineState, hydrated, isHumanTurn, logGameEvent, trickResolutionPending]);
 
   useEffect(() => {
     if (!hydrated || typeof window === "undefined") return;

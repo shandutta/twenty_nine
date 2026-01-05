@@ -961,8 +961,7 @@ export function GameTable({
     if (!isFinalTrick || !lastTrick) return null;
     const compact = variant === "compact";
     const bidDeltaValue = bidMargin === null ? null : Math.abs(bidMargin);
-    const bidDeltaText =
-      bidDeltaValue === null || madeBid === null ? null : `${madeBid ? "+" : "-"}${bidDeltaValue}`;
+    const bidDeltaText = bidDeltaValue === null || madeBid === null ? null : `${madeBid ? "+" : "-"}${bidDeltaValue}`;
     const handHeader = handWinnerTeam ? `${handWinnerTeam.name} takes the hand` : "Hand complete";
     const handOutcomeLine =
       handWinnerTeam && handLoserTeam
@@ -983,16 +982,12 @@ export function GameTable({
               <p className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.36em] text-emerald-100/60">
                 Final Trick · Hand Resolution
               </p>
-              <h3 className={cn("mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold", handWinnerTone)}>
-                {handHeader}
-              </h3>
+              <h3 className={cn("mt-1 text-[clamp(18px,1.6vw,24px)] font-semibold", handWinnerTone)}>{handHeader}</h3>
               <p className="mt-1 text-[clamp(11px,0.9vw,13px)] text-emerald-100/70">{handOutcomeLine}</p>
             </div>
             <div className="flex items-center gap-2">
               <Badge className="border-white/20 bg-white/5 text-emerald-100">Trick 8</Badge>
-              <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">
-                +{lastTrick.points} pts
-              </Badge>
+              <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">+{lastTrick.points} pts</Badge>
             </div>
           </div>
 
@@ -1004,7 +999,9 @@ export function GameTable({
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
                 <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
                 <span className="text-emerald-100/70">won for</span>
-                <Badge className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}>
+                <Badge
+                  className={cn("border text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em]", lastTrickBadge)}
+                >
                   {lastTrickTeam?.name ?? "Team"}
                 </Badge>
               </div>
@@ -1034,9 +1031,7 @@ export function GameTable({
                 <span className={cn("text-[clamp(16px,1.25vw,18px)] font-semibold", handWinnerTone)}>
                   {handWinnerTeam?.name ?? "Team"}
                 </span>
-                <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                  by {pointMargin} pts
-                </span>
+                <span className="text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">by {pointMargin} pts</span>
               </div>
               <div className="mt-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Score {scoreLine}</div>
               {bidderTeam && bidTarget !== null && (
@@ -1071,9 +1066,7 @@ export function GameTable({
                   </div>
                 </>
               ) : (
-                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                  Pip change unavailable.
-                </div>
+                <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">Pip change unavailable.</div>
               )}
               <div className="mt-2 text-[clamp(10px,0.75vw,12px)] text-emerald-100/60">
                 {teamA.name}: R{gameState.matchRedPips[0]}/B{gameState.matchBlackPips[0]} · {teamB.name}: R

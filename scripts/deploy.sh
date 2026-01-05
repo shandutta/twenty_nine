@@ -132,6 +132,25 @@ clear_next_lock() {
 
 clear_next_lock
 
+can_sudo() {
+  sudo -n true 2>/dev/null
+}
+
+service_active() {
+  systemctl is-active --quiet twentynine
+}
+
+if service_active && ! can_sudo; then
+  echo "deploy: twentynine service is active but sudo is unavailable."
+  echo "deploy: aborting before build to avoid serving mismatched assets."
+  exit 1
+fi
+
+if service_active && can_sudo; then
+  echo "deploy: stopping twentynine service before build"
+  sudo -n systemctl stop twentynine
+fi
+
 echo "deploy: building web app"
 echo "deploy: cleaning previous build"
 BACKUP_DIR="apps/web/.next.backup"
@@ -149,17 +168,29 @@ if ! pnpm -C apps/web build; then
   exit 1
 fi
 
-rm -rf "$BACKUP_DIR"
 node scripts/verify-next-build.mjs
 
-if ! sudo -n true 2>/dev/null; then
+if ! can_sudo; then
   echo "deploy: sudo is required to restart the service." >&2
-  echo "deploy: run 'sudo systemctl restart twentynine' manually." >&2
+  if [ -d "$BACKUP_DIR" ]; then
+    echo "deploy: restoring previous build from backup." >&2
+    rm -rf apps/web/.next
+    mv "$BACKUP_DIR" apps/web/.next
+  fi
   exit 1
 fi
 
 echo "deploy: restarting twentynine service"
-sudo -n systemctl restart twentynine
+if ! sudo -n systemctl restart twentynine; then
+  echo "deploy: restart failed." >&2
+  if [ -d "$BACKUP_DIR" ]; then
+    echo "deploy: restoring previous build from backup." >&2
+    rm -rf apps/web/.next
+    mv "$BACKUP_DIR" apps/web/.next
+  fi
+  exit 1
+fi
+
 echo "deploy: running health check"
 if command -v curl >/dev/null 2>&1; then
   HEALTH_URL="http://127.0.0.1:${TWENTYNINE_HEALTH_PORT:-3100}/game"
@@ -177,4 +208,6 @@ if command -v curl >/dev/null 2>&1; then
 else
   echo "deploy: curl not available; skipping health check"
 fi
+
+rm -rf "$BACKUP_DIR"
 echo "deploy: done"

@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { createGameState } from "@twentynine/engine";
 import type { GameState as EngineState } from "@twentynine/engine";
 import GamePage from "@/app/game/page";
@@ -68,13 +68,63 @@ const makeGameState = (cards: PlayingCard[]): GameState => ({
 const makeEngineState = (): EngineState =>
   createGameState({ seed: 1, trumpSuit: "spades", bidTarget: 16, phase: "playing" });
 
+type ControllerState = ReturnType<typeof useGameController>;
+
+const baseBotSettings = {
+  enabled: false,
+  difficulty: "easy",
+  model: "openai/gpt-5.2-chat",
+  fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
+  temperature: 0.2,
+  usageHint: "Conservative: protects high-value points and plays safely.",
+  reasoningEffort: "high",
+  showReasoningTrace: false,
+} as const;
+
+const makeControllerState = (overrides: Partial<ControllerState> = {}): ControllerState =>
+  ({
+    gameState: makeGameState([makeCard("hearts", "7"), makeCard("spades", "A")]),
+    engineState: makeEngineState(),
+    legalCardIds: ["hearts-7"],
+    onPlayCard: vi.fn(),
+    bidOptions: [],
+    canBid: false,
+    onPlaceBid: vi.fn(),
+    onPassBid: vi.fn(),
+    canChooseTrump: false,
+    onChooseTrump: vi.fn(),
+    onChooseTrumpFromSeventh: vi.fn(),
+    onNewGame: vi.fn(),
+    onNextHand: vi.fn(),
+    canStartNextHand: false,
+    canRevealTrump: false,
+    onRevealTrump: vi.fn(),
+    canDeclareRoyals: false,
+    onDeclareRoyals: vi.fn(),
+    lastMove: null,
+    botSettings: baseBotSettings,
+    llmInUse: false,
+    llmReasoning: null,
+    llmReasoningMeta: null,
+    trickResolution: { pending: false, open: false, summary: null },
+    onAcknowledgeTrickResolution: vi.fn(),
+    setBotEnabled: vi.fn(),
+    setBotDifficulty: vi.fn(),
+    setBotModel: vi.fn(),
+    setBotTemperature: vi.fn(),
+    setReasoningEffort: vi.fn(),
+    setShowReasoningTrace: vi.fn(),
+    controlMode: "standard",
+    controlModeLocked: false,
+    onControlModeChange: vi.fn(),
+    ...overrides,
+  }) satisfies ControllerState;
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("/game UI", () => {
-  let playCardMock: ReturnType<typeof vi.fn>;
-
   beforeEach(() => {
     vi.stubGlobal(
       "fetch",
@@ -83,55 +133,7 @@ describe("/game UI", () => {
       })) as unknown as typeof fetch
     );
 
-    const legal = makeCard("hearts", "7");
-    const illegal = makeCard("spades", "A");
-    playCardMock = vi.fn();
-
-    mockedUseGameController.mockReturnValue({
-      gameState: makeGameState([legal, illegal]),
-      engineState: makeEngineState(),
-      legalCardIds: [legal.id],
-      onPlayCard: playCardMock,
-      bidOptions: [],
-      canBid: false,
-      onPlaceBid: vi.fn(),
-      onPassBid: vi.fn(),
-      canChooseTrump: false,
-      onChooseTrump: vi.fn(),
-      onChooseTrumpFromSeventh: vi.fn(),
-      onNewGame: vi.fn(),
-      onNextHand: vi.fn(),
-      canStartNextHand: false,
-      canRevealTrump: false,
-      onRevealTrump: vi.fn(),
-      canDeclareRoyals: false,
-      onDeclareRoyals: vi.fn(),
-      lastMove: null,
-      botSettings: {
-        enabled: false,
-        difficulty: "easy",
-        model: "openai/gpt-5.2-chat",
-        fallbackModels: ["anthropic/claude-opus-4.5", "google/gemini-3-pro-preview"],
-        temperature: 0.2,
-        usageHint: "Conservative: protects high-value points and plays safely.",
-        reasoningEffort: "high",
-        showReasoningTrace: false,
-      },
-      llmInUse: false,
-      llmReasoning: null,
-      llmReasoningMeta: null,
-      trickResolution: { pending: false, open: false, summary: null },
-      onAcknowledgeTrickResolution: vi.fn(),
-      setBotEnabled: vi.fn(),
-      setBotDifficulty: vi.fn(),
-      setBotModel: vi.fn(),
-      setBotTemperature: vi.fn(),
-      setReasoningEffort: vi.fn(),
-      setShowReasoningTrace: vi.fn(),
-      controlMode: "standard",
-      controlModeLocked: false,
-      onControlModeChange: vi.fn(),
-    });
+    mockedUseGameController.mockReturnValue(makeControllerState());
   });
 
   it("disables illegal moves", async () => {
@@ -151,5 +153,94 @@ describe("/game UI", () => {
     fireEvent.mouseDown(aiTab, { button: 0 });
     expect(await screen.findByRole("heading", { name: "LLM Bots" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "AI Coach" })).toBeInTheDocument();
+  });
+
+  it("confirms before starting a new match", async () => {
+    const onNewGame = vi.fn();
+    mockedUseGameController.mockReturnValue(makeControllerState({ onNewGame }));
+
+    render(<GamePage />);
+    const [newMatchButton] = await screen.findAllByRole("button", { name: /New Match/i });
+    fireEvent.click(newMatchButton);
+
+    expect(await screen.findByText(/Start a new match\?/i)).toBeInTheDocument();
+    const confirmButton = await screen.findByRole("button", { name: /Start New Match/i });
+    fireEvent.click(confirmButton);
+
+    expect(onNewGame).toHaveBeenCalled();
+  });
+
+  it("shows trick resolution details and acknowledges the dialog", async () => {
+    const onAcknowledgeTrickResolution = vi.fn();
+    const lastTrick = {
+      trickNumber: 3,
+      winnerPlayerId: "player2",
+      winnerTeamId: "teamB" as const,
+      winningCard: makeCard("hearts", "A"),
+      points: 5,
+      plays: [
+        { playerId: "player1", card: makeCard("hearts", "7") },
+        { playerId: "player2", card: makeCard("hearts", "A") },
+        { playerId: "player3", card: makeCard("hearts", "9") },
+        { playerId: "player4", card: makeCard("hearts", "10") },
+      ],
+    };
+    const gameState = {
+      ...makeGameState([makeCard("clubs", "7")]),
+      currentPlayerId: "player2",
+      lastTrick,
+    };
+
+    mockedUseGameController.mockReturnValue(
+      makeControllerState({
+        gameState,
+        trickResolution: { pending: true, open: true, summary: lastTrick },
+        onAcknowledgeTrickResolution,
+      })
+    );
+
+    render(<GamePage />);
+    const dialog = await screen.findByRole("alertdialog");
+    expect(within(dialog).getByText(/Trick 3 resolved/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Winning card/i)).toBeInTheDocument();
+
+    const okButton = within(dialog).getByRole("button", { name: /OK - Next trick/i });
+    fireEvent.click(okButton);
+    expect(onAcknowledgeTrickResolution).toHaveBeenCalled();
+  });
+
+  it("requests a coach response when enabled", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
+      const url = typeof input === "string" ? input : input.url;
+      if (url.includes("/api/openrouter/models")) {
+        return {
+          ok: true,
+          json: async () => ({ models: [{ id: "openai/gpt-5.2-chat", supportsReasoning: true }] }),
+        };
+      }
+      if (url.includes("/api/openrouter") && (!init || init.method === "GET")) {
+        return { ok: true, json: async () => ({ configured: true }) };
+      }
+      if (url.includes("/api/openrouter") && init?.method === "POST") {
+        return { ok: true, json: async () => ({ message: { content: "Play the 7 of Hearts." } }) };
+      }
+      return { ok: false, json: async () => ({}) };
+    });
+    vi.stubGlobal("fetch", fetchMock as unknown as typeof fetch);
+
+    render(<GamePage />);
+    const [aiTab] = await screen.findAllByRole("tab", { name: /AI/i });
+    fireEvent.mouseDown(aiTab, { button: 0 });
+
+    const coachHeading = await screen.findByRole("heading", { name: "AI Coach" });
+    const coachCard = coachHeading.closest('[data-slot="card"]');
+    expect(coachCard).toBeTruthy();
+    const coachSwitch = within(coachCard as HTMLElement).getByRole("switch");
+    fireEvent.click(coachSwitch);
+
+    const coachButton = within(coachCard as HTMLElement).getByRole("button", { name: /Coach my turn/i });
+    fireEvent.click(coachButton);
+
+    expect(await screen.findByText(/Play the 7 of Hearts\./i)).toBeInTheDocument();
   });
 });

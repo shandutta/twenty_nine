@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { createDeck, getLegalPlays, playCard, scoreTrick, winningPlay } from "../src/index";
+import {
+  createDeck,
+  getLegalPlays,
+  isLegalPlay,
+  leadSuit,
+  playCard,
+  scoreTrick,
+  shouldRevealTrump,
+  trickPoints,
+  winningPlay,
+} from "../src/index";
 import type { Card, Rank, Suit, TrickState } from "../src/index";
 
 const card = (suit: Suit, rank: Rank): Card => ({ suit, rank });
@@ -59,6 +69,17 @@ describe("follow suit rule", () => {
     const legal = getLegalPlays(hand, trickWithLead);
     expect(legal).toEqual([card("hearts", "7")]);
   });
+
+  it("allows any card when void in the lead suit", () => {
+    const hand = [card("spades", "A"), card("clubs", "7")];
+    const trickWithLead: TrickState = {
+      plays: [{ player: 0, card: card("hearts", "10") }],
+    };
+
+    const legal = getLegalPlays(hand, trickWithLead);
+    expect(legal).toEqual(hand);
+    expect(isLegalPlay(hand, trickWithLead, card("spades", "A"))).toBe(true);
+  });
 });
 
 describe("seventh card trump rules", () => {
@@ -103,6 +124,19 @@ describe("seventh card trump rules", () => {
 
     expect(trumpPlay.trumpRevealed).toBe(true);
   });
+
+  it("allows leading trump when no non-trumps are available", () => {
+    const hand = [card("spades", "J"), card("spades", "7")];
+    const trick: TrickState = { plays: [] };
+
+    const legal = getLegalPlays(hand, trick, {
+      trumpSuit: "spades",
+      trumpRevealed: false,
+      trumpFromSeventh: true,
+    });
+
+    expect(legal).toEqual(hand);
+  });
 });
 
 describe("scoring totals", () => {
@@ -123,5 +157,74 @@ describe("scoring totals", () => {
     }, 0);
 
     expect(total).toBe(29);
+  });
+});
+
+describe("trick utilities", () => {
+  it("returns null lead suit for an empty trick", () => {
+    expect(leadSuit({ plays: [] })).toBeNull();
+  });
+
+  it("does not reveal trump when there is no lead suit", () => {
+    const hand = [card("hearts", "7")];
+    expect(shouldRevealTrump(hand, { plays: [] })).toBe(false);
+  });
+
+  it("throws when a trick has an invalid lead suit", () => {
+    const invalidCard = { suit: undefined, rank: "7" } as unknown as Card;
+    const trick: TrickState = { plays: [{ player: 0, card: invalidCard }] };
+    expect(() => winningPlay(trick, "spades", true)).toThrow("lead suit");
+  });
+
+  it("throws when playing an illegal card", () => {
+    const hand = [card("hearts", "7"), card("spades", "A")];
+    const trick: TrickState = {
+      plays: [{ player: 0, card: card("hearts", "10") }],
+    };
+
+    expect(() =>
+      playCard({
+        trick,
+        hand,
+        player: 1,
+        card: card("spades", "A"),
+        trumpRevealed: false,
+      })
+    ).toThrow("Illegal play");
+  });
+
+  it("reveals trump when a player is void and trump is not from the seventh", () => {
+    const hand = [card("spades", "A")];
+    const trick: TrickState = {
+      plays: [{ player: 0, card: card("hearts", "10") }],
+    };
+
+    const result = playCard({
+      trick,
+      hand,
+      player: 1,
+      card: card("spades", "A"),
+      trumpRevealed: false,
+    });
+
+    expect(result.trumpRevealed).toBe(true);
+  });
+
+  it("throws when evaluating an empty trick winner", () => {
+    expect(() => winningPlay({ plays: [] }, "spades", true)).toThrow("empty trick");
+  });
+
+  it("sums trick points without the last trick bonus", () => {
+    const trick: TrickState = {
+      plays: [
+        { player: 0, card: card("hearts", "J") },
+        { player: 1, card: card("hearts", "9") },
+        { player: 2, card: card("hearts", "A") },
+        { player: 3, card: card("hearts", "10") },
+      ],
+    };
+
+    expect(trickPoints(trick)).toBe(7);
+    expect(scoreTrick(trick, false)).toBe(7);
   });
 });

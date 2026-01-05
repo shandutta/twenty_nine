@@ -216,9 +216,9 @@ function GamePageClient() {
     const loadModelSupport = async () => {
       try {
         const response = await fetch("/api/openrouter/models");
-        const data = (await response.json().catch(() => null)) as
-          | { models?: Array<{ id?: string; supportsReasoning?: boolean }> }
-          | null;
+        const data = (await response.json().catch(() => null)) as {
+          models?: Array<{ id?: string; supportsReasoning?: boolean }>;
+        } | null;
         if (!isMounted) return;
         if (!Array.isArray(data?.models)) {
           setModelReasoningSupport(null);

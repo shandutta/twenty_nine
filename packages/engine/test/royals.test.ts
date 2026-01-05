@@ -17,6 +17,8 @@ describe("royals declaration rules", () => {
     expect(hasRoyals(hand, "spades")).toBe(true);
     expect(hasRoyals([card("spades", "K")], "spades")).toBe(false);
     expect(hasRoyals([card("spades", "Q")], "spades")).toBe(false);
+    expect(hasRoyals(hand, null)).toBe(false);
+    expect(hasRoyals([card("hearts", "7"), ...hand], "spades")).toBe(true);
   });
 
   it("cannot declare before trump reveal", () => {

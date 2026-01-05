@@ -154,11 +154,7 @@ export function GameSidebar({
     .map((model) => LLM_MODEL_OPTIONS.find((option) => option.value === model)?.label ?? model)
     .join(", ");
   const reasoningTraceUnavailable = reasoningTraceSupported === false;
-  const traceStatus = reasoningTraceUnavailable
-    ? "Unavailable"
-    : botSettings.showReasoningTrace
-      ? "Visible"
-      : "Hidden";
+  const traceStatus = reasoningTraceUnavailable ? "Unavailable" : botSettings.showReasoningTrace ? "Visible" : "Hidden";
   const disableReasoningToggle = reasoningTraceUnavailable && !botSettings.showReasoningTrace;
   const handleReasoningTraceToggle = (enabled: boolean) => {
     if (reasoningTraceUnavailable && enabled) return;

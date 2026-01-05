@@ -22,10 +22,7 @@ export async function GET() {
     });
 
     if (!response.ok) {
-      return NextResponse.json(
-        { models: [], error: "OpenRouter models request failed." },
-        { status: response.status }
-      );
+      return NextResponse.json({ models: [], error: "OpenRouter models request failed." }, { status: response.status });
     }
 
     const data = (await response.json().catch(() => null)) as { data?: OpenRouterModel[] } | null;
