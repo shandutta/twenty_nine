@@ -415,10 +415,6 @@ export function GameTable({
   canDeclareRoyals,
   onDeclareRoyals,
   llmInUse,
-  llmReasoning,
-  llmReasoningMeta,
-  showReasoningTrace,
-  reasoningTraceSupported = null,
 }: GameTableProps) {
   const bottomPlayer = gameState.players.find((p) => p.position === "bottom")!;
   const leftPlayer = gameState.players.find((p) => p.position === "left")!;
@@ -999,15 +995,9 @@ export function GameTable({
           matchFinished && "pointer-events-none opacity-40"
         )}
       >
-        {(llmInUse || showReasoningTrace) && (
+        {llmInUse && (
           <div className="pointer-events-none absolute right-6 top-6 z-30 flex flex-col items-end gap-2">
-            <LiveAiIndicator active={llmInUse} />
-            <ReasoningTracePanel
-              trace={llmReasoning}
-              meta={llmReasoningMeta}
-              show={showReasoningTrace}
-              supported={reasoningTraceSupported}
-            />
+            <LiveAiIndicator active />
           </div>
         )}
         {lastTrick && !isFinalTrick && (

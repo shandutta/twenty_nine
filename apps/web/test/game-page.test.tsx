@@ -110,7 +110,6 @@ const makeControllerState = (overrides: Partial<ControllerState> = {}): Controll
     setBotModel: vi.fn(),
     setBotTemperature: vi.fn(),
     setReasoningEffort: vi.fn(),
-    setShowReasoningTrace: vi.fn(),
     controlMode: "standard",
     controlModeLocked: false,
     onControlModeChange: vi.fn(),

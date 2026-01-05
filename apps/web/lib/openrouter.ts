@@ -99,6 +99,19 @@ const extractReasoningText = (message: unknown, maxChars: number): string | null
   return combined.length > maxChars ? `${combined.slice(0, maxChars)}...` : combined;
 };
 
+const sanitizeMessage = (message: unknown): { role?: string; content?: string } | null => {
+  if (!message || typeof message !== "object") return null;
+  const entry = message as { role?: unknown; content?: unknown };
+  const sanitized: { role?: string; content?: string } = {};
+  if (typeof entry.role === "string") {
+    sanitized.role = entry.role;
+  }
+  if (typeof entry.content === "string") {
+    sanitized.content = entry.content;
+  }
+  return Object.keys(sanitized).length ? sanitized : null;
+};
+
 const resolveLogPath = () => {
   if (process.env.OPENROUTER_LOG_PATH) {
     return process.env.OPENROUTER_LOG_PATH;
@@ -195,6 +208,7 @@ export const handleOpenRouterPost = async (request: Request) => {
 
   const message = data?.choices?.[0]?.message ?? null;
   const reasoningPreview = extractReasoningText(message, 2000);
+  const sanitizedMessage = sanitizeMessage(message);
   const logEntry: Record<string, unknown> = {
     ts: new Date().toISOString(),
     ok: true,
@@ -216,7 +230,7 @@ export const handleOpenRouterPost = async (request: Request) => {
   return NextResponse.json({
     id: data?.id ?? null,
     model: data?.model ?? payload.model ?? null,
-    message,
+    message: sanitizedMessage,
     usage: data?.usage ?? null,
     metrics,
   });

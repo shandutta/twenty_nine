@@ -130,6 +130,32 @@ describe("useGameController", () => {
     }
   });
 
+  it("maps reasoning effort to difficulty defaults", async () => {
+    vi.useRealTimers();
+
+    const { result } = renderHook(() => useGameController());
+
+    await waitFor(() => {
+      expect(result.current.botSettings.reasoningEffort).toBe("low");
+    });
+
+    await act(async () => {
+      result.current.setBotDifficulty("hard");
+    });
+
+    await waitFor(() => {
+      expect(result.current.botSettings.reasoningEffort).toBe("high");
+    });
+
+    await act(async () => {
+      result.current.setBotDifficulty("medium");
+    });
+
+    await waitFor(() => {
+      expect(result.current.botSettings.reasoningEffort).toBe("medium");
+    });
+  });
+
   it("sends reasoning effort in the LLM request", async () => {
     vi.useFakeTimers();
     vi.spyOn(Date, "now").mockReturnValue(3333);
@@ -189,7 +215,7 @@ describe("useGameController", () => {
     });
 
     const requestBody = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
-    expect(requestBody.reasoning).toMatchObject({ effort: "high" });
+    expect(requestBody.reasoning).toMatchObject({ effort: "low" });
   });
 
   it("hydrates from localStorage when a snapshot exists", async () => {
@@ -222,6 +248,31 @@ describe("useGameController", () => {
     expect(result.current.botSettings.reasoningEffort).toBe("minimal");
     expect(result.current.controlMode).toBe("single-hand");
     expect(result.current.controlModeLocked).toBe(true);
+  });
+
+  it("defaults reasoning effort from difficulty when missing in storage", async () => {
+    vi.useRealTimers();
+
+    const snapshot = createGameState({ seed: 555, phase: "playing", trumpSuit: "clubs", bidTarget: 16 });
+    const persisted = {
+      version: 1,
+      engineState: { ...snapshot, currentPlayer: 0 },
+      lastMove: null,
+      botEnabled: false,
+      botDifficulty: "hard",
+      botModel: "openai/gpt-5.2-chat",
+      botTemperature: 0.25,
+      controlMode: "standard",
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(persisted));
+
+    const { result } = renderHook(() => useGameController());
+
+    await waitFor(() => {
+      expect(result.current.engineState.seed).toBe(555);
+    });
+
+    expect(result.current.botSettings.reasoningEffort).toBe("high");
   });
 
   it("persists updates to localStorage after hydration", async () => {
