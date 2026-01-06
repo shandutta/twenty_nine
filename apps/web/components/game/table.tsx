@@ -892,18 +892,19 @@ export function GameTable({
                   {lastTrickTeam?.name ?? "Team"}
                 </Badge>
               </div>
-              <div className="mt-2 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                Winning card <span className="text-emerald-50">{lastTrickCardLabel}</span>
-                <span className="ml-2 inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70">
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                <span>Winning card</span>
+                <span className="text-emerald-50">{lastTrickCardLabel}</span>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70">
                   Last trick bonus +1
                 </span>
               </div>
               {!compact && (
-                <div className="mt-3 flex items-center gap-3">
-                  <div className="origin-left scale-90">
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  <div className="origin-left scale-90 shrink-0">
                     <PlayedCard card={lastTrick.winningCard} />
                   </div>
-                  <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.24em] text-emerald-100/60">
+                  <div className="min-w-0 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.24em] text-emerald-100/60 leading-snug">
                     Final winning card
                   </div>
                 </div>
@@ -985,8 +986,8 @@ export function GameTable({
       "--trick-card-w": "calc(var(--hand-card-w) * 0.94)",
       "--trick-card-h": "calc(var(--hand-card-h) * 0.94)",
       "--trick-card-radius": "clamp(10px,1vw,14px)",
-      "--hand-pip-size": "clamp(14px, calc(var(--hand-card-w) * 0.18), 22px)",
-      "--trick-pip-size": "clamp(12px, calc(var(--trick-card-w) * 0.18), 20px)",
+      "--hand-pip-size": "clamp(15px, calc(var(--hand-card-w) * 0.185), 23px)",
+      "--trick-pip-size": "clamp(14px, calc(var(--trick-card-w) * 0.195), 22px)",
     }),
     [isMobile]
   );
