@@ -374,8 +374,9 @@ export const reduceGame = (state: GameState, action: GameAction): GameState => {
     if (action.player !== state.currentPlayer) return state;
     if (state.bidTarget === null || state.bidderPlayer === null || state.bidderTeam === null) return state;
 
-    const deck = shuffleDeck(createDeck(), state.seed);
-    const seventhSuit = deck[6].suit;
+    const seventhCard = state.undealt[6];
+    if (!seventhCard) return state;
+    const seventhSuit = seventhCard.suit;
 
     return finalizeTrumpChoice({
       state,
