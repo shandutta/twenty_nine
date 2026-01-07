@@ -9,7 +9,7 @@ const EFFECT_LEVELS: Record<SoundEffect, number> = {
   shuffle: 0.35,
   deal: 0.22,
   bid: 0.25,
-  pass: 0.2,
+  pass: 0.1,
   trump: 0.32,
   trumpReveal: 0.3,
   trickWin: 0.36,
@@ -196,7 +196,8 @@ export function useSoundEffects({
           break;
         }
         case "pass": {
-          playTone(170, 0.12, { type: "sine", gain: 0.7, endFreq: 110 });
+          playNoise(0.18, { type: "lowpass", freq: 520, q: 0.3, gain: 0.18 });
+          playTone(200, 0.2, { type: "sine", gain: 0.28, endFreq: 140 });
           break;
         }
         case "trump": {
