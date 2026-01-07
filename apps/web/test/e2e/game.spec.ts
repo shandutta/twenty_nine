@@ -233,3 +233,47 @@ test("game page smoke flow", async ({ page }) => {
 
   expect(errors, `Console/page errors:\n${errors.join("\n")}`).toEqual([]);
 });
+
+test("single-hand mode allows partner hand play", async ({ page }) => {
+  test.setTimeout(120_000);
+  const snapshot = createGameState({
+    seed: 2026,
+    phase: "playing",
+    trumpSuit: "hearts",
+    bidTarget: 16,
+    bidderPlayer: 0,
+  });
+  snapshot.currentPlayer = 2;
+  snapshot.leader = 2;
+  const persistedState = {
+    version: 1,
+    engineState: snapshot,
+    lastMove: null,
+    botEnabled: false,
+    botDifficulty: "easy",
+    botModel: "openai/gpt-5.2-chat",
+    botTemperature: 0.2,
+    reasoningEffort: "high",
+    controlMode: "single-hand",
+  };
+  await page.addInitScript(
+    ({ state, storageKey }) => {
+      window.localStorage.setItem(storageKey, JSON.stringify(state));
+    },
+    { state: persistedState, storageKey: STORAGE_KEY }
+  );
+
+  await page.goto("/game", { waitUntil: "networkidle" });
+  await page.waitForSelector('[data-hydrated="true"]', { timeout: 10_000 });
+  await expect(page.getByText("Partner").first()).toBeVisible();
+  await expect(page.getByTestId("player-hand-status")).toHaveCount(2);
+
+  const enabledHandButtons = page.locator('button[aria-label*=" of "][aria-disabled="false"]');
+  await expect(enabledHandButtons.first()).toBeVisible({ timeout: 10_000 });
+  const legal = enabledHandButtons.first();
+  const label = await legal.getAttribute("aria-label");
+  await legal.click();
+  if (label) {
+    await expect(page.locator(`button[aria-label="${label}"]`)).toHaveCount(0);
+  }
+});
