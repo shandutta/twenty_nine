@@ -1525,6 +1525,7 @@ export const useGameController = () => {
         let chosen = chooseBotCard({
           hand,
           trick: snapshot.trick,
+          player: botPlayer,
           trumpSuit: snapshot.trumpSuit,
           trumpRevealed: snapshot.trumpRevealed,
           trumpFromSeventh: snapshot.trumpFromSeventh,

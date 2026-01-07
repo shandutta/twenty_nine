@@ -564,15 +564,16 @@ export default function App() {
           trumpFromSeventh: state.trumpFromSeventh,
         });
         const llmCard = await requestLLMMove(state, legalMoves);
-        const chosen =
-          llmCard ??
-          chooseBotCard({
-            hand,
-            trick: state.trick,
-            trumpSuit: state.trumpSuit,
-            trumpRevealed: state.trumpRevealed,
-            trumpFromSeventh: state.trumpFromSeventh,
-          });
+          const chosen =
+            llmCard ??
+            chooseBotCard({
+              hand,
+              trick: state.trick,
+              player: state.currentPlayer,
+              trumpSuit: state.trumpSuit,
+              trumpRevealed: state.trumpRevealed,
+              trumpFromSeventh: state.trumpFromSeventh,
+            });
         if (chosen) {
           applyAction({ type: "playCard", player: state.currentPlayer, card: chosen });
         }
