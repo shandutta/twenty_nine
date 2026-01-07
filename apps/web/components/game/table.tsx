@@ -847,8 +847,7 @@ export function GameTable({
     const compact = variant === "compact";
     const bidDeltaValue = bidMargin === null ? null : Math.abs(bidMargin);
     const bidDeltaText = bidDeltaValue === null || madeBid === null ? null : `${madeBid ? "+" : "-"}${bidDeltaValue}`;
-    const handVerb =
-      handWinnerTeam?.name?.includes("&") || handWinnerTeam?.name?.includes(" and ") ? "take" : "takes";
+    const handVerb = handWinnerTeam?.name?.includes("&") || handWinnerTeam?.name?.includes(" and ") ? "take" : "takes";
     const handHeader = handWinnerTeam ? `${handWinnerTeam.name} ${handVerb} the hand` : "Hand complete";
     const handOutcomeLine =
       handWinnerTeam && handLoserTeam
