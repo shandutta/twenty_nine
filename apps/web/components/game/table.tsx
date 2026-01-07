@@ -847,11 +847,14 @@ export function GameTable({
     const compact = variant === "compact";
     const bidDeltaValue = bidMargin === null ? null : Math.abs(bidMargin);
     const bidDeltaText = bidDeltaValue === null || madeBid === null ? null : `${madeBid ? "+" : "-"}${bidDeltaValue}`;
-    const handHeader = handWinnerTeam ? `${handWinnerTeam.name} takes the hand` : "Hand complete";
+    const handVerb =
+      handWinnerTeam?.name?.includes("&") || handWinnerTeam?.name?.includes(" and ") ? "take" : "takes";
+    const handHeader = handWinnerTeam ? `${handWinnerTeam.name} ${handVerb} the hand` : "Hand complete";
     const handOutcomeLine =
       handWinnerTeam && handLoserTeam
         ? `${handWinnerTeam.name} won by ${pointMargin} pts · ${scoreLine}`
         : `Score ${scoreLine}`;
+    const finalTrickNumber = lastTrick?.trickNumber ?? 8;
 
     const panelPadding = compact ? "p-3" : "p-4";
 
@@ -873,15 +876,19 @@ export function GameTable({
               <p className="mt-1.5 text-[clamp(11px,0.9vw,13px)] text-emerald-100/70">{handOutcomeLine}</p>
             </div>
             <div className="flex items-center gap-2.5">
-              <Badge className="border-white/20 bg-white/5 text-emerald-100">Trick 8</Badge>
-              <Badge className="border-[#f2c879]/40 bg-[#1e1406]/80 text-[#f6d38b]">+{lastTrick.points} pts</Badge>
+              <Badge className="border-white/15 bg-white/5 text-emerald-100/75 uppercase tracking-[0.24em] text-[clamp(9px,0.7vw,11px)]">
+                Trick {finalTrickNumber}
+              </Badge>
+              <Badge className="border-[#f2c879]/30 bg-[#1a1206]/70 text-[#f6d38b]/85 uppercase tracking-[0.2em] text-[clamp(9px,0.7vw,11px)]">
+                +{lastTrick.points} pts
+              </Badge>
             </div>
           </div>
 
           <div className={cn("grid gap-4", compact ? "md:grid-cols-2" : "md:grid-cols-3")}>
             <div className={cn("rounded-2xl border border-white/10 bg-black/40", panelPadding)}>
               <div className="text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.3em] text-emerald-100/60">
-                Trick 8 recap
+                Trick {finalTrickNumber} recap
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-[clamp(12px,0.95vw,14px)] text-emerald-50">
                 <span className={lastTrickAccent}>{lastTrickWinner?.name ?? "Player"}</span>
@@ -892,19 +899,21 @@ export function GameTable({
                   {lastTrickTeam?.name ?? "Team"}
                 </Badge>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
-                <span>Winning card</span>
-                <span className="text-emerald-50">{lastTrickCardLabel}</span>
-                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.22em] text-emerald-100/70">
+              <div className="mt-2 space-y-1 text-[clamp(11px,0.85vw,13px)] text-emerald-100/70">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>Winning card</span>
+                  <span className="font-medium text-emerald-50">{lastTrickCardLabel}</span>
+                </div>
+                <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.2em] text-emerald-100/70">
                   Last trick bonus +1
                 </span>
               </div>
               {!compact && (
-                <div className="mt-3 flex flex-wrap items-center gap-3">
-                  <div className="origin-left scale-90 shrink-0">
+                <div className="mt-3 flex flex-col items-start gap-2">
+                  <div className="origin-left scale-90">
                     <PlayedCard card={lastTrick.winningCard} />
                   </div>
-                  <div className="min-w-0 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.24em] text-emerald-100/60 leading-snug">
+                  <div className="pl-0.5 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.18em] text-emerald-100/60 leading-snug">
                     Final winning card
                   </div>
                 </div>
@@ -969,9 +978,9 @@ export function GameTable({
           </div>
 
           {!matchFinished && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.28em] text-emerald-100/70">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-gradient-to-r from-white/5 via-white/10 to-white/5 px-4 py-2.5 text-[clamp(10px,0.75vw,12px)] uppercase tracking-[0.26em] text-emerald-100/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
               <span>Ready for next round</span>
-              <span className="text-emerald-50">Round {gameState.matchRound}</span>
+              <span className="text-emerald-50/90">Round {gameState.matchRound}</span>
             </div>
           )}
         </div>
