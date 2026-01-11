@@ -463,8 +463,7 @@ describe("GamePage logic branches", () => {
   });
 
   it("blocks coach requests when OpenRouter is not configured", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-      const url = typeof input === "string" ? input : input.url;
+    const fetchMock = vi.fn(async (_input: RequestInfo, init?: RequestInit) => {
       if (url.includes("/api/openrouter/models")) {
         return { ok: true, json: async () => ({ models: [] }) } as Response;
       }
