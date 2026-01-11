@@ -10,6 +10,7 @@ import {
   reduceGame,
   shouldRevealTrump,
   teamForPlayer,
+  winningPlay,
 } from "@twentynine/engine";
 import type { Card, GameAction, GameState as EngineState, Suit } from "@twentynine/engine";
 import type { ControlMode, GameState, LastTrickSummary, PlayingCard, Player, Team } from "./types";
@@ -739,6 +740,10 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
   const seenTrumpRanks = trumpKnown && state.trumpSuit ? formatSeenTrumpRanks(seenCards, state.trumpSuit) : null;
   const outstandingTrumpRanks =
     trumpKnown && state.trumpSuit ? formatOutstandingTrumpRanks(seenCards, hand, state.trumpSuit) : null;
+  const currentWinner = state.trick.plays.length
+    ? winningPlay(state.trick, state.trumpSuit, state.trumpRevealed)
+    : null;
+  const partnerWinning = currentWinner ? teamForPlayer(currentWinner.player) === myTeam : false;
 
   const prompt = [
     'You are an expert 29 card game bot. Return JSON only with keys "rank" and "suit".',
@@ -749,6 +754,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     "- Avoid dumping the 9 or J early when a lower legal card exists and the trick is not guaranteed.",
     "- If it is early (tricks 1-3) and a 0-point legal card exists, do not play a point card unless it clearly wins the trick.",
     "- If you are unlikely to win the current trick, favor the lowest-point legal card.",
+    "- When your partner is currently winning the trick and you can safely follow suit, prefer adding higher-point cards to secure the trick's points.",
     "- Prefer winning with the lowest necessary card; avoid overtrumping.",
     strategy,
     `Rules: Rank order ${RANK_ORDER_LABEL}. Last trick bonus: +1 (hand totals can sum to ${TOTAL_HAND_POINTS}).`,
@@ -760,6 +766,7 @@ const requestLLMMove = async (state: EngineState, legalMoves: Card[], settings: 
     `Early trick: ${state.trickNumber < 3 ? "yes" : "no"}.`,
     `Score: Team A ${state.points[0]} pts, Team B ${state.points[1]} pts.`,
     `Current trick plays: ${currentTrick}.`,
+    `Partner currently winning trick: ${partnerWinning ? "yes" : "no"}.`,
     `Seen cards by suit: ${seenBySuit}.`,
     seenTrumpRanks ? `Seen trump ranks: ${seenTrumpRanks}.` : null,
     outstandingTrumpRanks ? `Outstanding trump ranks (excluding your hand): ${outstandingTrumpRanks}.` : null,
@@ -1525,6 +1532,7 @@ export const useGameController = () => {
         let chosen = chooseBotCard({
           hand,
           trick: snapshot.trick,
+          player: botPlayer,
           trumpSuit: snapshot.trumpSuit,
           trumpRevealed: snapshot.trumpRevealed,
           trumpFromSeventh: snapshot.trumpFromSeventh,

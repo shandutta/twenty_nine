@@ -294,6 +294,7 @@ describe("useGameController", () => {
     expect(prompt).toContain("Trump: spades (known to you, not revealed).");
     expect(prompt).toContain("Rank order J > 9 > A > 10 > K > Q > 8 > 7");
     expect(prompt).toContain("Last trick bonus: +1");
+    expect(prompt).toContain("Partner currently winning trick: no.");
     expect(prompt).toContain("Seen cards by suit:");
     expect(prompt).toContain("spades [8, 7]");
     expect(prompt).toContain("hearts [A]");

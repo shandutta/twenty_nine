@@ -25,6 +25,7 @@ import {
   leadSuit,
   reduceGame,
   teamForPlayer,
+  winningPlay,
 } from "@twentynine/engine";
 import type { Card, GameAction, GameState, Suit } from "@twentynine/engine";
 
@@ -186,6 +187,12 @@ const buildBotPrompt = (state: GameState, legalMoves: Card[]): string => {
   const currentTrick = state.trick.plays.length
     ? state.trick.plays.map((play) => `${PLAYER_LABELS[play.player]}:${cardLongLabel(play.card)}`).join(", ")
     : "none";
+  const currentWinner = state.trick.plays.length
+    ? winningPlay(state.trick, state.trumpSuit, state.trumpRevealed)
+    : null;
+  const partnerWinning = currentWinner
+    ? teamForPlayer(currentWinner.player) === teamForPlayer(player)
+    : false;
   const legalMovesWithPoints = legalMoves
     .map((card) => `{"rank":"${card.rank}","suit":"${card.suit}","points":${cardPoints(card)}}`)
     .join(", ");
@@ -199,6 +206,7 @@ const buildBotPrompt = (state: GameState, legalMoves: Card[]): string => {
     "- Avoid dumping the 9 or J early when a lower legal card exists and the trick is not guaranteed.",
     "- If it is early (tricks 1-3) and a 0-point legal card exists, do not play a point card unless it clearly wins the trick.",
     "- If you are unlikely to win the current trick, favor the lowest-point legal card.",
+    "- When your partner is currently winning the trick and you can safely follow suit, prefer adding higher-point cards to secure the trick's points.",
     "- Prefer winning with the lowest necessary card; avoid overtrumping.",
     "",
     `Player: ${PLAYER_LABELS[player]}.`,
@@ -207,6 +215,7 @@ const buildBotPrompt = (state: GameState, legalMoves: Card[]): string => {
     `Trump: ${state.trumpRevealed ? trumpLabel : "hidden"}.`,
     `Score: Team A ${state.points[0]} pts, Team B ${state.points[1]} pts.`,
     `Current trick plays: ${currentTrick}.`,
+    `Partner currently winning trick: ${partnerWinning ? "yes" : "no"}.`,
     `Your hand: ${hand.map(cardLongLabel).join(", ")}.`,
     `Legal moves: ${legalMovesWithPoints}.`,
     "",
@@ -564,15 +573,16 @@ export default function App() {
           trumpFromSeventh: state.trumpFromSeventh,
         });
         const llmCard = await requestLLMMove(state, legalMoves);
-        const chosen =
-          llmCard ??
-          chooseBotCard({
-            hand,
-            trick: state.trick,
-            trumpSuit: state.trumpSuit,
-            trumpRevealed: state.trumpRevealed,
-            trumpFromSeventh: state.trumpFromSeventh,
-          });
+          const chosen =
+            llmCard ??
+            chooseBotCard({
+              hand,
+              trick: state.trick,
+              player: state.currentPlayer,
+              trumpSuit: state.trumpSuit,
+              trumpRevealed: state.trumpRevealed,
+              trumpFromSeventh: state.trumpFromSeventh,
+            });
         if (chosen) {
           applyAction({ type: "playCard", player: state.currentPlayer, card: chosen });
         }

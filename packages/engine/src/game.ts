@@ -204,12 +204,14 @@ const rankTieBreaker = (a: Card, b: Card): number => {
 export const chooseBotCard = ({
   hand,
   trick,
+  player,
   trumpSuit,
   trumpRevealed,
   trumpFromSeventh,
 }: {
   hand: Card[];
   trick: TrickState;
+  player?: number;
   trumpSuit?: Suit | null;
   trumpRevealed?: boolean;
   trumpFromSeventh?: boolean;
@@ -222,6 +224,18 @@ export const chooseBotCard = ({
     if (pointDiff !== 0) return pointDiff;
     return rankTieBreaker(a, b);
   });
+
+  if (typeof player === "number" && trick.plays.length > 0) {
+    const currentWinner = winningPlay(trick, trumpSuit ?? null, Boolean(trumpRevealed));
+    if (teamForPlayer(currentWinner.player) === teamForPlayer(player)) {
+      const byPoints = legal.slice().sort((a, b) => {
+        const pointDiff = cardPoints(b) - cardPoints(a);
+        if (pointDiff !== 0) return pointDiff;
+        return rankTieBreaker(b, a);
+      });
+      return byPoints[0];
+    }
+  }
 
   return bySafety[0];
 };

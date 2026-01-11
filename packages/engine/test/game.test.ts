@@ -233,22 +233,29 @@ describe("bot choices", () => {
   it("prefers the lowest point, lowest ranked legal card", () => {
     const hand = [card("hearts", "7"), card("hearts", "K"), card("hearts", "9")];
     const trick = { plays: [] };
-    const chosen = chooseBotCard({ hand, trick });
+    const chosen = chooseBotCard({ hand, trick, player: 0 });
     expect(chosen).toEqual(card("hearts", "7"));
   });
 
   it("returns the only legal card when forced to follow suit", () => {
     const hand = [card("hearts", "7"), card("spades", "A")];
     const trick = { plays: [{ player: 1, card: card("hearts", "9") }] };
-    const chosen = chooseBotCard({ hand, trick });
+    const chosen = chooseBotCard({ hand, trick, player: 0 });
     expect(chosen).toEqual(card("hearts", "7"));
   });
 
   it("handles rank ties when point values are equal", () => {
     const hand = [card("clubs", "8"), card("spades", "8")];
     const trick = { plays: [] };
-    const chosen = chooseBotCard({ hand, trick });
+    const chosen = chooseBotCard({ hand, trick, player: 0 });
     expect([hand[0], hand[1]]).toContainEqual(chosen);
+  });
+
+  it("plays higher point cards when a partner is winning the trick", () => {
+    const hand = [card("hearts", "8"), card("hearts", "9")];
+    const trick = { plays: [{ player: 0, card: card("hearts", "J") }, { player: 1, card: card("hearts", "7") }] };
+    const chosen = chooseBotCard({ hand, trick, player: 2 });
+    expect(chosen).toEqual(card("hearts", "9"));
   });
 });
 
