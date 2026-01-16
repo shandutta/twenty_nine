@@ -520,7 +520,6 @@ describe("GamePage logic branches", () => {
   it("skips state updates after unmounting", async () => {
     let resolveConfig: ((value: unknown) => void) | null = null;
     const fetchMock = vi.fn(async (input: RequestInfo, init?: RequestInit) => {
-      const url = typeof input === "string" ? input : input.url;
       if (!init || init.method === "GET") {
         return {
           ok: true,

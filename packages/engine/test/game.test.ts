@@ -47,16 +47,34 @@ describe("trump reveal action", () => {
 
 describe("trump selection", () => {
   it("lets the bidder set trump from the 7th card", () => {
-    const seed = 12345;
-    const deck = shuffleDeck(createDeck(), seed);
+    const seed = 1;
     const base = createGameState({ seed, phase: "choose-trump", bidderPlayer: 1, bidTarget: 16 });
+    const overrideUndealt = [
+      card("clubs", "7"),
+      card("clubs", "8"),
+      card("clubs", "9"),
+      card("clubs", "10"),
+      card("clubs", "J"),
+      card("clubs", "Q"),
+      card("hearts", "A"),
+    ];
+    const state = { ...base, undealt: [...overrideUndealt, ...base.undealt.slice(7)] };
 
-    const next = reduceGame(base, { type: "chooseTrumpFromSeventh", player: 1 });
+    const next = reduceGame(state, { type: "chooseTrumpFromSeventh", player: 1 });
 
-    expect(next.trumpSuit).toBe(deck[6].suit);
+    expect(next.trumpSuit).toBe("hearts");
     expect(next.trumpRevealed).toBe(false);
     expect(next.trumpFromSeventh).toBe(true);
     expect(next.phase).toBe("playing");
+  });
+
+  it("ignores seventh-card trump when fewer than 7 undealt cards remain", () => {
+    const base = createGameState({ seed: 2, phase: "choose-trump", bidderPlayer: 1, bidTarget: 16 });
+    const state = { ...base, undealt: base.undealt.slice(0, 6) };
+
+    const next = reduceGame(state, { type: "chooseTrumpFromSeventh", player: 1 });
+
+    expect(next).toBe(state);
   });
 });
 
